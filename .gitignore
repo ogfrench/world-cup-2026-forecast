@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .netlify/
+
+# Playwright MCP scratch output
+.playwright-mcp/
