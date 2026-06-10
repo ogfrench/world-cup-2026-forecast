@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/ogfrench/world-cup-2026-prediction/actions/workflows/ci.yml/badge.svg)](https://github.com/ogfrench/world-cup-2026-prediction/actions/workflows/ci.yml)
 
+**Live: https://world-cup-2026-model-predictions.netlify.app/**
+
 A Monte Carlo simulation of the 2026 World Cup. It runs the full tournament, all 104 matches and the
 knockout bracket, 50,000 times under five match-rating models and reports each team's probability of
 reaching every stage.
@@ -56,7 +58,8 @@ Open `index.html` in a browser, or run `python -m http.server` from the reposito
 
 ## Deployment
 
-Deployed on Netlify from the repository root, redeploying on each push to `main`.
+Deployed on Netlify at <https://world-cup-2026-model-predictions.netlify.app/>, served from the
+repository root and redeployed on each push to `main`.
 
 ## Disclaimer
 
