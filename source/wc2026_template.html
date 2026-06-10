@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Cup 2026 Prediction Engine</title>
+<meta name="description" content="Who actually wins the World Cup 2026? A from-scratch simulation: the whole tournament played 50,000 times, five ways, from cold stats to the betting market.">
+<meta name="theme-color" content="#0a0b0d">
+<meta property="og:type" content="website">
+<meta property="og:title" content="World Cup 2026 Prediction Engine">
+<meta property="og:description" content="The whole tournament, played 50,000 times, five ways. Opens on the market's view. The fun is in where the methods disagree.">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230a0b0d'/><circle cx='16' cy='16' r='8' fill='%23c8ff4d'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b0d; --bg2:#101216; --surface:#15181e; --surface2:#1b1f27;
+    --line:#262b34; --line2:#323845;
+    --txt:#eceef1; --muted:#969ca6; --faint:#646a74;
+    --lime:#c8ff4d; --lime-dim:#8fae3a; --gold:#ffd166; --blue:#5fb3ff;
+    --win:#5cd17f; --draw:#8a909b; --loss:#ff6f5e;
+    --maxw:1080px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--bg); color:var(--txt);
+    font-family:'Archivo',system-ui,sans-serif; line-height:1.5;
+    background-image:
+      radial-gradient(1200px 600px at 80% -10%, rgba(200,255,77,.06), transparent 60%),
+      radial-gradient(900px 500px at -10% 10%, rgba(95,179,255,.05), transparent 55%);
+    background-attachment:fixed;
+  }
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.025;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .wrap{position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;padding:0 18px 80px}
+
+  /* ---------- header ---------- */
+  header{padding:40px 0 22px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--lime);display:flex;align-items:center;gap:8px}
+  .kicker::before{content:"";width:26px;height:1px;background:var(--lime)}
+  h1{font-family:'Anton',sans-serif;font-weight:400;letter-spacing:.01em;line-height:.92;
+     font-size:clamp(44px,11vw,104px);text-transform:uppercase;margin:10px 0 6px}
+  h1 .yr{color:var(--lime)}
+  .sub{color:var(--muted);font-size:15px;max-width:640px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .chip{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);
+        border:1px solid var(--line2);border-radius:999px;padding:5px 11px;white-space:nowrap}
+  .chip b{color:var(--txt);font-weight:500}
+
+  /* ---------- tabs ---------- */
+  nav{position:sticky;top:0;z-index:20;background:rgba(10,11,13,.86);backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--line);margin:0 -18px 26px;padding:0 18px;
+      display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  .tab{font-family:'Archivo';font-weight:700;font-size:13px;letter-spacing:.02em;
+       color:var(--muted);background:none;border:none;cursor:pointer;
+       padding:16px 14px;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s}
+  .tab:hover{color:var(--txt)}
+  .tab.on{color:var(--lime);border-bottom-color:var(--lime)}
+
+  section{display:none;animation:fade .35s ease}
+  section.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .sec-h{font-family:'Anton';text-transform:uppercase;font-size:13px;letter-spacing:.12em;
+         color:var(--faint);margin:30px 0 14px;display:flex;align-items:center;gap:10px}
+  .sec-h::after{content:"";flex:1;height:1px;background:var(--line)}
+  .lead{color:var(--muted);font-size:14px;margin-bottom:18px;max-width:680px}
+
+  /* ---------- title race bars ---------- */
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin:0 0 16px;font-size:12px;color:var(--muted)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .sw{width:14px;height:10px;border-radius:2px;display:inline-block}
+  .sw.model{background:var(--lime)}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;border:2px solid}
+  .dot.opta{border-color:var(--blue)}
+  .dot.mkt{border-color:var(--gold)}
+
+  .bar-row{display:grid;grid-template-columns:128px 1fr 54px;align-items:center;gap:12px;padding:7px 0}
+  .bar-row .nm{font-weight:700;font-size:13.5px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar-row .nm small{display:block;font-family:'DM Mono';font-weight:400;font-size:10px;color:var(--faint)}
+  .track{position:relative;height:26px;background:var(--surface);border-radius:5px;overflow:visible}
+  .fill{position:absolute;left:0;top:0;bottom:0;border-radius:5px;
+        background:linear-gradient(90deg,var(--lime-dim),var(--lime));min-width:2px;
+        transition:width .9s cubic-bezier(.2,.8,.2,1)}
+  .mk{position:absolute;top:-3px;height:32px;width:0;border-left:2px dashed;transform:translateX(-1px)}
+  .mk.opta{border-color:var(--blue)}
+  .mk.mkt{border-color:var(--gold)}
+  .bar-row .val{font-family:'DM Mono';font-weight:500;font-size:14px;color:var(--lime);text-align:right}
+  .bar-row .val small{color:var(--faint);font-size:10px}
+
+  /* ---------- podium ---------- */
+  .podium{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:26px}
+  .pod{background:linear-gradient(180deg,var(--surface2),var(--surface));border:1px solid var(--line);
+       border-radius:12px;padding:18px 16px;position:relative;overflow:hidden}
+  .pod::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--line2)}
+  .pod.p1::before{background:var(--lime)} .pod.p2::before{background:var(--blue)} .pod.p3::before{background:var(--gold)}
+  .pod .rk{font-family:'DM Mono';font-size:11px;color:var(--faint)}
+  .pod .tnm{font-family:'Anton';text-transform:uppercase;font-size:clamp(20px,5vw,30px);line-height:1;margin:6px 0 2px}
+  .pod .pct{font-family:'DM Mono';font-size:30px;font-weight:500;color:var(--lime)}
+  .pod.p1 .pct{color:var(--lime)} .pod.p2 .pct{color:var(--blue)} .pod.p3 .pct{color:var(--gold)}
+  .pod .lbl{font-size:11px;color:var(--muted);letter-spacing:.04em}
+  .pod .elo{font-family:'DM Mono';font-size:11px;color:var(--faint);margin-top:8px}
+
+  /* ---------- knockout matrix ---------- */
+  .tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin-top:8px}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:13px}
+  th,td{padding:9px 8px;text-align:center}
+  thead th{font-family:'DM Mono';font-weight:500;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+           color:var(--muted);background:var(--bg2);border-bottom:1px solid var(--line2);position:sticky;top:0}
+  tbody td{font-family:'DM Mono';border-bottom:1px solid var(--line);color:var(--txt)}
+  tbody tr:last-child td{border-bottom:none}
+  .tname{text-align:left!important;font-family:'Archivo'!important;font-weight:700;white-space:nowrap;position:sticky;left:0;background:var(--surface)}
+  .tname small{font-family:'DM Mono';font-weight:400;color:var(--faint);margin-left:6px}
+  .grp-pill{display:inline-block;min-width:16px;font-size:9px;color:var(--bg);background:var(--faint);
+            border-radius:3px;padding:1px 4px;font-family:'DM Mono';margin-left:6px;vertical-align:middle}
+
+  /* ---------- groups ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:16px}
+  .gcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .ghd{display:flex;align-items:center;gap:10px;padding:13px 15px;background:var(--bg2);border-bottom:1px solid var(--line)}
+  .ghd .g{font-family:'Anton';font-size:22px;color:var(--lime);line-height:1}
+  .ghd .t{font-family:'DM Mono';font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .grow{display:grid;grid-template-columns:1fr 46px;align-items:center;gap:10px;padding:8px 15px}
+  .grow .tn{font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:8px}
+  .grow .tn i{font-style:normal;font-family:'DM Mono';font-size:10px;color:var(--faint)}
+  .gbar{grid-column:1/3;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:-2px}
+  .gbar i{display:block;height:100%;background:var(--lime-dim);border-radius:3px}
+  .grow .gp{font-family:'DM Mono';font-size:13px;color:var(--lime);text-align:right}
+
+  .matches{border-top:1px solid var(--line);padding:6px 0 4px}
+  .matches .mh{font-family:'DM Mono';font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);padding:8px 15px 4px}
+  .m{padding:9px 15px;border-top:1px solid var(--line)}
+  .m:first-of-type{border-top:none}
+  .m .top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+  .m .ta{font-weight:600;font-size:13px}
+  .m .tb{font-weight:600;font-size:13px;text-align:right}
+  .m .sc{font-family:'Anton';font-size:18px;letter-spacing:.06em;color:var(--txt);
+         background:var(--bg2);border:1px solid var(--line2);border-radius:6px;padding:2px 9px}
+  .wdl{display:flex;height:5px;border-radius:3px;overflow:hidden;margin:8px 0 5px;background:var(--surface2)}
+  .wdl i{height:100%}
+  .wdl .w{background:var(--win)} .wdl .d{background:var(--draw)} .wdl .l{background:var(--loss)}
+  .m .det{display:flex;justify-content:space-between;font-family:'DM Mono';font-size:10px;color:var(--faint)}
+  .m .det .alts span{color:var(--muted)}
+
+  /* ---------- method ---------- */
+  .prose{max-width:760px}
+  .prose p{color:var(--muted);font-size:14.5px;margin:0 0 14px}
+  .prose h3{font-family:'Anton';text-transform:uppercase;letter-spacing:.06em;font-size:16px;margin:26px 0 10px;color:var(--txt)}
+  .prose b,.prose strong{color:var(--txt);font-weight:700}
+  .prose code{font-family:'DM Mono';font-size:12.5px;background:var(--surface2);border:1px solid var(--line);
+              border-radius:4px;padding:1px 6px;color:var(--lime)}
+  .cal{width:100%;min-width:0;border-collapse:collapse;margin:6px 0 20px;font-size:13px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .cal th,.cal td{padding:9px 11px;text-align:right;border-bottom:1px solid var(--line);font-family:'DM Mono'}
+  .cal th{background:var(--bg2);color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+  .cal td:first-child,.cal th:first-child{text-align:left;font-family:'Archivo';font-weight:700}
+  .cal tr:last-child td{border-bottom:none}
+  .note{background:var(--surface);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:13px 16px;margin:18px 0;font-size:13.5px;color:var(--muted)}
+  .scorers{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
+  .scorers .s{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px}
+  .scorers .s b{display:block;font-weight:700}
+  .scorers .s span{font-family:'DM Mono';font-size:11px;color:var(--gold)}
+  footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-size:11px;color:var(--faint);font-family:'DM Mono'}
+
+  /* ---------- model switcher ---------- */
+  .modelbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:22px 0 10px}
+  .mlbl{font-family:'DM Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-right:3px}
+  .mbtn{font-family:'Archivo';font-weight:700;font-size:12.5px;color:var(--txt);
+        background:var(--surface);border:1px solid var(--line2);border-radius:999px;
+        padding:8px 14px;cursor:pointer;transition:.15s;white-space:nowrap;opacity:1}
+  .mbtn.rec{border-color:rgba(200,255,77,.55)}
+  .mbtn.dim{opacity:.45;color:var(--muted);border-color:var(--line)}
+  .mbtn:hover{opacity:1;color:var(--txt);border-color:var(--faint)}
+  .mbtn.on{color:var(--bg);background:var(--lime);border-color:var(--lime);opacity:1}
+  .mhint{font-size:11.5px;color:var(--faint);margin:2px 0 22px;max-width:660px}
+  .mhint b{color:var(--muted);font-weight:600}
+
+  /* ---------- netherlands timeline ---------- */
+  .nlgrid{display:flex;flex-direction:column;gap:15px}
+  .nlcard{background:linear-gradient(180deg,var(--surface2),var(--surface));border:1px solid var(--line);border-radius:14px;padding:17px 18px 18px}
+  .nlcard .stage{font-family:'DM Mono';font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--lime)}
+  .nlcard .mt{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin:7px 0 2px}
+  .nlcard .vs{font-family:'Anton';text-transform:uppercase;font-size:clamp(19px,5.2vw,28px);line-height:1.02}
+  .nlcard .vs em{color:var(--faint);font-style:normal;font-size:.55em;padding:0 .4em}
+  .nlcard .ftbig{font-family:'Anton';font-size:clamp(20px,5.6vw,30px);color:var(--lime);line-height:1;white-space:nowrap;text-align:right}
+  .nlcard .ftbig small{display:block;font-family:'DM Mono';font-size:9px;color:var(--faint);letter-spacing:.1em;margin-top:3px}
+  .nltl{position:relative;height:56px;margin:16px 0 4px}
+  .nltl .axis{position:absolute;left:0;right:0;top:34px;height:3px;background:var(--surface);border-radius:2px}
+  .nltl .axfill{position:absolute;left:0;top:34px;height:3px;background:linear-gradient(90deg,var(--lime-dim),var(--line2));border-radius:2px}
+  .nltl .htL{position:absolute;top:22px;height:24px;width:0;border-left:1px dashed var(--line2)}
+  .nltl .cap{position:absolute;top:2px;transform:translateX(-50%);font-family:'DM Mono';font-size:9.5px;color:var(--muted);white-space:nowrap}
+  .nltl .cap.l{left:0;transform:none}
+  .nltl .cap.r{right:0;left:auto;transform:none}
+  .nltl .goal{position:absolute;top:28px;width:13px;height:13px;border-radius:50%;transform:translateX(-50%);border:2px solid var(--bg);box-shadow:0 0 0 3px rgba(0,0,0,.28)}
+  .nltl .goal.ned{background:var(--lime)}
+  .nltl .goal.opp{background:var(--loss)}
+  .nltl .gmin{position:absolute;top:44px;transform:translateX(-50%);font-family:'DM Mono';font-size:9.5px;color:var(--faint);white-space:nowrap}
+  .nlwdl{display:flex;height:7px;border-radius:4px;overflow:hidden;margin:8px 0 7px}
+  .nlwdl i{height:100%;transition:width .6s}
+  .nlwdl .w{background:var(--win)} .nlwdl .d{background:var(--draw)} .nlwdl .l{background:var(--loss)}
+  .nlmeta{display:flex;flex-wrap:wrap;gap:6px 15px;font-family:'DM Mono';font-size:11px;color:var(--muted)}
+  .nlmeta b{color:var(--txt);font-weight:500}
+  .nlmeta .lean{color:var(--lime)}
+  .nlnote{font-size:11.5px;color:var(--faint);margin-top:9px;border-top:1px solid var(--line);padding-top:8px;line-height:1.45}
+  .nlpending{background:var(--surface);border:1px dashed var(--line2);border-radius:12px;padding:15px 16px;color:var(--muted);font-size:12.5px}
+  .nlsrc{font-size:12.5px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--lime);border-radius:8px;padding:10px 13px;margin-bottom:4px;line-height:1.5}
+  .nlsrc b{color:var(--txt);font-weight:600}
+
+  /* ---------- mobile ---------- */
+  @media(max-width:520px){
+    .wrap{padding:0 13px 64px}
+    nav{margin:0 -13px 22px;padding:0 13px}
+    .sub{font-size:14px}
+    .bar-row{grid-template-columns:88px 1fr 46px;gap:9px}
+    .bar-row .nm{font-size:12px}
+    .bar-row .val{font-size:13px}
+    .pod{padding:14px 11px}
+    .pod .tnm{font-size:18px}
+    .pod .pct{font-size:24px}
+    .cal th,.cal td{padding:8px 7px;font-size:11.5px}
+    .mbtn{font-size:11.5px;padding:7px 11px}
+    .nlcard{padding:15px 14px 16px}
+    .nlmeta{font-size:10.5px;gap:5px 12px}
+    .prose,.prose p,.note,.lead{overflow-wrap:break-word}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Who actually wins it? Here's the maths.</div>
+    <h1>World Cup <span class="yr">2026</span><br>Prediction Engine</h1>
+    <p class="sub">Everyone's got a hunch about the World Cup. I built this one from data. It plays out all 104 matches and the entire knockout bracket 50,000 times over, and it does it five different ways, from cold results to the betting market, to see which way of guessing actually holds up. The short version: the market usually knows best, and Spain leads. The fun is in where the five disagree. It opens on the market's view, so tap the others to argue with it.</p>
+    <div class="meta-row" id="meta"></div>
+  </header>
+
+  <div class="modelbar" id="modelbar"></div>
+  <div class="mhint">Same tournament, five ways to guess the result. The two bright buttons are the ones worth trusting: <b>Pure Market</b> (what the bookmakers think, usually the smartest guess in the room) and <b>Hybrid</b> (the best guess built from results alone). The three dim ones are there so you can see how much the answer depends on which method you pick.</div>
+
+  <nav>
+    <button class="tab on" data-t="race">Title Race</button>
+    <button class="tab" data-t="ko">Knockout Odds</button>
+    <button class="tab" data-t="groups">Groups &amp; Scores</button>
+    <button class="tab" data-t="nl">Netherlands</button>
+    <button class="tab" data-t="method">Method &amp; Caveats</button>
+  </nav>
+
+  <!-- TITLE RACE -->
+  <section class="on" id="race">
+    <div class="podium" id="podium"></div>
+    <div class="sec-h">Who lifts the trophy</div>
+    <p class="lead">Every bar is a team's chance of winning the whole thing, for the model you've picked above. The dots mark where Opta's supercomputer and the betting market land, for a sanity check.</p>
+    <div class="legend">
+      <span><i class="sw model"></i> Selected model</span>
+      <span><i class="dot opta"></i> Opta supercomputer</span>
+      <span><i class="dot mkt"></i> Betting market</span>
+      <span style="color:var(--faint)">± = Monte Carlo standard error</span>
+    </div>
+    <div id="raceBars"></div>
+  </section>
+
+  <!-- KNOCKOUT -->
+  <section id="ko">
+    <div class="sec-h">Road to the final</div>
+    <p class="lead">How far each team gets. Every number is the share of the 50,000 runs where that team reached that round. Read left to right and watch the odds pile onto the favourites as the field thins out.</p>
+    <div class="tbl-scroll"><table id="koTable"></table></div>
+  </section>
+
+  <!-- GROUPS -->
+  <section id="groups">
+    <div class="sec-h">Group winner odds &amp; match-by-match</div>
+    <p class="lead">The percentage is each team's chance of winning its group, for the model picked above. Tap any fixture for its most likely scoreline, the win/draw/loss split, and the runner-up scores. One honest note: that single "most likely score" is a near coin toss between a few options, so trust the win/draw/loss bar more than the exact number.</p>
+    <div class="grid" id="groupGrid"></div>
+  </section>
+
+  <!-- NETHERLANDS -->
+  <section id="nl">
+    <div class="sec-h">Netherlands · match timeline</div>
+    <p class="lead">What the Netherlands' tournament might look like, game by game: a likely first-goal minute, half-time score, and full-time score for each fixture. It follows the model picked above, so switch to <b>Pure Market</b> for the bookmakers' take. I'll add the knockout rounds here once the bracket is set.</p>
+    <div class="nlgrid" id="nlGrid"></div>
+
+    <div class="prose" style="margin-top:34px">
+      <div class="sec-h">How this is built, and what to trust</div>
+      <p>Each card tells <b>one story that holds together</b>. That sounds obvious, but it is easy to get wrong. The most likely half-time score is 0-0, while the average first goal lands around the half-hour, and those two facts describe <b>different matches</b>: the 0-0 comes from the games where nobody scores early, and the half-hour average only counts the games that did. Quote them side by side and you get a goal at minute 30 in a match that was goalless at the break, which is nonsense. So each card picks a single scenario and reads the minute, the half-time and the full-time all from that one story, so they always line up.</p>
+      <p>The result and the goal count come from whichever model you pick, and the cards refresh when you switch. <b>The interesting bit is that the market and the model disagree about the Dutch.</b> The bookmakers rate the Netherlands a touch higher than results alone do, so under Pure Market they are favoured in all three group games, including against Japan, which the data-only models call a coin flip (the goals model even leans Japan). Against Tunisia the market turns a narrow 1-0 into a 2-0, which drags the likely first goal forward from late on to before the break. Flip between models to see how much of this is method rather than fact.</p>
+      <p>The first-goal minute comes from the <b>real pattern of when goals are scored</b>: matches start quiet and get busier, with the most goals in the closing fifteen minutes. So a first-half goal tends to land around the 26th minute, and if the half stays goalless the single goal usually arrives around the 70th.</p>
+      <p><b>What to trust, in order.</b> Who is favoured, or that it is a coin flip, is solid. Two to three goals is solid. The exact score is shaky: it is just the likeliest option out of many, and even that is only a few percent likely. The first-goal <b>minute is the shakiest of all</b>, because it comes from a league-wide average that is the same shape for every team, so it says almost nothing specific about these games. Read it as the rhythm of a typical match, not a real prediction. And the whole thing has never been tested on an actual World Cup.</p>
+    </div>
+  </section>
+
+  <!-- METHOD -->
+  <section id="method">
+    <div class="prose">
+      <div class="sec-h">Five models, one engine</div>
+      <p>The buttons up top are five different ways to guess a result. They all run the <b>exact same tournament</b> underneath: all 104 games, the eight best third-placed teams, the official FIFA bracket (every one of the 495 possible round-of-32 line-ups), and the real knockout through the final with extra time and penalties, played out <b id="nsim2"></b> times. The only thing that changes between them is how each match's two scorelines get estimated. Here they are, simplest first.</p>
+      <p><b>Pure Elo.</b> Ranks teams purely on results, like a chess rating, then turns the gap between two sides into expected goals. Simple, and hard to fool with one freak scoreline, but it has no idea how a team actually plays. It backs the favourites harder than any of the others. (Ratings from eloratings.net.)</p>
+      <p><b>Score (Dixon-Coles).</b> Learns each team's attack and defence from <b>15,431 real internationals</b> since 2010 (recent games count for more), so it predicts actual scorelines, not just a winner. It worked out a home-field bump worth about <b>1.31x</b> on goals, entirely from the data. The catch: it rewards teams that pile goals on weak opponents, so it overrates the likes of Japan and Algeria. (Dixon-Coles is a classic football scoring model.)</p>
+      <p><b>Hybrid.</b> The two above, simply averaged. Each one patches the other's blind spot. I tested it on 1,230 internationals it had never seen, from 2025 and 2026, and it grades out at least as well as either model alone, with the steadiest confidence of the three:</p>
+      <table class="cal" id="ooTable"></table>
+      <p><b>The honest read.</b> Three things tell you whether a forecast is any good: how often it picks the right result, how surprised it was by what actually happened (the stats name is log-loss, lower is better), and whether its confidence matches reality (calibration). The Hybrid wins or ties on all three, and its confidence is the best matched: when it says 60 percent, that is about what happens. It clearly beats the goals model, but it only edges plain Elo by a whisker, well inside the noise. So the fair claim is modest: blending is at least as good as the best single model and steadier, and its real job is calming the goals model down. The fancy model never actually out-predicts simple Elo on quality, it only edges it on raw hit-rate. The quiet lesson: more complicated is not the same as more accurate.</p>
+      <p><b>Model + Market.</b> The Hybrid, nudged halfway toward the betting market. I take the bookmakers' title odds, work backwards to the team ratings they imply, blend those 50/50 with the model, and re-run the whole tournament. This is roughly how a lot of professional models work, since they feed on market prices. The effect: Argentina comes down, France goes up.</p>
+      <p><b>Does following the bookies actually pay off?</b> I couldn't test the World Cup market directly, because nobody kept the historical odds, so I checked the idea on 5,327 club matches where the closing odds do exist. The market beat a solid Elo model on every measure. A 50/50 model-plus-market blend improved on the model but never beat the market on its own. That is the honest basis for this column: leaning on the market makes a model better, it does not make it better than the market. The caveat: that was club football. The World Cup is one of the most heavily bet events on earth, so its market is probably just as sharp, but I haven't proven that here.</p>
+      <p><b>Pure Market.</b> Just the bookmakers, no model at all. I calibrate their ratings so the simulated title odds match the published ones, then play the whole bracket out, so you see what the market thinks about every group and knockout tie, not only the winner. Given the test just above, this is the one to trust, and it is what the page opens on. The catch: it is the market seen through this engine's bracket and pinned to the published title odds, not a live feed of every single match price.</p>
+
+      <h3>How it stacks up against Opta and the market</h3>
+      <p>None of these models was trained on Opta's numbers, so this is a fair outside check. Your selected model's title odds sit right next to Opta's supercomputer and the betting market:</p>
+      <table class="cal" id="calTable"></table>
+      <div class="note"><b>Where the results-only models break from the market.</b> They love <b>Argentina</b> on recent form (Copa champions, on a tear): the Hybrid puts them almost level with Spain, while the market has them around fifth. They also rate <b>France</b> below the market, which is paying for squad depth that results alone cannot see. Model + Market splits the difference. Flipping between the five shows how much of the title race is method rather than fact.</div>
+
+      <p><b>Why models that rate single games almost identically still disagree wildly on the trophy.</b> A tiny edge in one match compounds across seven knockout rounds and a 48-team field, so a small difference in rating one game balloons into a big difference in who wins it all. Spain's number swings from about 10 to 29 percent across the five, far wider than the match odds ever differ. So read the five less as rival predictions and more as a stress test: how much does the answer depend on the method?</p>
+
+      <h3>A note on the Golden Boot</h3>
+      <p>Top-scorer odds are <b>not</b> something this engine produces: it models team scores, not individual players. For reference, here is roughly where the betting market has it, with the bookmaker margin stripped out:</p>
+      <div class="scorers" id="scorers"></div>
+
+      <h3>Where it's weak (worth reading)</h3>
+      <p><b>It backs the favourites too hard.</b> A fixed-strength simulation cannot see a tournament turn: an injury, a player catching fire, a red card. So it piles probability onto the big teams. Pure Elo is the worst for it, the Hybrid less so, the market views least of all. (The goals model spreads things out more, but that is goal-padding, not wisdom.) The head-to-heads stay sensible, though: Spain against Argentina is a coin flip.</p>
+      <p><b>What the test can and cannot prove.</b> Those 1,230 test games are mostly qualifiers and friendlies, often one-sided, where any half-decent model looks clever. Tight knockout ties between top teams, the games a World Cup is actually decided by, barely feature. And the test grades the match guesses, not the title odds, which nobody can check until the trophy is handed out. Encouraging, not gospel.</p>
+      <p><b>Injuries are not in it.</b> I used to fudge the ratings by hand for injured stars. That is gone now. The model knows results up to 6 June 2026 and nothing about who is actually fit for kickoff. Brazil, for one, is rated at full strength.</p>
+      <p><b>It draws a bit less than real life.</b> International football, full of lopsided qualifiers, draws less often than club leagues, and the model learned that. Its group draw rate sits around 23 to 24 percent, just under the World Cup norm of 26 to 28 (pure Elo is lower, the goals model lands right on it). It is the honest fitted number, not tuned up.</p>
+      <p><b>The single "most likely score" is fragile.</b> In an even game, 1-1, 1-0 and 0-0 are all within a few percent of each other, so the headline score flips on a whim. Trust the win/draw/loss split, and treat the exact score as the tallest blade of grass in a flat field.</p>
+      <p><b>One bit of small print.</b> The blend weight and the Elo-to-goals conversion were tuned on an Elo I rebuilt from the same match data, which lines up 0.97 with the official ratings used for the live predictions; any flat gap between the two cancels out in a given matchup.</p>
+      <p><b>This is a toy, not an oracle.</b> A transparent baseline built from public data and standard methods. Great for the shape of the tournament. Not for staking your mortgage.</p>
+    </div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>const DATA = /*DATA*/;</script>
+<script>
+(function(){
+  const MODELS = DATA.models, META = DATA.meta, OPTA = DATA.opta, MKT = DATA.market, G = DATA.groups;
+  const LABELS = META.labels, n = META.n_sims;
+  const fmt = x => (Math.round(x*10)/10).toFixed(1);
+  const se = p => 100*Math.sqrt((p/100)*(1-p/100)/n);
+  let CUR = 'market_pure';   // app opens on Pure Market, the recommended forecast
+
+  // ---- static chrome ----
+  const oo = META.oos_logloss || {};
+  document.getElementById('meta').innerHTML = [
+    ['Simulations', n.toLocaleString()],
+    ['Models', '5'],
+    ['DC fit on', '15,431 matches'],
+    ['Home effect', (META.home_mult||1.31)+'×'],
+    ['ρ (fitted)', (Math.round(META.rho*1000)/1000)],
+    ['As of', 'Jun 6 2026']
+  ].map(([k,v])=>`<span class="chip">${k} <b>${v}</b></span>`).join('');
+  const n2=document.getElementById('nsim2'); if(n2) n2.textContent=n.toLocaleString();
+  document.getElementById('foot').innerHTML =
+    `Five match models (Pure Elo · Dixon-Coles · Hybrid · Model + Market · Pure Market) over a shared Monte Carlo of ${n.toLocaleString()} tournaments with the official FIFA Annex C round-of-32 (495 combinations). Dixon-Coles fit by MLE on 15,431 internationals (2010-2026); hybrid weight chosen by out-of-sample log-loss; market odds de-vigged and the pure-market ratings calibrated to them. Opta and Polymarket / Kalshi / FanDuel shown for comparison. Not betting advice.<div style="margin-top:16px;text-align:center;color:var(--muted);letter-spacing:.04em">made with <span style="color:var(--txt)">&#9829;</span> by François</div>`;
+
+  if (document.getElementById('ooTable')) {
+    const ooRows=[
+      ['Naive base rate','1.0472','0.228','48%',false],
+      ['Pure Elo','0.8464','0.163','60%',false],
+      ['Score (Dixon-Coles)','0.8558','0.167','61%',false],
+      ['Hybrid','0.8409','0.163','60%',true]
+    ];
+    document.getElementById('ooTable').innerHTML =
+      '<tr><th>Model · held-out 2025-26</th><th>Log-loss ↓</th><th>RPS ↓</th><th>Acc ↑</th></tr>'+
+      ooRows.map(r=>{const c=r[4]?' style="color:var(--lime)"':'';
+        return `<tr${c}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`;}).join('');
+  }
+  const sc=[['Mbappé','France','~14%'],['Kane','England','~12%'],['Haaland','Norway','~7%'],
+            ['Messi','Argentina','~6%'],['Oyarzabal','Spain','~5%'],['Yamal','Spain','~5%'],
+            ['J. Álvarez','Argentina','~3%']];
+  document.getElementById('scorers').innerHTML = sc.map(s=>`<div class="s"><b>${s[0]}</b><span>${s[1]} · ${s[2]}</span></div>`).join('');
+
+  // ---- model switcher ----
+  const order=['elo','score','hybrid','market','market_pure'];
+  const REC=new Set(['hybrid','market_pure']);
+  document.getElementById('modelbar').innerHTML = '<span class="mlbl">Model</span>'+
+    order.map(k=>{
+      const c='mbtn'+(REC.has(k)?' rec':' dim')+(k===CUR?' on':'');
+      return `<button class="${c}" data-m="${k}">${LABELS[k]}</button>`;
+    }).join('');
+  document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',()=>{
+    CUR=b.dataset.m;
+    document.querySelectorAll('.mbtn').forEach(x=>x.classList.toggle('on',x.dataset.m===CUR));
+    render();
+    if(typeof renderNL==='function') renderNL();
+  }));
+
+  function render(){
+    const T = MODELS[CUR].teams, GM = MODELS[CUR].group_matches;
+    const byChamp = Object.keys(T).sort((a,b)=>T[b].champ-T[a].champ);
+
+    // podium
+    const podCols=['p1','p2','p3'], rkTxt=['1st favourite','2nd favourite','3rd favourite'];
+    document.getElementById('podium').innerHTML = byChamp.slice(0,3).map((t,i)=>`
+      <div class="pod ${podCols[i]}">
+        <div class="rk">${rkTxt[i]}</div>
+        <div class="tnm">${t}</div>
+        <div class="pct">${fmt(T[t].champ)}<span style="font-size:15px">%</span></div>
+        <div class="lbl">to win the World Cup</div>
+        <div class="elo">Elo ${T[t].elo} · reaches final ${fmt(T[t].final)}%</div>
+      </div>`).join('');
+
+    // title race bars (top 16)
+    const top = byChamp.slice(0,16);
+    const maxv = Math.max(...top.map(t=>Math.max(T[t].champ, OPTA[t]||0, MKT[t]||0)))*1.08;
+    document.getElementById('raceBars').innerHTML = top.map(t=>{
+      const v=T[t].champ, o=OPTA[t], m=MKT[t];
+      const mk=(val,cls)=> val==null?'':`<span class="mk ${cls}" style="left:${(val/maxv)*100}%" title="${cls}"></span>`;
+      return `<div class="bar-row"><div class="nm">${t}<small>Elo ${T[t].elo}</small></div>
+        <div class="track"><div class="fill" style="width:${(v/maxv)*100}%"></div>${mk(o,'opta')}${mk(m,'mkt')}</div>
+        <div class="val">${fmt(v)}<small>±${se(v).toFixed(1)}</small></div></div>`;
+    }).join('');
+
+    // knockout matrix (top 24)
+    const cols=[['advance','R32'],['r16','R16'],['qf','QF'],['sf','SF'],['final','Final'],['champ','Win']];
+    const head='<thead><tr><th class="tname" style="text-align:left">Team</th>'+cols.map(c=>`<th>${c[1]}</th>`).join('')+'</tr></thead>';
+    const body='<tbody>'+byChamp.slice(0,24).map(t=>{
+      const cells=cols.map(c=>{const v=T[t][c[0]];const a=Math.min(.9,v/100*0.95+0.04);
+        return `<td style="background:rgba(200,255,77,${a.toFixed(3)});color:${v>55?'#0a0b0d':'var(--txt)'}">${fmt(v)}</td>`;}).join('');
+      return `<tr><td class="tname">${t}<span class="grp-pill">${T[t].group}</span></td>${cells}</tr>`;
+    }).join('')+'</tbody>';
+    document.getElementById('koTable').innerHTML=head+body;
+
+    // groups
+    document.getElementById('groupGrid').innerHTML = Object.keys(G).map(g=>{
+      const teams = G[g].slice().sort((a,b)=>T[b].win_group-T[a].win_group);
+      const maxw = Math.max(...teams.map(t=>T[t].win_group)) || 1;
+      const rows = teams.map(t=>`
+        <div class="grow">
+          <div class="tn">${t} <i>Elo ${T[t].elo}</i></div>
+          <div class="gp">${Math.round(T[t].win_group)}%</div>
+          <div class="gbar"><i style="width:${(T[t].win_group/maxw)*100}%"></i></div>
+        </div>`).join('');
+      const matches = GM[g].map(mm=>{
+        const tot=mm.p_home+mm.p_draw+mm.p_away;
+        const alts = mm.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
+        return `<div class="m">
+          <div class="top"><div class="ta">${mm.home}</div><div class="sc">${mm.modal[0]}-${mm.modal[1]}</div><div class="tb">${mm.away}</div></div>
+          <div class="wdl"><i class="w" style="width:${mm.p_home/tot*100}%"></i><i class="d" style="width:${mm.p_draw/tot*100}%"></i><i class="l" style="width:${mm.p_away/tot*100}%"></i></div>
+          <div class="det"><span>W ${fmt(mm.p_home)}% · D ${fmt(mm.p_draw)}% · L ${fmt(mm.p_away)}%</span><span class="alts">also: <span>${alts}</span></span></div>
+        </div>`;
+      }).join('');
+      return `<div class="gcard"><div class="ghd"><div class="g">${g}</div><div class="t">Group ${g}</div></div>
+        ${rows}<div class="matches"><div class="mh">Match predictions</div>${matches}</div></div>`;
+    }).join('');
+
+    // calibration table (selected model vs Opta/market)
+    const calTeams=['Spain','France','England','Argentina','Brazil','Portugal','Germany','Netherlands'];
+    document.getElementById('calTable').innerHTML =
+      `<tr><th>Team</th><th>${LABELS[CUR]}</th><th>Opta</th><th>Market</th></tr>`+
+      calTeams.map(t=>`<tr><td>${t}</td><td style="color:var(--lime)">${fmt(T[t].champ)}%</td>`+
+        `<td style="color:var(--blue)">${OPTA[t]!=null?OPTA[t]+'%':'n/a'}</td>`+
+        `<td style="color:var(--gold)">${MKT[t]!=null?MKT[t]+'%':'n/a'}</td></tr>`).join('');
+  }
+
+  render();
+
+  // ---- Netherlands match timeline (model-aware) ----
+  // Per-model expected goals for each Dutch fixture, straight from the engine.
+  // To extend: add a fixture to NL_FIX and its [lN,lO] per model to NL_LAM once a knockout opponent is known.
+  const NL_FIX = [
+    {stage:'Group F \u00b7 Match 1', opp:'Japan'},
+    {stage:'Group F \u00b7 Match 2', opp:'Sweden'},
+    {stage:'Group F \u00b7 Match 3', opp:'Tunisia'}
+  ];
+  const NL_LAM = {"elo":{"Japan":[1.463,1.266],"Sweden":[1.966,0.763],"Tunisia":[2.171,0.558]},"score":{"Japan":[1.205,1.476],"Sweden":[1.935,1.082],"Tunisia":[1.31,0.895]},"hybrid":{"Japan":[1.334,1.371],"Sweden":[1.951,0.922],"Tunisia":[1.74,0.726]},"market":{"Japan":[1.426,1.291],"Sweden":[1.996,0.805],"Tunisia":[1.993,0.605]},"market_pure":{"Japan":[1.517,1.211],"Sweden":[2.041,0.687],"Tunisia":[2.246,0.483]}};
+  const NL_RHO = (META.rho!=null?META.rho:-0.039);
+  const NL_BANDS = [[1,15,12],[16,30,14],[31,45,17],[46,60,16],[61,75,18],[76,90,23]]; // empirical 15-min goal shares
+  function nlPois(k,l){let p=Math.exp(-l);for(let i=1;i<=k;i++)p*=l/i;return p;}
+  function nlTau(i,j,l,m){
+    if(i===0&&j===0)return 1-l*m*NL_RHO; if(i===0&&j===1)return 1+l*NL_RHO;
+    if(i===1&&j===0)return 1+m*NL_RHO;   if(i===1&&j===1)return 1-NL_RHO; return 1;}
+  function nlDist(lN,lO){
+    const Nn=11; let W=0,D=0,L=0,over=0,Z=0; const cells=[];
+    for(let i=0;i<Nn;i++)for(let j=0;j<Nn;j++){const p=nlTau(i,j,lN,lO)*nlPois(i,lN)*nlPois(j,lO);Z+=p;cells.push([i,j,p]);}
+    for(const c of cells){c[2]/=Z; if(c[0]>c[1])W+=c[2]; else if(c[0]===c[1])D+=c[2]; else L+=c[2]; if(c[0]+c[1]>=3)over+=c[2];}
+    cells.sort((a,b)=>b[2]-a[2]);
+    return {W:W*100,D:D*100,L:L*100,over:over*100,total:lN+lO,top:cells.slice(0,4)};
+  }
+  function nlFirstGoalMin(firstHalf){
+    const sel = firstHalf?NL_BANDS.slice(0,3):NL_BANDS.slice(3);
+    const tot = sel.reduce((s,b)=>s+b[2],0), target=tot*0.5; let cum=0;
+    for(const b of sel){ if(cum+b[2]>=target){ const f=(target-cum)/b[2]; return Math.round(b[0]+f*(b[1]-b[0])); } cum+=b[2]; }
+    return sel[sel.length-1][1];
+  }
+  function nlScenario(d){
+    // one coherent scenario derived from the score distribution, so minute / HT / FT agree
+    const ft = d.top.find(s=>!(s[0]===0&&s[1]===0)) || d.top[0];   // modal score, skipping 0-0
+    const a=ft[0], b=ft[1], g=a+b;
+    const firstHalf = g>=2;                                        // lone goal skews 2nd half; 2+ goals -> one before the break
+    const nedFirst = a>b ? true : (a<b ? false : (d.W>=d.L));      // winner scores first; a draw breaks on single-match win prob
+    const htN = (firstHalf && g>0) ? (nedFirst?1:0) : 0;
+    const htO = (firstHalf && g>0) ? (nedFirst?0:1) : 0;
+    const gmin = nlFirstGoalMin(firstHalf);
+    return {a,b,g,firstHalf,nedFirst,htN,htO,gmin};
+  }
+  function renderNL(){
+    const host=document.getElementById('nlGrid'); if(!host) return;
+    const mlabel = LABELS[CUR] || CUR;
+    host.innerHTML =
+      `<div class="nlsrc">Showing the <b>${mlabel}</b> view \u00b7 switch models at the top to compare. <b>Pure Market</b> is the betting market's read, and it favours the Netherlands in all three, including against Japan, where the model has a coin flip.</div>` +
+      NL_FIX.map(fx=>{
+        const lam = (NL_LAM[CUR]||NL_LAM.hybrid)[fx.opp];
+        const d=nlDist(lam[0],lam[1]), s=nlScenario(d);
+        const gx=Math.max(4,Math.min(96, s.gmin/90*100));
+        const diff=d.W-d.L, ad=Math.abs(diff);
+        const lean = ad<6 ? 'Coin flip' : ad<16 ? (diff>0?'Lean Netherlands':'Lean '+fx.opp) : (diff>0?'Netherlands favoured':fx.opp+' favoured');
+        const tops = d.top.map(x=>`${x[0]}-${x[1]} ${Math.round(x[2]*100)}%`).join(' \u00b7 ');
+        const goalRead = d.over>=50 ? 'Two to three goals likely' : 'Low-scoring, under 2.5 the call';
+        const timeRead = s.g===0 ? 'A goalless game is the single most likely exact line here.'
+          : (s.firstHalf ? 'Enough goals expected that one comes before the break.'
+                         : 'A lone goal in a tight scoreline tends to come late, so the first half projects goalless.');
+        const whoFirst = s.nedFirst?'NL':fx.opp;
+        const goalMark = s.g>0
+          ? `<div class="goal ${s.nedFirst?'ned':'opp'}" style="left:${gx}%"></div><div class="gmin" style="left:${gx}%">${s.gmin}'</div>` : '';
+        const fgMeta = s.g>0 ? `<span>First goal <b>${s.gmin}'</b> (${whoFirst})</span>` : '';
+        return `<div class="nlcard">
+          <div class="stage">${fx.stage}</div>
+          <div class="mt">
+            <div class="vs">Netherlands <em>v</em> ${fx.opp}</div>
+            <div class="ftbig">${s.a}\u2013${s.b}<small>FULL TIME</small></div>
+          </div>
+          <div class="nltl">
+            <div class="cap l">KO 0'</div>
+            <div class="axis"></div><div class="axfill" style="width:100%"></div>
+            <div class="htL" style="left:50%"></div>
+            <div class="cap" style="left:50%">HT ${s.htN}\u2013${s.htO}</div>
+            ${goalMark}
+            <div class="cap r">90'</div>
+          </div>
+          <div class="nlwdl"><i class="w" style="width:${d.W}%"></i><i class="d" style="width:${d.D}%"></i><i class="l" style="width:${d.L}%"></i></div>
+          <div class="nlmeta">
+            <span class="lean">${lean}</span>
+            <span>W <b>${fmt(d.W)}%</b> &middot; D <b>${fmt(d.D)}%</b> &middot; L <b>${fmt(d.L)}%</b></span>
+            ${fgMeta}
+            <span>Goals <b>${d.total.toFixed(1)}</b> &middot; over 2.5 <b>${fmt(d.over)}%</b></span>
+          </div>
+          <div class="nlnote">${goalRead}. Most likely scores: ${tops}. ${timeRead}</div>
+        </div>`;
+      }).join('') + `<div class="nlpending">Knockout fixtures appear here once Group F is decided and the round-of-32 is set.</div>`;
+  }
+  renderNL();
+
+  // tabs
+  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+    document.querySelectorAll('section').forEach(s=>s.classList.remove('on'));
+    btn.classList.add('on');
+    document.getElementById(btn.dataset.t).classList.add('on');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+"""
+World Cup 2026 prediction engine -- HYBRID model + per-tournament form noise.
+
+Match model (validated out-of-sample, see val_hybrid.py):
+    lambda = 0.5 * DixonColes + 0.5 * Elo     (blend weight chosen by held-out log-loss)
+  - Dixon-Coles: attack/defense per team + home effect + low-score dependence rho,
+    fit by weighted Poisson MLE on 15,431 real internationals (2010-2026). rho and the
+    1.31x home advantage are ESTIMATED, not assumed.
+  - Elo: official eloratings.net ratings -> goal supremacy via a slope fit to results.
+  Pure DC OOS log-loss 0.856, pure Elo 0.846, hybrid 0.841 (beats both).
+
+Tournament variance: each simulated tournament draws a per-team form offset f_t ~ N(0, sigma)
+in goal-supremacy units, held fixed across that team's whole run. This models unmodeled
+in-tournament variance (injury/form/red cards) that a fixed-strength sim ignores and that
+otherwise makes favourites overconfident. sigma is a judgment value, NOT fit to Opta.
+
+The per-match prediction tables use the full Dixon-Coles distribution; the Monte Carlo
+samples goals as Poisson with form noise (the rho correction is negligible for who-advances).
+
+Usage: python3 wc2026_engine.py [n_sims] [sigma]
+"""
+import sys, os, json, math
+from itertools import combinations
+import numpy as np
+from annexc_data import parse_annex_c
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+PARAMS = json.load(open(os.path.join(_HERE, 'model_params.json')))
+
+# ----------------------------------------------------------------------------
+# 1. DATA: groups + official eloratings.net "R" values (read off the site, 6 Jun 2026)
+# ----------------------------------------------------------------------------
+GROUPS = {
+    'A': [('Mexico', 1875), ('South Korea', 1758), ('Czechia', 1740), ('South Africa', 1518)],
+    'B': [('Switzerland', 1894), ('Canada', 1793), ('Qatar', 1423), ('Bosnia-Herzegovina', 1591)],
+    'C': [('Brazil', 1988), ('Morocco', 1824), ('Scotland', 1770), ('Haiti', 1554)],
+    'D': [('Turkiye', 1906), ('Paraguay', 1833), ('Australia', 1774), ('USA', 1733)],
+    'E': [('Ecuador', 1935), ('Germany', 1925), ('Ivory Coast', 1695), ('Curacao', 1433)],
+    'F': [('Netherlands', 1944), ('Japan', 1906), ('Sweden', 1712), ('Tunisia', 1633)],
+    'G': [('Belgium', 1888), ('Iran', 1772), ('Egypt', 1699), ('New Zealand', 1563)],
+    'H': [('Spain', 2155), ('Uruguay', 1892), ('Cape Verde', 1576), ('Saudi Arabia', 1566)],
+    'I': [('France', 2062), ('Norway', 1917), ('Senegal', 1867), ('Iraq', 1618)],
+    'J': [('Argentina', 2113), ('Austria', 1830), ('Algeria', 1760), ('Jordan', 1685)],
+    'K': [('Portugal', 1984), ('Colombia', 1977), ('Uzbekistan', 1718), ('DR Congo', 1661)],
+    'L': [('England', 2020), ('Croatia', 1908), ('Panama', 1734), ('Ghana', 1510)],
+}
+HOST_TEAMS = {'Mexico', 'USA', 'Canada'}     # home effect applied in their group games
+
+OPTA = {'Spain': 16.1, 'Argentina': 10.4, 'France': 13.0, 'England': 11.2, 'Brazil': 6.6,
+        'Portugal': 7.0, 'Germany': 5.1, 'Netherlands': 2.8}
+MARKET = {'Spain': 16.0, 'France': 16.0, 'England': 11.3, 'Brazil': 9.0, 'Argentina': 8.3,
+          'Portugal': 8.0, 'Germany': 5.0, 'Netherlands': 3.0}
+
+# ----------------------------------------------------------------------------
+# 2. FITTED PARAMETERS (from model_params.json)
+# ----------------------------------------------------------------------------
+INTERCEPT = PARAMS['intercept']; HOME = PARAMS['home']; RHO = PARAMS['rho']
+ATT = PARAMS['att']; DFN = PARAMS['dfn']
+C = PARAMS['c']; TOTAL = PARAMS['total']; ALPHA = PARAMS['alpha']
+ELO = {name: e for teams in GROUPS.values() for name, e in teams}
+TEAM_GROUP = {name: g for g, teams in GROUPS.items() for name, _ in teams}
+TEAMS = list(ELO); TEAM_IDX = {t: i for i, t in enumerate(TEAMS)}
+SHOOTOUT_COEF = 0.0005
+MAXG = 10; NCOL = MAXG + 1
+
+# de-vigged market title odds (June 2026); top 8 firm, tail approximate.
+MARKET_FULL = {
+    'Spain':16.0,'France':16.0,'England':11.3,'Brazil':9.0,'Argentina':8.3,'Portugal':8.0,
+    'Germany':5.0,'Netherlands':3.5,'Belgium':2.5,'Colombia':2.2,'USA':2.0,'Uruguay':2.0,
+    'Croatia':1.8,'Morocco':1.8,'Mexico':1.6,'Japan':1.5,'Norway':1.2,'Senegal':1.2,
+    'Switzerland':1.1,'Ecuador':1.0,
+}
+MARKET_ELO = {}                  # market-implied Elo, filled by market_implied_elo()
+CURRENT_MODEL = 'hybrid'         # 'elo' | 'score' | 'hybrid' | 'market'
+
+# ----------------------------------------------------------------------------
+# 3. HYBRID MATCH MODEL -> Dixon-Coles scoreline matrix (for the display tables)
+# ----------------------------------------------------------------------------
+_FACT = np.array([math.factorial(k) for k in range(MAXG + 1)], dtype=float)
+_K = np.arange(MAXG + 1)
+def _pois(lam):
+    lam = max(lam, 1e-9)
+    return np.exp(-lam) * lam ** _K / _FACT
+
+def _elo_pair(h, a, hh_h, hh_a, elo):
+    eh = elo[h] + (100.0 if hh_h else 0.0); ea = elo[a] + (100.0 if hh_a else 0.0)
+    sup = C * (eh - ea)
+    return TOTAL/2 + sup/2, TOTAL/2 - sup/2
+
+def _dc_pair(h, a, hh_h, hh_a):
+    lh = math.exp(INTERCEPT + ATT[h] + DFN[a] + (HOME if hh_h else 0.0))
+    la = math.exp(INTERCEPT + ATT[a] + DFN[h] + (HOME if hh_a else 0.0))
+    return lh, la
+
+def _hybrid_pair(h, a, hh_h, hh_a):
+    e = _elo_pair(h, a, hh_h, hh_a, ELO); d = _dc_pair(h, a, hh_h, hh_a)
+    return 0.5*e[0] + 0.5*d[0], 0.5*e[1] + 0.5*d[1]
+
+def lambdas(h, a, hh_h=False, hh_a=False):
+    """Expected goals for the currently selected model (CURRENT_MODEL)."""
+    m = CURRENT_MODEL
+    if m == 'elo':
+        lh, la = _elo_pair(h, a, hh_h, hh_a, ELO)
+    elif m == 'score':
+        lh, la = _dc_pair(h, a, hh_h, hh_a)
+    elif m == 'market':                      # 0.5 hybrid + 0.5 (Elo driven by market-implied ratings)
+        hy = _hybrid_pair(h, a, hh_h, hh_a); mk = _elo_pair(h, a, hh_h, hh_a, MARKET_ELO)
+        lh = 0.5*hy[0] + 0.5*mk[0]; la = 0.5*hy[1] + 0.5*mk[1]
+    elif m == 'market_pure':                 # the market's own view: Elo on market-implied ratings
+        lh, la = _elo_pair(h, a, hh_h, hh_a, MARKET_ELO)
+    else:
+        lh, la = _hybrid_pair(h, a, hh_h, hh_a)
+    return max(0.05, lh), max(0.05, la)
+
+def dc_matrix(h, a, hh_h=False, hh_a=False):
+    la, lb = lambdas(h, a, hh_h, hh_a)
+    M = np.outer(_pois(la), _pois(lb))
+    M[0, 0] *= 1 - la * lb * RHO
+    M[0, 1] *= 1 + la * RHO
+    M[1, 0] *= 1 + lb * RHO
+    M[1, 1] *= 1 - RHO
+    M = np.clip(M, 0, None)
+    return M / M.sum()
+
+ANNEX_C = parse_annex_c()
+ELIG = {74: set('ABCDF'), 77: set('CDFGH'), 79: set('CEFHI'), 80: set('EHIJK'),
+        81: set('BEFIJ'), 82: set('AEHIJ'), 85: set('EFGIJ'), 87: set('DEIJL')}
+
+def assign_thirds(adv_groups):
+    key = frozenset(adv_groups)
+    mp = ANNEX_C.get(key)
+    if mp is not None and all(mp[m] in ELIG[m] for m in ELIG):
+        return mp
+    slots = list(ELIG); groups = list(adv_groups); res = {}
+    def bt(i):
+        if i == len(slots): return True
+        m = slots[i]
+        for gpr in groups:
+            if gpr in ELIG[m] and gpr not in res.values():
+                res[m] = gpr
+                if bt(i + 1): return True
+                del res[m]
+        return False
+    bt(0); return res
+
+# ----------------------------------------------------------------------------
+# 4. GROUP STAGE (FIFA 2026 tiebreakers: head-to-head FIRST)
+# ----------------------------------------------------------------------------
+GROUP_FIXTURES = {g: list(combinations([t[0] for t in teams], 2)) for g, teams in GROUPS.items()}
+
+# build per-group fixture base lambdas for the CURRENT_MODEL (host home applied to host group games)
+def build_fx():
+    fxd = {}
+    for g in GROUPS:
+        fx = GROUP_FIXTURES[g]; blh = []; bla = []
+        for (h, a) in fx:
+            lh, la = lambdas(h, a, h in HOST_TEAMS, a in HOST_TEAMS)
+            blh.append(lh); bla.append(la)
+        fxd[g] = dict(h=[p[0] for p in fx], a=[p[1] for p in fx],
+                      blh=np.array(blh), bla=np.array(bla))
+    return fxd
+
+def rank_group(group, results):
+    teams = [t[0] for t in GROUPS[group]]
+    pts = {t: 0 for t in teams}; gf = {t: 0 for t in teams}; ga = {t: 0 for t in teams}
+    for h, a, hg, ag in results:
+        gf[h] += hg; ga[h] += ag; gf[a] += ag; ga[a] += hg
+        if hg > ag: pts[h] += 3
+        elif hg < ag: pts[a] += 3
+        else: pts[h] += 1; pts[a] += 1
+    def h2h(among):
+        hp = {t: 0 for t in among}; hgf = {t: 0 for t in among}; hga = {t: 0 for t in among}
+        for h, a, hg, ag in results:
+            if h in among and a in among:
+                hgf[h] += hg; hga[h] += ag; hgf[a] += ag; hga[a] += hg
+                if hg > ag: hp[h] += 3
+                elif hg < ag: hp[a] += 3
+                else: hp[h] += 1; hp[a] += 1
+        return hp, hgf, hga
+    order = sorted(teams, key=lambda t: -pts[t]); final = []; i = 0
+    while i < len(order):
+        j = i
+        while j < len(order) and pts[order[j]] == pts[order[i]]: j += 1
+        block = order[i:j]
+        if len(block) == 1:
+            final.append(block[0])
+        else:
+            hp, hgf, hga = h2h(block)
+            block.sort(key=lambda t: (-hp[t], -(hgf[t] - hga[t]), -hgf[t],
+                                      -(gf[t] - ga[t]), -gf[t], -ELO[t]))
+            final.extend(block)
+        i = j
+    stats = {t: (pts[t], gf[t] - ga[t], gf[t]) for t in teams}
+    return final, stats
+
+# ----------------------------------------------------------------------------
+# 5. ONE TOURNAMENT
+# ----------------------------------------------------------------------------
+def play_ko(a, b, rng):
+    lh, la = lambdas(a, b, False, False)        # knockouts neutral
+    x, y = rng.poisson(lh), rng.poisson(la)
+    if x > y: return a, b
+    if y > x: return b, a
+    ex, ey = rng.poisson(lh / 3.0), rng.poisson(la / 3.0)    # extra time
+    if ex > ey: return a, b
+    if ey > ex: return b, a
+    p_a = min(0.60, max(0.40, 0.5 + SHOOTOUT_COEF * (ELO[a] - ELO[b])))
+    return (a, b) if rng.random() < p_a else (b, a)
+
+def simulate_tournament(group_results, rng):
+    winners, runners, thirds, third_stats = {}, {}, {}, {}
+    for g in GROUPS:
+        order, stats = rank_group(g, group_results[g])
+        winners[g], runners[g], thirds[g] = order[0], order[1], order[2]
+        third_stats[g] = stats[order[2]]
+    ranked_thirds = sorted(GROUPS, key=lambda g: (-third_stats[g][0], -third_stats[g][1],
+                                                  -third_stats[g][2], -ELO[thirds[g]]))
+    adv_groups = ranked_thirds[:8]
+    tmap = assign_thirds(adv_groups)
+    T = {g: thirds[g] for g in adv_groups}
+    W, R = winners, runners
+    r32 = {
+        73: (R['A'], R['B']), 74: (W['E'], T[tmap[74]]), 75: (W['F'], R['C']),
+        76: (W['C'], R['F']), 77: (W['I'], T[tmap[77]]), 78: (R['E'], R['I']),
+        79: (W['A'], T[tmap[79]]), 80: (W['L'], T[tmap[80]]), 81: (W['D'], T[tmap[81]]),
+        82: (W['G'], T[tmap[82]]), 83: (R['K'], R['L']), 84: (W['H'], R['J']),
+        85: (W['B'], T[tmap[85]]), 86: (W['J'], R['H']), 87: (W['K'], T[tmap[87]]),
+        88: (R['D'], R['G']),
+    }
+    wq = {m: play_ko(a, b, rng)[0] for m, (a, b) in r32.items()}
+    r16_pairs = {89: (74, 77), 90: (73, 75), 91: (76, 78), 92: (79, 80),
+                 93: (83, 84), 94: (81, 82), 95: (86, 88), 96: (85, 87)}
+    w16 = {m: play_ko(wq[p], wq[q], rng)[0] for m, (p, q) in r16_pairs.items()}
+    qf_pairs = {97: (89, 90), 98: (93, 94), 99: (91, 92), 100: (95, 96)}
+    wqf = {m: play_ko(w16[p], w16[q], rng)[0] for m, (p, q) in qf_pairs.items()}
+    sf_pairs = {101: (97, 98), 102: (99, 100)}
+    wsf = {m: play_ko(wqf[p], wqf[q], rng)[0] for m, (p, q) in sf_pairs.items()}
+    champ, _ = play_ko(wsf[101], wsf[102], rng)
+    return {'winners': winners, 'runners': runners, 'thirds': T,
+            'r32_winners': set(wq.values()), 'r16_winners': set(w16.values()),
+            'qf_winners': set(wqf.values()), 'sf_winners': set(wsf.values()),
+            'finalists': {wsf[101], wsf[102]}, 'champion': champ}
+
+# ----------------------------------------------------------------------------
+# 6. MONTE CARLO
+# ----------------------------------------------------------------------------
+def run(n=50000, seed=20260611, model='hybrid'):
+    global CURRENT_MODEL; CURRENT_MODEL = model
+    rng = np.random.default_rng(seed)
+    fx_all = build_fx()
+    counters = {t: dict(win_group=0, advance=0, r16=0, qf=0, sf=0, final=0, champ=0) for t in TEAMS}
+    for _ in range(n):
+        group_results = {}
+        for g in GROUPS:
+            fx = fx_all[g]
+            hg = rng.poisson(fx['blh']); ag = rng.poisson(fx['bla'])
+            group_results[g] = [(fx['h'][k], fx['a'][k], int(hg[k]), int(ag[k])) for k in range(len(hg))]
+        res = simulate_tournament(group_results, rng)
+        for g in GROUPS: counters[res['winners'][g]]['win_group'] += 1
+        advancing = set(res['winners'].values()) | set(res['runners'].values()) | set(res['thirds'].values())
+        for t in advancing: counters[t]['advance'] += 1
+        for t in res['r32_winners']: counters[t]['r16'] += 1
+        for t in res['r16_winners']: counters[t]['qf'] += 1
+        for t in res['qf_winners']: counters[t]['sf'] += 1
+        for t in res['finalists']: counters[t]['final'] += 1
+        counters[res['champion']]['champ'] += 1
+    probs = {}
+    for t in TEAMS:
+        probs[t] = {k: 100.0 * v / n for k, v in counters[t].items()}
+        probs[t]['elo'] = ELO[t]; probs[t]['group'] = TEAM_GROUP[t]
+    return probs, n
+
+# ----------------------------------------------------------------------------
+# 7. DETERMINISTIC PER-MATCH PREDICTIONS (group stage, full Dixon-Coles, no noise)
+# ----------------------------------------------------------------------------
+def match_report(a, b):
+    hh_a = a in HOST_TEAMS; hh_b = b in HOST_TEAMS
+    M = dc_matrix(a, b, hh_a, hh_b)
+    p_home = float(np.tril(M, -1).sum()); p_draw = float(np.trace(M)); p_away = float(np.triu(M, 1).sum())
+    mh, ma = divmod(int(np.argmax(M)), NCOL)
+    la, lb = lambdas(a, b, hh_a, hh_b)
+    order = np.argsort(M, axis=None)[::-1][:4]
+    tops = [(int(s // NCOL), int(s % NCOL), round(float(M.ravel()[s]) * 100, 1)) for s in order]
+    return dict(home=a, away=b, p_home=round(p_home*100,1), p_draw=round(p_draw*100,1),
+                p_away=round(p_away*100,1), modal=[int(mh), int(ma)],
+                xg_home=round(la,2), xg_away=round(lb,2), top_scores=tops)
+
+def group_match_predictions(model='hybrid'):
+    global CURRENT_MODEL; CURRENT_MODEL = model
+    return {g: [match_report(h, a) for (h, a) in GROUP_FIXTURES[g]] for g in GROUPS}
+
+def market_implied_elo(probs_elo):
+    """Invert the pure-Elo model's log(title%)-vs-Elo line to map market title odds -> implied Elo."""
+    ts = [t for t in TEAMS if probs_elo[t]['champ'] > 0.05]
+    x = np.array([ELO[t] for t in ts], float)
+    y = np.log(np.array([probs_elo[t]['champ'] for t in ts], float))
+    b, a = np.polyfit(x, y, 1)               # log p = b*Elo + a
+    out = {t: ((math.log(MARKET_FULL[t]) - a) / b if t in MARKET_FULL else ELO[t]) for t in TEAMS}
+    return out, b
+
+def calibrate_market(b, iters=4, n=30000, damp=0.8, seed=4242):
+    """Nudge MARKET_ELO so a pure-market sim reproduces the published market title odds,
+    correcting the group-difficulty bias the global inversion leaves behind."""
+    for _ in range(iters):
+        pm, _ = run(n, model='market_pure', seed=seed)
+        for t in MARKET_FULL:
+            s = max(pm[t]['champ'], 0.01)
+            MARKET_ELO[t] += damp * (math.log(MARKET_FULL[t]) - math.log(s)) / b
+
+# ----------------------------------------------------------------------------
+# 8. MAIN  (four models, all full simulations, sharing the tournament machinery)
+# ----------------------------------------------------------------------------
+LABELS = {'elo': 'Pure Elo', 'score': 'Score (Dixon-Coles)',
+          'hybrid': 'Hybrid Elo + Score', 'market': 'Model + Market', 'market_pure': 'Pure Market'}
+
+if __name__ == '__main__':
+    n = int(sys.argv[1]) if len(sys.argv) > 1 else 50000
+    print(f"Annex C: {len(ANNEX_C)} | rho={RHO:+.3f} home x{math.exp(HOME):.2f} c={C:.4f} total={TOTAL:.2f}")
+    out = {}
+    for key in ('elo', 'score', 'hybrid'):
+        print(f"Running {LABELS[key]} ({n:,} sims) ...")
+        out[key], _ = run(n, model=key)
+    mE, b = market_implied_elo(out['elo'])
+    MARKET_ELO.clear(); MARKET_ELO.update(mE)
+    print("Calibrating market-implied ratings to the published odds ...")
+    calibrate_market(b)
+    for key in ('market', 'market_pure'):
+        print(f"Running {LABELS[key]} ({n:,} sims) ...")
+        out[key], _ = run(n, model=key)
+    resid = max(abs(out['market_pure'][t]['champ'] - MARKET_FULL[t]) for t in MARKET_FULL)
+    print(f"  pure-market max error to published odds: {resid:.2f}pp")
+
+    order = ('elo', 'score', 'hybrid', 'market', 'market_pure')
+    gm = {key: group_match_predictions(key) for key in order}
+    for key in order:
+        top = sorted(out[key], key=lambda t: -out[key][t]['champ'])[:6]
+        print(f"  {LABELS[key]:<22}: " + "  ".join(f"{t} {out[key][t]['champ']:.1f}" for t in top))
+
+    data = {'meta': dict(n_sims=n, default_model='market_pure', labels=LABELS,
+                         rho=RHO, home_mult=round(math.exp(HOME), 3), c=C, total=TOTAL,
+                         oos_logloss=dict(pure_dc=0.8558, pure_elo=0.8464, hybrid=0.8409),
+                         dc_matches=PARAMS['meta'].get('dc_matches')),
+            'opta': OPTA, 'market': MARKET,
+            'groups': {g: [t[0] for t in GROUPS[g]] for g in GROUPS},
+            'market_implied_elo': {t: round(MARKET_ELO[t]) for t in MARKET_FULL},
+            'models': {key: dict(teams=out[key], group_matches=gm[key]) for key in order}}
+    json.dump(data, open(os.path.join(_HERE, 'wc2026_results.json'), 'w'), indent=1)
+    print("\nSaved wc2026_results.json")
