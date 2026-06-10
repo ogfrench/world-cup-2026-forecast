@@ -17,11 +17,11 @@ re-renders for the selected model. It opens on Pure Market, the recommended fore
 ## 2. The five models
 
 - **Pure Elo.** Official eloratings.net ratings turned into a goal supremacy. Results only.
-- **Score (Dixon-Coles).** A goals model fit by maximum likelihood to 15,431 internationals
+- **Pure Goals.** A goals model fit by maximum likelihood to 15,431 internationals
   (2010 to 2026, recency-weighted): per-team attack and defense, a home effect, and the low-score
   dependence rho. Home edge came out at 1.31x, rho at -0.039, both earned from data.
-- **Hybrid Elo + Score.** Equal blend of the two. Each covers the other's blind spot. The app's recommended standalone model.
-- **Model + Market.** The hybrid pulled halfway toward the betting market.
+- **Hybrid.** Equal blend of the two. Each covers the other's blind spot. The app's recommended standalone model.
+- **Hybrid + Market.** The hybrid pulled halfway toward the betting market.
 - **Pure Market.** The market on its own, calibrated to reproduce the published title odds, then run
   through the full bracket.
 
@@ -33,9 +33,9 @@ a short calibration loop pins the pure-market simulation to the published odds w
 | Model | Top of the board |
 |---|---|
 | Pure Elo | Spain 28.9, Argentina 19.8, France 12.2, England 7.2 |
-| Score (Dixon-Coles) | Argentina 15.4, Brazil 10.1, Spain 10.1, England 5.3, Japan 5.3 |
+| Pure Goals | Argentina 15.4, Brazil 10.1, Spain 10.1, England 5.3, Japan 5.3 |
 | Hybrid | Spain 19.8, Argentina 18.7, France 8.3, Brazil 7.2, England 7.0 |
-| Model + Market | Spain 18.5, Argentina 12.8, France 12.1, England 9.3, Brazil 8.4 |
+| Hybrid + Market | Spain 18.5, Argentina 12.8, France 12.1, England 9.3, Brazil 8.4 |
 | Pure Market | Spain 16.6, France 15.8, England 11.5, Brazil 8.9, Argentina 8.3 |
 
 The spread on a single team is large (Spain ranges from 10 to 29 percent across the five) because a
@@ -51,7 +51,7 @@ test after. Lower is better except accuracy.
 |---|---|---|---|---|
 | Naive base rate | 1.0472 | 0.2279 | 48% | - |
 | Pure Elo | 0.8464 | 0.1632 | 60% | 0.037 |
-| Score (Dixon-Coles) | 0.8558 | 0.1667 | 61% | 0.041 |
+| Pure Goals | 0.8558 | 0.1667 | 61% | 0.041 |
 | Hybrid | 0.8409 | 0.1627 | 60% | 0.026 |
 
 All three crush the baseline. The hybrid is best by every proper score and clearly the best
@@ -115,7 +115,7 @@ match like this, not a real per-game forecast.
   data, best of the testable models out of sample, and the only one validated directly on
   internationals. Most interesting because it shows where cold results-based reasoning parts from the
   crowd (Argentina high, France low).
-- **Do not center Model + Market.** The test showed the blend is dominated at both ends: less
+- **Do not center Hybrid + Market.** The test showed the blend is dominated at both ends: less
   accurate than Pure Market, less pure than the Hybrid. A reasonable "can't decide" setting, nothing
   more.
 - **Hold all of it loosely.** None of the five is validated on the actual tournament yet.

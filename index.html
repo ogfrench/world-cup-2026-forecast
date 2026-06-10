@@ -18,7 +18,7 @@
   :root{
     --bg:#0a0b0d; --bg2:#101216; --surface:#15181e; --surface2:#1b1f27;
     --line:#262b34; --line2:#323845;
-    --txt:#eceef1; --muted:#969ca6; --faint:#646a74;
+    --txt:#eceef1; --muted:#969ca6; --faint:#8b919d;
     --lime:#c8ff4d; --lime-dim:#8fae3a; --gold:#ffd166; --blue:#5fb3ff;
     --win:#5cd17f; --draw:#8a909b; --loss:#ff6f5e;
     --maxw:1080px;
@@ -36,6 +36,7 @@
   body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.025;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
   .wrap{position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;padding:0 18px 80px}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:6px}
 
   /* ---------- header ---------- */
   header{padding:40px 0 22px;border-bottom:1px solid var(--line)}
@@ -178,10 +179,10 @@
         background:var(--surface);border:1px solid var(--line2);border-radius:999px;
         padding:8px 14px;cursor:pointer;transition:.15s;white-space:nowrap;opacity:1}
   .mbtn.rec{border-color:rgba(200,255,77,.55)}
-  .mbtn.dim{opacity:.45;color:var(--muted);border-color:var(--line)}
+  .mbtn.dim{color:var(--muted);border-color:var(--line)}
   .mbtn:hover{opacity:1;color:var(--txt);border-color:var(--faint)}
   .mbtn.on{color:var(--bg);background:var(--lime);border-color:var(--lime);opacity:1}
-  .mhint{font-size:11.5px;color:var(--faint);margin:2px 0 22px;max-width:660px}
+  .mhint{font-size:12px;color:var(--muted);margin:2px 0 22px;max-width:660px}
   .mhint b{color:var(--muted);font-weight:600}
 
   /* ---------- netherlands timeline ---------- */
@@ -335,18 +336,18 @@
       <div class="sec-h">Five models, one engine</div>
       <p>There are five different ways to call a result. They all run the <b>exact same tournament</b> underneath: all 104 games, the eight best third-placed teams, the official FIFA bracket (every one of the 495 possible round-of-32 line-ups), and the real knockout through the final with extra time and penalties, played out <b id="nsim2"></b> times. The only thing that changes between them is how each match's two scorelines get estimated. Here they are, simplest first.</p>
       <p><b>Pure Elo.</b> Ranks teams purely on results, like a chess rating, then turns the gap between two sides into expected goals. Simple, and hard to fool with one freak scoreline, but it has no idea how a team actually plays. It backs the favourites harder than any of the others. (Ratings from eloratings.net.)</p>
-      <p><b>Score (Dixon-Coles).</b> Learns each team's attack and defence from <b>15,431 real internationals</b> since 2010 (recent games count for more), so it predicts actual scorelines, not just a winner. It worked out a home-field bump worth about <b>1.31x</b> on goals, entirely from the data. The catch: it rewards teams that pile goals on weak opponents, so it overrates the likes of Japan and Algeria. (Dixon-Coles is a classic football scoring model.)</p>
+      <p><b>Pure Goals.</b> Learns each team's attack and defence from <b>15,431 real internationals</b> since 2010 (recent games count for more), so it predicts actual scorelines, not just a winner. It worked out a home-field bump worth about <b>1.31x</b> on goals, entirely from the data. The catch: it rewards teams that pile goals on weak opponents, so it overrates the likes of Japan and Algeria. (Dixon-Coles is a classic football scoring model.)</p>
       <p><b>Hybrid.</b> The two above, simply averaged. Each one patches the other's blind spot. I tested it on 1,230 internationals it had never seen, from 2025 and 2026, and it grades out at least as well as either model alone, with the steadiest confidence of the three:</p>
       <table class="cal" id="ooTable"></table>
       <p><b>The honest read.</b> Three things tell you whether a forecast is any good: how often it picks the right result, how surprised it was by what actually happened (the stats name is log-loss, lower is better), and whether its confidence matches reality (calibration). The Hybrid wins or ties on all three, and its confidence is the best matched: when it says 60 percent, that is about what happens. It clearly beats the goals model, but it only edges plain Elo by a whisker, well inside the noise. So the fair claim is modest: blending is at least as good as the best single model and steadier, and its real job is calming the goals model down. The fancy model never actually out-predicts simple Elo on quality, it only edges it on raw hit-rate. The quiet lesson: more complicated is not the same as more accurate.</p>
-      <p><b>Model + Market.</b> The Hybrid, nudged halfway toward the betting market. I take the bookmakers' title odds, work backwards to the team ratings they imply, blend those 50/50 with the model, and re-run the whole tournament. This is roughly how a lot of professional models work, since they feed on market prices. The effect: Argentina comes down, France goes up.</p>
+      <p><b>Hybrid + Market.</b> The Hybrid, nudged halfway toward the betting market. I take the bookmakers' title odds, work backwards to the team ratings they imply, blend those 50/50 with the model, and re-run the whole tournament. This is roughly how a lot of professional models work, since they feed on market prices. The effect: Argentina comes down, France goes up.</p>
       <p><b>Does following the bookies actually pay off?</b> I couldn't test the World Cup market directly, because nobody kept the historical odds, so I checked the idea on 5,327 club matches where the closing odds do exist. The market beat a solid Elo model on every measure. A 50/50 model-plus-market blend improved on the model but never beat the market on its own. That is the honest basis for this column: leaning on the market makes a model better, it does not make it better than the market. The caveat: that was club football. The World Cup is one of the most heavily bet events on earth, so its market is probably just as sharp, but I haven't proven that here.</p>
       <p><b>Pure Market.</b> Just the bookmakers, no model at all. I calibrate their ratings so the simulated title odds match the published ones, then play the whole bracket out, so you see what the market thinks about every group and knockout tie, not only the winner. Given the test just above, this is the one to trust. The catch: it is the market seen through this engine's bracket and pinned to the published title odds, not a live feed of every single match price.</p>
 
       <h3>How it stacks up against Opta and the market</h3>
       <p>None of these models was trained on Opta's numbers, so this is a fair outside check. The selected model's title odds sit right next to Opta's supercomputer and the betting market:</p>
       <table class="cal" id="calTable"></table>
-      <div class="note"><b>Where the results-only models break from the market.</b> They love <b>Argentina</b> on recent form (Copa champions, on a tear): the Hybrid puts them almost level with Spain, while the market has them around fifth. They also rate <b>France</b> below the market, which is paying for squad depth that results alone cannot see. Model + Market splits the difference. The spread across the five is how much of the title race is method rather than fact.</div>
+      <div class="note"><b>Where the results-only models break from the market.</b> They love <b>Argentina</b> on recent form (Copa champions, on a tear): the Hybrid puts them almost level with Spain, while the market has them around fifth. They also rate <b>France</b> below the market, which is paying for squad depth that results alone cannot see. Hybrid + Market splits the difference. The spread across the five is how much of the title race is method rather than fact.</div>
 
       <p><b>Why models that rate single games almost identically still disagree wildly on the trophy.</b> A tiny edge in one match compounds across seven knockout rounds and a 48-team field, so a small difference in rating one game balloons into a big difference in who wins it all. Spain's number swings from about 10 to 29 percent across the five, far wider than the match odds ever differ. So read the five less as rival predictions and more as a stress test: how much does the answer depend on the method?</p>
 
@@ -374,9 +375,9 @@
   "default_model": "market_pure",
   "labels": {
    "elo": "Pure Elo",
-   "score": "Score (Dixon-Coles)",
-   "hybrid": "Hybrid Elo + Score",
-   "market": "Model + Market",
+   "score": "Pure Goals",
+   "hybrid": "Hybrid",
+   "market": "Hybrid + Market",
    "market_pure": "Pure Market"
   },
   "rho": -0.03876114484218984,
@@ -15927,13 +15928,13 @@
   ].map(([k,v])=>`<span class="chip" data-tip="${CHIP_TIP[k]||''}">${k} <b>${v}</b></span>`).join('');
   const n2=document.getElementById('nsim2'); if(n2) n2.textContent=n.toLocaleString();
   document.getElementById('foot').innerHTML =
-    `Five match models (Pure Elo · Dixon-Coles · Hybrid · Model + Market · Pure Market) over a shared Monte Carlo of ${n.toLocaleString()} tournaments with the official FIFA Annex C round-of-32 (495 combinations). Dixon-Coles fit by MLE on 15,431 internationals (2010-2026); hybrid weight chosen by out-of-sample log-loss; market odds de-vigged and the pure-market ratings calibrated to them. Opta and Polymarket / Kalshi / FanDuel shown for comparison. Not betting advice.<div class="madeby">made with <span class="hb">&#9829;</span> by François<span class="sep">&middot;</span><a href="https://github.com/ogfrench/world-cup-2026-prediction" target="_blank" rel="noopener" aria-label="View the source on GitHub"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 012-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></div>`;
+    `Five match models (Pure Elo · Pure Goals · Hybrid · Hybrid + Market · Pure Market) over a shared Monte Carlo of ${n.toLocaleString()} tournaments with the official FIFA Annex C round-of-32 (495 combinations). Dixon-Coles fit by MLE on 15,431 internationals (2010-2026); hybrid weight chosen by out-of-sample log-loss; market odds de-vigged and the pure-market ratings calibrated to them. Opta and Polymarket / Kalshi / FanDuel shown for comparison. Not betting advice.<div class="madeby">made with <span class="hb">&#9829;</span> by François<span class="sep">&middot;</span><a href="https://github.com/ogfrench/world-cup-2026-prediction" target="_blank" rel="noopener" aria-label="View the source on GitHub"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 012-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></div>`;
 
   if (document.getElementById('ooTable')) {
     const ooRows=[
       ['Naive base rate','1.0472','0.228','48%',false],
       ['Pure Elo','0.8464','0.163','60%',false],
-      ['Score (Dixon-Coles)','0.8558','0.167','61%',false],
+      ['Pure Goals','0.8558','0.167','61%',false],
       ['Hybrid','0.8409','0.163','60%',true]
     ];
     document.getElementById('ooTable').innerHTML =
@@ -15951,9 +15952,9 @@
   const REC=new Set(['hybrid','market_pure']);
   const MODEL_TIP={
     elo:'<b>Pure Elo.</b> Ranks teams on results alone, like a chess rating. Simple and hard to fool, but knows nothing about how a team plays. Backs the favourites hardest.',
-    score:'<b>Score (Dixon-Coles).</b> Learns each team’s attack and defence from 15,431 internationals, so it predicts actual scorelines. Tends to overrate teams that pile goals on weak opponents.',
+    score:'<b>Pure Goals.</b> Learns each team’s attack and defence from 15,431 internationals, so it predicts actual scorelines. Tends to overrate teams that pile goals on weak opponents.',
     hybrid:'<b>Hybrid.</b> Pure Elo and Dixon-Coles simply averaged. Each patches the other’s blind spot. The best guess built from results alone, and the only one validated on internationals.',
-    market:'<b>Model + Market.</b> The Hybrid nudged halfway toward the betting market. Roughly how a lot of professional models work.',
+    market:'<b>Hybrid + Market.</b> The Hybrid nudged halfway toward the betting market. Roughly how a lot of professional models work.',
     market_pure:'<b>Pure Market.</b> The bookmakers alone, calibrated so the simulated title odds match the published ones. The smartest single guess of the five.'
   };
   document.getElementById('modelbar').innerHTML = '<span class="mlbl">Model</span>'+
@@ -16004,7 +16005,8 @@
     const head='<thead><tr><th class="tname" style="text-align:left">Team</th>'+cols.map(c=>`<th data-tip="${c[2]}">${c[1]}</th>`).join('')+'</tr></thead>';
     const body='<tbody>'+byChamp.slice(0,24).map(t=>{
       const cells=cols.map(c=>{const v=T[t][c[0]];const a=Math.min(.9,v/100*0.95+0.04);
-        return `<td data-tip="${t} reaches <b>${c[1]}</b> in ${fmt(v)}% of runs (±${se(v).toFixed(1)})." style="background:rgba(200,255,77,${a.toFixed(3)});color:${v>55?'#0a0b0d':'var(--txt)'}">${fmt(v)}</td>`;}).join('');
+        const dark=v>=46;  // bright cell -> dark text; either way a halo keeps the number legible
+        return `<td data-tip="${t} reaches <b>${c[1]}</b> in ${fmt(v)}% of runs (±${se(v).toFixed(1)})." style="background:rgba(200,255,77,${a.toFixed(3)});color:${dark?'#0a0b0d':'var(--txt)'};text-shadow:${dark?'0 1px 1px rgba(255,255,255,.22)':'0 1px 2px rgba(0,0,0,.8)'}">${fmt(v)}</td>`;}).join('');
       return `<tr><td class="tname">${t}<span class="grp-pill" data-tip="Group ${T[t].group}">${T[t].group}</span></td>${cells}</tr>`;
     }).join('')+'</tbody>';
     document.getElementById('koTable').innerHTML=head+body;

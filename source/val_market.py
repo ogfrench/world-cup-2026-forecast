@@ -1,5 +1,5 @@
 """
-Can the market be beaten? An executable proxy for the claim behind the Model + Market column.
+Can the market be beaten? An executable proxy for the claim behind the Hybrid + Market column.
 I cannot backtest the World Cup market (no historical international odds), so I test the general
 phenomenon on club football, where real closing odds exist on every match.
 

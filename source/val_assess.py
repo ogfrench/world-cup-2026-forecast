@@ -5,7 +5,7 @@ Elo is frozen at end-2024; Dixon-Coles is refit on <2025; hybrid = 0.5 DC + 0.5 
 at the lambda level (exactly as the app). Reports proper scoring rules + accuracy +
 a naive base-rate floor + calibration, with paired bootstrap CIs on the gaps.
 
-The 'Model + Market' model is NOT here: it is built from CURRENT (June 2026) market
+The 'Hybrid + Market' model is NOT here: it is built from CURRENT (June 2026) market
 title odds, and there are no historical odds to backtest it on these matches.
 """
 import numpy as np, pandas as pd, math

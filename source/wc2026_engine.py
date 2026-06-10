@@ -310,8 +310,8 @@ def calibrate_market(b, iters=4, n=30000, damp=0.8, seed=4242):
 # ----------------------------------------------------------------------------
 # 8. MAIN  (four models, all full simulations, sharing the tournament machinery)
 # ----------------------------------------------------------------------------
-LABELS = {'elo': 'Pure Elo', 'score': 'Score (Dixon-Coles)',
-          'hybrid': 'Hybrid Elo + Score', 'market': 'Model + Market', 'market_pure': 'Pure Market'}
+LABELS = {'elo': 'Pure Elo', 'score': 'Pure Goals',
+          'hybrid': 'Hybrid', 'market': 'Hybrid + Market', 'market_pure': 'Pure Market'}
 
 if __name__ == '__main__':
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 50000

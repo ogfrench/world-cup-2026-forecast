@@ -72,9 +72,9 @@ To re-derive parameters: `python3 fit_dc.py` then `python3 build_params.py` (nee
 
 Set by the module global `CURRENT_MODEL`; `lambdas(home, away)` dispatches on it.
 - `elo` — Pure Elo. `_elo_pair` on official Elo: supremacy = c*(Elo_h - Elo_a), split around TOTAL/2.
-- `score` — Dixon-Coles. `_dc_pair`: exp(intercept + ATT + DFN + home). Goal-pads weak opponents.
+- `score` — Pure Goals. `_dc_pair`: exp(intercept + ATT + DFN + home). Goal-pads weak opponents.
 - `hybrid` — `_hybrid_pair`: 50/50 of elo and score pairs. The recommended standalone model.
-- `market` — Model + Market. 0.5*hybrid + 0.5*(`_elo_pair` on MARKET_ELO).
+- `market` — Hybrid + Market. 0.5*hybrid + 0.5*(`_elo_pair` on MARKET_ELO).
 - `market_pure` — Pure Market. `_elo_pair` on MARKET_ELO alone.
 
 MARKET_ELO is built by `market_implied_elo` (invert the pure-Elo log-title-odds vs Elo line, map the
@@ -95,7 +95,7 @@ Dixon-Coles fit on 15,431 internationals (window 2010+, half-life 2.5 years, min
 - Market proxy (5,327 club matches, real odds): the market beats a competent Elo model; a 50/50 blend
   beats the model but does not beat the market. Markets tend to win.
 - Recommendation: Pure Market for the best forecast; Hybrid as the defensible standalone model
-  (only one validated on internationals); do not center Model + Market (dominated both ways); hold
+  (only one validated on internationals); do not center Hybrid + Market (dominated both ways); hold
   all of it loosely (none validated on a real World Cup).
 
 ## The Netherlands tab (how it works and how to extend)

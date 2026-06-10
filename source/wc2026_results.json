@@ -4,9 +4,9 @@
   "default_model": "market_pure",
   "labels": {
    "elo": "Pure Elo",
-   "score": "Score (Dixon-Coles)",
-   "hybrid": "Hybrid Elo + Score",
-   "market": "Model + Market",
+   "score": "Pure Goals",
+   "hybrid": "Hybrid",
+   "market": "Hybrid + Market",
    "market_pure": "Pure Market"
   },
   "rho": -0.03876114484218984,
