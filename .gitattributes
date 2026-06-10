@@ -1,0 +1,6 @@
+# Normalize line endings so the built index.html is byte-identical on every
+# machine and CI's build_app.py --check stays deterministic.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

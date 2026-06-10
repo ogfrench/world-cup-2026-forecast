@@ -209,6 +209,29 @@
   .nlsrc{font-size:12.5px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--lime);border-radius:8px;padding:10px 13px;margin-bottom:4px;line-height:1.5}
   .nlsrc b{color:var(--txt);font-weight:600}
 
+  /* ---------- tooltips ---------- */
+  [data-tip]{cursor:help}
+  button[data-tip],a[data-tip],.tab[data-tip]{cursor:pointer}
+  .has-tip{border-bottom:1px dotted var(--line2);text-underline-offset:3px}
+  .tip{position:fixed;z-index:60;max-width:min(280px,calc(100vw - 24px));pointer-events:none;
+       background:var(--surface2);color:var(--txt);border:1px solid var(--line2);border-radius:9px;
+       padding:9px 12px;font-family:'Archivo',sans-serif;font-size:12.5px;line-height:1.45;
+       box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;transform:translateY(4px);
+       transition:opacity .14s ease,transform .14s ease}
+  .tip.on{opacity:1;transform:none}
+  .tip b{color:var(--lime);font-weight:700}
+
+  /* ---------- tablet ---------- */
+  @media(max-width:760px){
+    header{padding:32px 0 18px}
+    .sub{max-width:none}
+    .podium{gap:9px}
+    .pod{padding:15px 12px}
+    .legend{gap:10px 14px}
+    .lead{font-size:13.5px}
+    .mhint{font-size:11px}
+  }
+
   /* ---------- mobile ---------- */
   @media(max-width:520px){
     .wrap{padding:0 13px 64px}
@@ -222,9 +245,18 @@
     .pod .pct{font-size:24px}
     .cal th,.cal td{padding:8px 7px;font-size:11.5px}
     .mbtn{font-size:11.5px;padding:7px 11px}
+    .tab{padding:15px 12px}
+    .tip{font-size:12px;padding:8px 10px}
     .nlcard{padding:15px 14px 16px}
     .nlmeta{font-size:10.5px;gap:5px 12px}
     .prose,.prose p,.note,.lead{overflow-wrap:break-word}
+  }
+
+  /* ---------- very small ---------- */
+  @media(max-width:360px){
+    h1{font-size:40px}
+    .podium{grid-template-columns:1fr 1fr;gap:8px}
+    .pod.p3{grid-column:1/3}
   }
 </style>
 </head>
@@ -254,10 +286,10 @@
     <div class="sec-h">Who lifts the trophy</div>
     <p class="lead">Every bar is a team's chance of winning the whole thing, for the model you've picked above. The dots mark where Opta's supercomputer and the betting market land, for a sanity check.</p>
     <div class="legend">
-      <span><i class="sw model"></i> Selected model</span>
-      <span><i class="dot opta"></i> Opta supercomputer</span>
-      <span><i class="dot mkt"></i> Betting market</span>
-      <span style="color:var(--faint)">± = Monte Carlo standard error</span>
+      <span data-tip="The model you picked above. Each bar is its chance that the team wins the whole tournament."><i class="sw model"></i> <span class="has-tip">Selected model</span></span>
+      <span data-tip="Opta's published supercomputer title odds, shown as an outside sanity check. None of these models was trained on them."><i class="dot opta"></i> <span class="has-tip">Opta supercomputer</span></span>
+      <span data-tip="De-vigged title odds from the betting market (Polymarket / Kalshi / FanDuel), bookmaker margin stripped out."><i class="dot mkt"></i> <span class="has-tip">Betting market</span></span>
+      <span style="color:var(--faint)" data-tip="Monte Carlo standard error: how much this number would wobble if you re-ran the 50,000 tournaments. Small means the estimate is stable."><span class="has-tip">± = Monte Carlo standard error</span></span>
     </div>
     <div id="raceBars"></div>
   </section>
@@ -15871,6 +15903,14 @@
 
   // ---- static chrome ----
   const oo = META.oos_logloss || {};
+  const CHIP_TIP = {
+    'Simulations':'Each model plays the entire tournament out this many times. More runs, smoother odds.',
+    'Models':'Five different ways to rate a single match, all sitting on the same shared tournament engine.',
+    'DC fit on':'Real internationals since 2010 used to fit the Dixon-Coles scoring model (recent games weighted more).',
+    'Home effect':'Goal multiplier for the home side, learned entirely from the data (about 1.31x).',
+    'ρ (fitted)':'Dixon-Coles low-score correction. Nudges 0-0, 1-0, 0-1 and 1-1 away from treating the two scores as independent.',
+    'As of':'The model knows results up to this date and nothing after it. No knowledge of who is actually fit for kickoff.'
+  };
   document.getElementById('meta').innerHTML = [
     ['Simulations', n.toLocaleString()],
     ['Models', '5'],
@@ -15878,7 +15918,7 @@
     ['Home effect', (META.home_mult||1.31)+'×'],
     ['ρ (fitted)', (Math.round(META.rho*1000)/1000)],
     ['As of', 'Jun 6 2026']
-  ].map(([k,v])=>`<span class="chip">${k} <b>${v}</b></span>`).join('');
+  ].map(([k,v])=>`<span class="chip" data-tip="${CHIP_TIP[k]||''}">${k} <b>${v}</b></span>`).join('');
   const n2=document.getElementById('nsim2'); if(n2) n2.textContent=n.toLocaleString();
   document.getElementById('foot').innerHTML =
     `Five match models (Pure Elo · Dixon-Coles · Hybrid · Model + Market · Pure Market) over a shared Monte Carlo of ${n.toLocaleString()} tournaments with the official FIFA Annex C round-of-32 (495 combinations). Dixon-Coles fit by MLE on 15,431 internationals (2010-2026); hybrid weight chosen by out-of-sample log-loss; market odds de-vigged and the pure-market ratings calibrated to them. Opta and Polymarket / Kalshi / FanDuel shown for comparison. Not betting advice.<div style="margin-top:16px;text-align:center;color:var(--muted);letter-spacing:.04em">made with <span style="color:var(--txt)">&#9829;</span> by François</div>`;
@@ -15903,10 +15943,17 @@
   // ---- model switcher ----
   const order=['elo','score','hybrid','market','market_pure'];
   const REC=new Set(['hybrid','market_pure']);
+  const MODEL_TIP={
+    elo:'<b>Pure Elo.</b> Ranks teams on results alone, like a chess rating. Simple and hard to fool, but knows nothing about how a team plays. Backs the favourites hardest.',
+    score:'<b>Score (Dixon-Coles).</b> Learns each team’s attack and defence from 15,431 internationals, so it predicts actual scorelines. Tends to overrate teams that pile goals on weak opponents.',
+    hybrid:'<b>Hybrid.</b> Pure Elo and Dixon-Coles simply averaged. Each patches the other’s blind spot. The best guess built from results alone, and the only one validated on internationals.',
+    market:'<b>Model + Market.</b> The Hybrid nudged halfway toward the betting market. Roughly how a lot of professional models work.',
+    market_pure:'<b>Pure Market.</b> The bookmakers alone, calibrated so the simulated title odds match the published ones. The smartest single guess, and what the page opens on.'
+  };
   document.getElementById('modelbar').innerHTML = '<span class="mlbl">Model</span>'+
     order.map(k=>{
       const c='mbtn'+(REC.has(k)?' rec':' dim')+(k===CUR?' on':'');
-      return `<button class="${c}" data-m="${k}">${LABELS[k]}</button>`;
+      return `<button class="${c}" data-m="${k}" data-tip="${MODEL_TIP[k]||''}">${LABELS[k]}</button>`;
     }).join('');
   document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',()=>{
     CUR=b.dataset.m;
@@ -15942,12 +15989,17 @@
     }).join('');
 
     // knockout matrix (top 24)
-    const cols=[['advance','R32'],['r16','R16'],['qf','QF'],['sf','SF'],['final','Final'],['champ','Win']];
-    const head='<thead><tr><th class="tname" style="text-align:left">Team</th>'+cols.map(c=>`<th>${c[1]}</th>`).join('')+'</tr></thead>';
+    const cols=[['advance','R32','Reached the round of 32, i.e. survived the group stage.'],
+                ['r16','R16','Reached the round of 16.'],
+                ['qf','QF','Reached the quarter-finals (last 8).'],
+                ['sf','SF','Reached the semi-finals (last 4).'],
+                ['final','Final','Reached the final.'],
+                ['champ','Win','Won the tournament. Share of the 50,000 runs ending with this team as champion.']];
+    const head='<thead><tr><th class="tname" style="text-align:left">Team</th>'+cols.map(c=>`<th data-tip="${c[2]}">${c[1]}</th>`).join('')+'</tr></thead>';
     const body='<tbody>'+byChamp.slice(0,24).map(t=>{
       const cells=cols.map(c=>{const v=T[t][c[0]];const a=Math.min(.9,v/100*0.95+0.04);
-        return `<td style="background:rgba(200,255,77,${a.toFixed(3)});color:${v>55?'#0a0b0d':'var(--txt)'}">${fmt(v)}</td>`;}).join('');
-      return `<tr><td class="tname">${t}<span class="grp-pill">${T[t].group}</span></td>${cells}</tr>`;
+        return `<td data-tip="${t} reaches <b>${c[1]}</b> in ${fmt(v)}% of runs (±${se(v).toFixed(1)})." style="background:rgba(200,255,77,${a.toFixed(3)});color:${v>55?'#0a0b0d':'var(--txt)'}">${fmt(v)}</td>`;}).join('');
+      return `<tr><td class="tname">${t}<span class="grp-pill" data-tip="Group ${T[t].group}">${T[t].group}</span></td>${cells}</tr>`;
     }).join('')+'</tbody>';
     document.getElementById('koTable').innerHTML=head+body;
 
@@ -15958,7 +16010,7 @@
       const rows = teams.map(t=>`
         <div class="grow">
           <div class="tn">${t} <i>Elo ${T[t].elo}</i></div>
-          <div class="gp">${Math.round(T[t].win_group)}%</div>
+          <div class="gp" data-tip="${t}: ${fmt(T[t].win_group)}% chance of finishing top of Group ${g}, under the ${LABELS[CUR]} model.">${Math.round(T[t].win_group)}%</div>
           <div class="gbar"><i style="width:${(T[t].win_group/maxw)*100}%"></i></div>
         </div>`).join('');
       const matches = GM[g].map(mm=>{
@@ -16079,6 +16131,46 @@
     document.getElementById(btn.dataset.t).classList.add('on');
     window.scrollTo({top:0,behavior:'smooth'});
   }));
+})();
+</script>
+<script>
+/* Lightweight, dependency-free tooltips.
+   Any element with a data-tip attribute gets one. Event delegation on document,
+   so it also covers content that render()/renderNL() add later. Works with hover,
+   keyboard focus, and tap. */
+(function(){
+  const tip=document.createElement('div');
+  tip.className='tip'; tip.setAttribute('role','tooltip');
+  document.body.appendChild(tip);
+  let cur=null;
+  function place(el){
+    const r=el.getBoundingClientRect(), t=tip.getBoundingClientRect();
+    let left=r.left+r.width/2-t.width/2;
+    left=Math.max(8,Math.min(left,window.innerWidth-t.width-8));
+    let top=r.top-t.height-9;
+    if(top<8) top=r.bottom+9;                 // flip below when there is no room above
+    tip.style.left=Math.round(left)+'px';
+    tip.style.top=Math.round(top)+'px';
+  }
+  function show(el){
+    const txt=el.getAttribute('data-tip'); if(!txt){hide();return;}
+    cur=el; tip.innerHTML=txt; tip.classList.add('on'); place(el);
+  }
+  function hide(){ cur=null; tip.classList.remove('on'); }
+  document.addEventListener('mouseover',e=>{const el=e.target.closest('[data-tip]'); if(el) show(el);});
+  document.addEventListener('mouseout', e=>{const el=e.target.closest('[data-tip]'); if(el&&el===cur) hide();});
+  document.addEventListener('focusin', e=>{const el=e.target.closest('[data-tip]'); if(el) show(el);});
+  document.addEventListener('focusout',hide);
+  // Touch: tapping a non-button info element toggles its tip; buttons/links use focus instead.
+  document.addEventListener('click',e=>{
+    const el=e.target.closest('[data-tip]');
+    if(!el){ if(cur) hide(); return; }
+    if(el.matches('button,a,[role="button"]')) return;
+    cur===el ? hide() : show(el);
+  });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') hide(); });
+  window.addEventListener('scroll',()=>{ if(cur) place(cur); },true);
+  window.addEventListener('resize',hide);
 })();
 </script>
 </body>
