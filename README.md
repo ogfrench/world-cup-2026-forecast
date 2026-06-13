@@ -27,13 +27,14 @@ Methodology and validation are in [source/REPORT.md](source/REPORT.md).
 
 ## What the app shows
 
-Five tabs, one model selected at a time (pills on desktop, a dropdown on mobile):
+One model selected at a time (pills on desktop, a dropdown on mobile), across these tabs:
 
-- **Title & Knockout** - each team's chance of winning the tournament, plus how often it reaches each round, against Opta and the betting market as a sanity check.
-- **Groups & Scores** - the live group table set against the position the model predicted each team to finish, with an arrow for who is beating or missing the forecast. Expand a group for its match predictions and results.
+- **Title Odds** - each team's chance of winning the tournament, plus how often it reaches each round, against Opta and the betting market as a sanity check.
 - **Schedule** - every fixture by kickoff time, the model's predicted score, and the real result as it comes in, color-coded (dark green exact, green right result, red wrong).
-- **Netherlands** - a per-model game-by-game timeline for one team.
+- **Groups & Scores** - the live group table against where the model predicted each team to finish, marking who is ahead of the forecast and who is behind. Expand a group for its match predictions and results.
+- **Knockout Phase** - a placeholder until the round-of-32 is set, then the predicted bracket against the real results.
 - **Method & Caveats** - the write-up, the validation, and the honest weaknesses.
+- **Netherlands** and **France** - a per-model, game-by-game timeline for a single team.
 
 ## How it works
 

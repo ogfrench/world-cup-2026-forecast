@@ -24,6 +24,9 @@ repo root as-is, so the homepage is the app.
 - No em dashes. Use commas, parentheses, colons, or shorter sentences.
 - No emojis. US English. Minimal formatting, no decorative bolding or bullet spam.
 - Be honest and flag weaknesses. Do not oversell. One clear recommendation, not a menu.
+- App and doc copy is for the reader, not the author. Cut filler and tighten relentlessly.
+  No first-person voice ("I tested", "I take"), no notes-to-self, no "the classic trap" style
+  asides. Say it in fewer words. If a sentence only explains your own process, delete it.
 
 ## Repo layout
 
