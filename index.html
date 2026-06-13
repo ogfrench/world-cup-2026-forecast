@@ -238,11 +238,12 @@
   .ppred.exact{background:var(--win);color:#08140d}
   .ppred.result{background:var(--gold);color:#1b1408}
   .ppred.miss{background:var(--loss);color:#1c0b09}
-  .m .mcap{font-family:'DM Mono';font-size:10px;color:var(--faint);letter-spacing:.04em;margin-bottom:7px}
+  .m .mcap{font-family:'DM Mono';font-size:10px;color:var(--faint);letter-spacing:.04em;margin-bottom:8px}
   .m .sc.ft{color:var(--txt);border-color:var(--line2);background:var(--surface2)}
-  .m .mres{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:9px;
-           font-family:'DM Mono';font-size:11px;color:var(--faint)}
-  .m .fttag{color:var(--faint);letter-spacing:.1em;text-transform:uppercase;font-size:9px}
+  /* actual result and prediction stack centred so the two scores line up vertically */
+  .m .scwrap{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .m .sclab{font-family:'DM Mono';font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .m .predline{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:9px}
 
   /* ---------- schedule (by date) ---------- */
   .scoreboard{display:flex;flex-wrap:wrap;align-items:stretch;background:var(--surface);
@@ -717,18 +718,17 @@
         const tot=mm.p_home+mm.p_draw+mm.p_away;
         const alts = mm.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
         const a = actualFor(mm);
-        let chip, predRow;
+        let scoreBlock, predRow = '';
         if (a) {
           const tier = predTier(mm,a);
-          chip = `<div class="sc ft" data-tip="The real result, full time.">${a.hs}-${a.as}</div>`;
-          predRow = `<div class="mres"><span class="fttag">Full time &middot; predicted</span><span class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${mm.modal[0]}-${mm.modal[1]}</span></div>`;
+          scoreBlock = `<div class="scwrap"><div class="sc ft" data-tip="The real result, full time.">${a.hs}-${a.as}</div><div class="sclab">result</div></div>`;
+          predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${mm.modal[0]}-${mm.modal[1]}</div><div class="sclab">predicted</div></div>`;
         } else {
-          chip = `<div class="sc" data-tip="The model's most likely scoreline (a prediction). Trust the win/draw/loss split more than this exact number.">${mm.modal[0]}-${mm.modal[1]}</div>`;
-          predRow = '';
+          scoreBlock = `<div class="scwrap"><div class="sc" data-tip="The model's most likely scoreline (a prediction). Trust the win/draw/loss split more than this exact number.">${mm.modal[0]}-${mm.modal[1]}</div><div class="sclab">predicted</div></div>`;
         }
         return `<div class="m">
           <div class="mcap">${fmtDay(mm.date)}</div>
-          <div class="top"><div class="ta">${mm.home}</div>${chip}<div class="tb">${mm.away}</div></div>
+          <div class="top"><div class="ta">${mm.home}</div>${scoreBlock}<div class="tb">${mm.away}</div></div>
           ${predRow}
           <div class="wdl"><i class="w" style="width:${mm.p_home/tot*100}%"></i><i class="d" style="width:${mm.p_draw/tot*100}%"></i><i class="l" style="width:${mm.p_away/tot*100}%"></i></div>
           <div class="det"><span>W ${fmt(mm.p_home)}% · D ${fmt(mm.p_draw)}% · L ${fmt(mm.p_away)}%</span><span class="alts">also: <span>${alts}</span></span></div>
@@ -784,13 +784,13 @@
     if (sb) {
       const lab = LABELS[CUR] || CUR;
       if (!played)
-        sb.innerHTML = `<div class="sbnote">No results in yet. How the <b>${lab}</b> model's predictions hold up gets scored here as games are played.</div>`;
+        sb.innerHTML = `<div class="sbnote">How the <b>${lab}</b> model does gets scored here once games are played.</div>`;
       else {
         const pct = Math.round((played-against)/played*100);
         sb.innerHTML =
-            `<div class="sbstat"><div class="sbnum">${played-against}/${played}</div><div class="sbcap">called right</div></div>`
+            `<div class="sbstat"><div class="sbnum">${played-against}/${played}</div><div class="sbcap">called right &middot; ${pct}%</div></div>`
           + `<div class="sbstat"><div class="sbnum">${exact}</div><div class="sbcap">exact scores</div></div>`
-          + `<div class="sbnote">How the <b>${lab}</b> model is doing, ${pct}% of results called. A call is the right outcome (win, draw or loss); an exact score is the precise line.</div>`;
+          + `<div class="sbnote">How the <b>${lab}</b> model is doing so far.</div>`;
       }
     }
     const pk = document.getElementById('predKey');
@@ -875,7 +875,7 @@
           <div class="stage">${fx.stage}</div>
           <div class="mt">
             <div class="vs">Netherlands <em>v</em> ${fx.opp}</div>
-            <div class="ftbig">${s.a}\u2013${s.b}<small>FULL TIME</small></div>
+            <div class="ftbig">${s.a}\u2013${s.b}<small>PREDICTED</small></div>
           </div>
           <div class="nltl">
             <div class="cap l">KO 0'</div>
