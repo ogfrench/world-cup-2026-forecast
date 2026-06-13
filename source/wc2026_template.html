@@ -43,7 +43,7 @@
   .kicker{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--lime);display:flex;align-items:center;gap:8px}
   .kicker::before{content:"";width:26px;height:1px;background:var(--lime)}
   h1{font-family:'Anton',sans-serif;font-weight:400;letter-spacing:.01em;line-height:.96;
-     font-size:clamp(30px,6vw,58px);text-transform:uppercase;margin:10px 0 6px}
+     font-size:clamp(34px,7vw,74px);text-transform:uppercase;margin:10px 0 6px}
   h1 .yr{color:var(--lime)}
   .sub{color:var(--muted);font-size:15px;max-width:640px}
   .meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
@@ -53,8 +53,10 @@
 
   /* ---------- sticky top bar (model switcher + tabs) ---------- */
   .topbar{position:sticky;top:0;z-index:20;background:rgba(10,11,13,.9);backdrop-filter:blur(10px);
-          border-bottom:1px solid var(--line);margin:0 -18px 26px;padding:0 18px}
-  nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+          margin:0 0 26px}
+  /* border lives on nav (and the modelbar) so the rules sit at content width,
+     aligned with the header and section rules, not bled to the page edge */
+  nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line)}
   nav::-webkit-scrollbar{display:none}
   .tab{font-family:'Archivo';font-weight:700;font-size:13px;letter-spacing:.02em;
        color:var(--muted);background:none;border:none;cursor:pointer;
@@ -267,8 +269,6 @@
   .nlmeta .lean{color:var(--lime)}
   .nlnote{font-size:11.5px;color:var(--faint);margin-top:9px;border-top:1px solid var(--line);padding-top:8px;line-height:1.45}
   .nlpending{background:var(--surface);border:1px dashed var(--line2);border-radius:12px;padding:15px 16px;color:var(--muted);font-size:12.5px}
-  .nlsrc{font-size:12.5px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--lime);border-radius:8px;padding:10px 13px;margin-bottom:4px;line-height:1.5}
-  .nlsrc b{color:var(--txt);font-weight:600}
 
   /* ---------- actual result vs prediction (shared) ---------- */
   /* the model's predicted score, color-coded against the real result:
@@ -288,7 +288,8 @@
 
   /* ---------- schedule (by date) ---------- */
   .scoreboard{display:flex;flex-wrap:wrap;align-items:stretch;background:var(--surface);
-              border:1px solid var(--line);border-radius:11px;overflow:hidden;margin:6px 0 12px}
+              border:1px solid var(--line);border-radius:11px;overflow:hidden;margin:10px 0 18px}
+  .scoreboard:empty{display:none}
   .scoreboard .sbstat{padding:13px 18px;display:flex;flex-direction:column;justify-content:center;gap:4px}
   .scoreboard .sbstat + .sbstat{border-left:1px solid var(--line)}
   .scoreboard .sbnum{font-family:'Anton';font-size:28px;color:var(--lime);line-height:.95;white-space:nowrap}
@@ -298,7 +299,7 @@
   .scoreboard .sbnote:first-child{border-left:none}
   .scoreboard .sbnote b{color:var(--txt);font-weight:600}
   .schedsync{display:flex;align-items:center;gap:8px;font-family:'DM Mono';font-size:11.5px;
-             color:var(--muted);margin:2px 0 6px}
+             color:var(--muted);margin:4px 0 18px}
   .schedsync .dotlive{width:8px;height:8px;border-radius:50%;background:var(--win);animation:pulse 2.4s infinite}
   .schedsync .dotoff{width:8px;height:8px;border-radius:50%;background:var(--faint)}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(92,209,127,.5)}70%{box-shadow:0 0 0 6px rgba(92,209,127,0)}100%{box-shadow:0 0 0 0 rgba(92,209,127,0)}}
@@ -360,7 +361,7 @@
   /* ---------- mobile ---------- */
   @media(max-width:520px){
     .wrap{padding:0 13px 64px}
-    .topbar{margin:0 -13px 22px;padding:0 13px}
+    .topbar{margin:0 0 22px}
     .sub{font-size:14px}
     .bar-row{grid-template-columns:88px 1fr 46px;gap:9px}
     .bar-row .nm{font-size:12px}
@@ -388,7 +389,7 @@
   /* ---------- web: a little more breathing room ---------- */
   @media(min-width:761px){
     header{padding:54px 0 30px}
-    .topbar{margin:0 -18px 30px}
+    .topbar{margin:0 0 30px}
     .sec-h{margin:44px 0 18px}
     .lead{margin-bottom:22px;font-size:14.5px}
     .podium{margin-bottom:34px;gap:14px}
@@ -398,6 +399,10 @@
     .prose p{margin:0 0 17px;line-height:1.62}
     .prose h3{margin:36px 0 13px}
     .wrap{padding:0 22px 108px}
+    .scoreboard{margin:12px 0 22px}
+    .schedsync{margin:6px 0 24px}
+    .sday{margin:32px 0 11px}
+    .srow{margin-bottom:9px}
   }
 </style>
 </head>
@@ -405,7 +410,7 @@
 <div class="wrap">
   <header>
     <div class="kicker">104 matches &middot; five models &middot; 50,000 simulations</div>
-    <h1>World Cup <span class="yr">2026</span><br>Forecast</h1>
+    <h1>World Cup <span class="yr">2026</span> Forecast</h1>
     <p class="sub">The whole World Cup, all 104 matches and the knockouts, simulated 50,000 times, five different ways, from cold form to the betting market.</p>
     <div class="meta-row" id="meta"></div>
   </header>
@@ -443,6 +448,7 @@
   <section id="groups">
     <div class="sec-h">Group winner odds &amp; match-by-match</div>
     <p class="lead">The live table against where the model predicted each team to finish. The arrow shows who is beating or missing the forecast. Expand a group for the match-by-match predictions and results.</p>
+    <div class="scoreboard" id="grpScore"></div>
     <div class="grid" id="groupGrid"></div>
   </section>
 
@@ -460,6 +466,7 @@
   <section id="nl">
     <div class="sec-h">Netherlands · match timeline</div>
     <p class="lead">How the Netherlands' tournament might play out under the selected model: a likely first-goal minute, half-time and full-time score for each game. Knockout rounds fill in once the bracket is set.</p>
+    <div class="scoreboard" id="nlScore"></div>
     <div class="nlgrid" id="nlGrid"></div>
 
     <div class="prose" style="margin-top:34px">
@@ -543,6 +550,27 @@
     miss:'The result went against the model. <b>Red</b>: wrong result.'
   };
   const ord = n => ['', '1st', '2nd', '3rd', '4th'][n] || (n+'th');
+  // shared "how the model is doing" scoreboard, computed over any list of fixtures
+  function scoreOver(matches){
+    let played=0, against=0, exact=0;
+    matches.forEach(mm=>{ const a=actualFor(mm); if(!a) return;
+      played++; const tier=predTier(mm,a);
+      if(tier==='miss') against++; else if(tier==='exact') exact++; });
+    return {played, against, exact};
+  }
+  function scoreboardHTML(s, lab, extra, scope){
+    if(!s.played) return '';                 // nothing played yet: collapse (CSS :empty), no placeholder
+    const sc = scope ? ' '+scope : '';
+    const pct = Math.round((s.played-s.against)/s.played*100);
+    let h = `<div class="sbstat"><div class="sbnum">${s.played-s.against}/${s.played}</div><div class="sbcap">called right &middot; ${pct}%</div></div>`
+          + `<div class="sbstat"><div class="sbnum">${s.exact}</div><div class="sbcap">exact scores</div></div>`;
+    if(extra){
+      const tip = extra.tip ? ` data-tip="${extra.tip}"` : '';
+      h += `<div class="sbstat"${tip}><div class="sbnum">${extra.num}</div><div class="sbcap">${extra.cap}</div></div>`;
+    }
+    h += `<div class="sbnote"><span>How the <b>${lab}</b> model is doing${sc} so far.</span></div>`;
+    return h;
+  }
   // live group table from actual results, ranked points then goal difference then goals for
   function groupStandings(g){
     const teams = G[g];
@@ -823,6 +851,21 @@
         </details></div>`;
     }).join('');
 
+    // groups scoreboard: match accuracy over every group game, plus group winners called
+    let gWin=0, gTot=0;
+    Object.keys(G).forEach(g=>{
+      const st=groupStandings(g); if(!st.anyPlayed) return;
+      gTot++;
+      const predWinner=G[g].slice().sort((a,b)=> T[b].win_group-T[a].win_group || T[b].advance-T[a].advance || T[b].elo-T[a].elo)[0];
+      const leader=G[g].find(t=>st.pos[t]===1);
+      if(leader===predWinner) gWin++;
+    });
+    const grpAll=[]; Object.keys(GM).forEach(g=>GM[g].forEach(m=>grpAll.push(m)));
+    const grpSb=document.getElementById('grpScore');
+    if(grpSb) grpSb.innerHTML = scoreboardHTML(scoreOver(grpAll), LABELS[CUR]||CUR,
+      gTot ? {num:`${gWin}/${gTot}`, cap:'groups called',
+              tip:'Groups whose current leader is the team the model picked to win the group, across groups that have kicked off. Provisional until the group finishes.'} : null);
+
     // calibration table (selected model vs Opta/market)
     const calTeams=['Spain','France','England','Argentina','Brazil','Portugal','Germany','Netherlands'];
     document.getElementById('calTable').innerHTML =
@@ -866,18 +909,7 @@
     });
     host.innerHTML = html;
     const sb = document.getElementById('schedScore');
-    if (sb) {
-      const lab = LABELS[CUR] || CUR;
-      if (!played)
-        sb.innerHTML = `<div class="sbnote"><span>How the <b>${lab}</b> model is doing will show here once games are played.</span></div>`;
-      else {
-        const pct = Math.round((played-against)/played*100);
-        sb.innerHTML =
-            `<div class="sbstat"><div class="sbnum">${played-against}/${played}</div><div class="sbcap">called right &middot; ${pct}%</div></div>`
-          + `<div class="sbstat"><div class="sbnum">${exact}</div><div class="sbcap">exact scores</div></div>`
-          + `<div class="sbnote"><span>How the <b>${lab}</b> model is doing so far.</span></div>`;
-      }
-    }
+    if (sb) sb.innerHTML = scoreboardHTML({played, against, exact}, LABELS[CUR] || CUR);
     const pk = document.getElementById('predKey');
     if (pk) pk.innerHTML = played
       ? `<span><i class="k exact"></i>exact score</span><span><i class="k result"></i>right result</span><span><i class="k miss"></i>wrong result</span>`
@@ -939,8 +971,12 @@
   function renderNL(){
     const host=document.getElementById('nlGrid'); if(!host) return;
     const mlabel = LABELS[CUR] || CUR;
+    // scoreboard scoped to the Dutch group games
+    const GMn=MODELS[CUR].group_matches, nlM=[];
+    Object.keys(GMn).forEach(g=>GMn[g].forEach(m=>{ if(m.home==='Netherlands'||m.away==='Netherlands') nlM.push(m); }));
+    const nlSb=document.getElementById('nlScore');
+    if(nlSb) nlSb.innerHTML = scoreboardHTML(scoreOver(nlM), mlabel, null, 'on the Dutch group games');
     host.innerHTML =
-      `<div class="nlsrc">Each game read through the <b>${mlabel}</b> model. Switch models above to see how the Dutch outlook shifts.</div>` +
       NL_FIX.map(fx=>{
         const lam = (NL_LAM[CUR]||NL_LAM.hybrid)[fx.opp];
         const d=nlDist(lam[0],lam[1]), s=nlScenario(d);
