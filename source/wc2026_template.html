@@ -51,10 +51,10 @@
         border:1px solid var(--line2);border-radius:999px;padding:5px 11px;white-space:nowrap}
   .chip b{color:var(--txt);font-weight:500}
 
-  /* ---------- tabs ---------- */
-  nav{position:sticky;top:0;z-index:20;background:rgba(10,11,13,.86);backdrop-filter:blur(10px);
-      border-bottom:1px solid var(--line);margin:0 -18px 26px;padding:0 18px;
-      display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+  /* ---------- sticky top bar (model switcher + tabs) ---------- */
+  .topbar{position:sticky;top:0;z-index:20;background:rgba(10,11,13,.9);backdrop-filter:blur(10px);
+          border-bottom:1px solid var(--line);margin:0 -18px 26px;padding:0 18px}
+  nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
   nav::-webkit-scrollbar{display:none}
   .tab{font-family:'Archivo';font-weight:700;font-size:13px;letter-spacing:.02em;
        color:var(--muted);background:none;border:none;cursor:pointer;
@@ -173,7 +173,9 @@
   .madeby .sep{color:var(--line2)}
 
   /* ---------- model switcher ---------- */
-  .modelbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:22px 0 10px}
+  .modelbar{display:flex;align-items:center;gap:8px;margin:0;padding:9px 0;
+            overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line)}
+  .modelbar::-webkit-scrollbar{display:none}
   .mlbl{font-family:'DM Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-right:3px}
   .mbtn{font-family:'Archivo';font-weight:700;font-size:12.5px;color:var(--txt);
         background:var(--surface);border:1px solid var(--line2);border-radius:999px;
@@ -227,6 +229,51 @@
   .nlsrc{font-size:12.5px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--lime);border-radius:8px;padding:10px 13px;margin-bottom:4px;line-height:1.5}
   .nlsrc b{color:var(--txt);font-weight:600}
 
+  /* ---------- actual results + divergence (shared) ---------- */
+  .tag{font-family:'DM Mono';font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;
+       border-radius:5px;padding:2px 6px;border:1px solid;white-space:nowrap}
+  .tag.up{color:var(--loss);border-color:rgba(255,111,94,.5);background:rgba(255,111,94,.07)}
+  .tag.hit{color:var(--win);border-color:rgba(92,209,127,.45);background:rgba(92,209,127,.07)}
+  .m .mcap{font-family:'DM Mono';font-size:10px;color:var(--faint);letter-spacing:.04em;margin-bottom:7px}
+  .m .sc.ft{color:var(--lime);border-color:rgba(200,255,77,.5);background:rgba(200,255,77,.08)}
+  .m .mres{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;
+           font-family:'DM Mono';font-size:10.5px;color:var(--faint)}
+  .m .mres b{color:var(--muted);font-weight:500}
+  .m .fttag{color:var(--lime);letter-spacing:.1em;text-transform:uppercase;font-size:9px}
+
+  /* ---------- schedule (by date) ---------- */
+  .schedsync{display:flex;align-items:center;gap:8px;font-family:'DM Mono';font-size:11.5px;
+             color:var(--muted);margin:2px 0 6px}
+  .schedsync .dotlive{width:8px;height:8px;border-radius:50%;background:var(--win);animation:pulse 2.4s infinite}
+  .schedsync .dotoff{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(92,209,127,.5)}70%{box-shadow:0 0 0 6px rgba(92,209,127,0)}100%{box-shadow:0 0 0 0 rgba(92,209,127,0)}}
+  .sched{margin-top:4px}
+  .sday{font-family:'DM Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);
+        margin:22px 0 9px;display:flex;align-items:center;gap:10px}
+  .sday:first-child{margin-top:6px}
+  .sday::after{content:"";flex:1;height:1px;background:var(--line)}
+  .sday .cnt{color:var(--faint);letter-spacing:.04em}
+  .srow{display:grid;grid-template-columns:58px 1fr auto;align-items:center;gap:12px;
+        padding:10px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-bottom:8px}
+  .srow .stime{font-family:'DM Mono';font-size:12.5px;color:var(--muted);line-height:1.25}
+  .srow .stime small{display:block;font-size:9px;color:var(--faint)}
+  .srow .smatch{min-width:0}
+  .srow .teams{display:flex;align-items:center;gap:7px;font-weight:600;font-size:14px;flex-wrap:wrap}
+  .srow .teams i{font-style:normal;color:var(--faint);font-family:'DM Mono';font-size:11px}
+  .srow .gpill{font-family:'DM Mono';font-size:9px;color:var(--bg);background:var(--faint);
+               border-radius:3px;padding:1px 5px;font-weight:600}
+  .srow .sub{font-family:'DM Mono';font-size:11px;color:var(--faint);margin-top:3px}
+  .srow .sright{display:flex;align-items:center;gap:9px;justify-self:end;text-align:right}
+  .spred{font-family:'DM Mono';font-size:12px;color:var(--faint);line-height:1.25}
+  .spred small{display:block;font-size:9px;color:var(--faint)}
+  .spred b{color:var(--muted);font-weight:500}
+  .sact{font-family:'Anton';font-size:19px;letter-spacing:.04em;color:var(--lime);line-height:1}
+  .sact small{display:block;font-family:'DM Mono';font-size:8.5px;color:var(--faint);letter-spacing:.1em;margin-top:3px}
+  @media(max-width:520px){
+    .srow{grid-template-columns:48px 1fr;gap:7px 10px}
+    .srow .sright{grid-column:1/3;justify-self:start;margin-top:3px}
+  }
+
   /* ---------- tooltips ---------- */
   [data-tip]{cursor:help}
   button[data-tip],a[data-tip],.tab[data-tip]{cursor:pointer}
@@ -253,7 +300,7 @@
   /* ---------- mobile ---------- */
   @media(max-width:520px){
     .wrap{padding:0 13px 64px}
-    nav{margin:0 -13px 22px;padding:0 13px}
+    .topbar{margin:0 -13px 22px;padding:0 13px}
     .sub{font-size:14px}
     .bar-row{grid-template-columns:88px 1fr 46px;gap:9px}
     .bar-row .nm{font-size:12px}
@@ -280,8 +327,7 @@
   /* ---------- web: a little more breathing room ---------- */
   @media(min-width:761px){
     header{padding:54px 0 30px}
-    .modelbar{margin:26px 0 10px}
-    nav{margin:0 -18px 34px}
+    .topbar{margin:0 -18px 30px}
     .sec-h{margin:44px 0 18px}
     .lead{margin-bottom:22px;font-size:14.5px}
     .podium{margin-bottom:34px;gap:14px}
@@ -303,16 +349,18 @@
     <div class="meta-row" id="meta"></div>
   </header>
 
-  <div class="modelbar" id="modelbar"></div>
+  <div class="topbar">
+    <div class="modelbar" id="modelbar"></div>
+    <nav>
+      <button class="tab on" data-t="race">Title Race</button>
+      <button class="tab" data-t="ko">Knockout Odds</button>
+      <button class="tab" data-t="groups">Groups &amp; Scores</button>
+      <button class="tab" data-t="schedule">Schedule</button>
+      <button class="tab" data-t="nl">Netherlands</button>
+      <button class="tab" data-t="method">Method &amp; Caveats</button>
+    </nav>
+  </div>
   <div class="mhint" id="mhint"></div>
-
-  <nav>
-    <button class="tab on" data-t="race">Title Race</button>
-    <button class="tab" data-t="ko">Knockout Odds</button>
-    <button class="tab" data-t="groups">Groups &amp; Scores</button>
-    <button class="tab" data-t="nl">Netherlands</button>
-    <button class="tab" data-t="method">Method &amp; Caveats</button>
-  </nav>
 
   <!-- TITLE RACE -->
   <section class="on" id="race">
@@ -340,6 +388,14 @@
     <div class="sec-h">Group winner odds &amp; match-by-match</div>
     <p class="lead">The percentage is each team's chance of topping its group, under the selected model. Each fixture below shows its most likely scoreline, the win/draw/loss split, and the next-likeliest scores. One honest note: that single "most likely score" is a near coin toss between a few options, so trust the win/draw/loss bar more than the exact number.</p>
     <div class="grid" id="groupGrid"></div>
+  </section>
+
+  <!-- SCHEDULE -->
+  <section id="schedule">
+    <div class="sec-h">The tournament, by date</div>
+    <p class="lead">Every group fixture in kickoff order, shown the right way round, with the selected model's most likely scoreline. As games are played the real result slots in next to the prediction, and any match that went against the model is flagged. Knockout fixtures join the list once the bracket is set.</p>
+    <div class="schedsync" id="schedSync"></div>
+    <div class="sched" id="schedList"></div>
   </section>
 
   <!-- NETHERLANDS -->
@@ -410,6 +466,89 @@
   const fmt = x => (Math.round(x*10)/10).toFixed(1);
   const se = p => 100*Math.sqrt((p/100)*(1-p/100)/n);
   let CUR = 'market_pure';   // app opens on Pure Market, the recommended forecast
+
+  // ---- date + fixture helpers ----
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const fmtDay = iso => { const p = iso.split('-'); return MON[+p[1]-1] + ' ' + (+p[2]); };
+  const fmtDayLong = iso => WD[new Date(iso+'T12:00:00Z').getUTCDay()] + ' ' + fmtDay(iso);
+  const byKO = (a,b) => a.kickoff_utc < b.kickoff_utc ? -1 : (a.kickoff_utc > b.kickoff_utc ? 1 : 0);
+  const favOutcome = m => { const x = Math.max(m.p_home,m.p_draw,m.p_away);
+                            return x===m.p_home ? 'H' : (x===m.p_away ? 'A' : 'D'); };
+  const actOutcome = a => a.hs>a.as ? 'H' : (a.hs<a.as ? 'A' : 'D');
+
+  // ---- live actual results -----------------------------------------------
+  // Fetched in the browser from the openfootball World Cup 2026 dataset on
+  // raw.githubusercontent.com: public, CORS-enabled, no key, the same source
+  // as the embedded schedule so team names line up. Swap ACT_SRC + parseActuals
+  // for any JSON feed (e.g. TheSportsDB) without touching the render code.
+  const ACT_SRC = 'https://raw.githubusercontent.com/openfootball/worldcup/master/2026--usa/cup.txt';
+  const ACT_NAME = {'Czech Republic':'Czechia','Bosnia & Herzegovina':'Bosnia-Herzegovina','Turkey':'Turkiye','Curaçao':'Curacao'};
+  const ACT_MON = {May:5,June:6,July:7};
+  let ACTUALS = {}, ACT_SYNC = 0, ACT_STATE = 'init', ACT_TIMER = null, ACT_SIG = '', ACT_HYDRATED = false;
+  const actNm = s => { s = s.trim(); return ACT_NAME[s] || s; };
+  const actKey = (d,a,b) => d + '|' + [a,b].slice().sort().join('|');
+  function parseActuals(txt){
+    const out = {}; let date = null;
+    const dre = /^[A-Z][a-z]{2}\s+([A-Z][a-z]+)\s+(\d{1,2})\s*$/;
+    const mre = /^\s*\d{1,2}:\d{2}\s+UTC[+-]\d+\s+(.+?)\s+(\d+)-(\d+)\s+\([0-9-]+\)\s+(.+?)\s+@\s+/;
+    txt.split('\n').forEach(ln => {
+      const d = ln.match(dre);
+      if (d) { const mo = ACT_MON[d[1]]; if (mo) date = '2026-'+String(mo).padStart(2,'0')+'-'+String(+d[2]).padStart(2,'0'); return; }
+      const m = ln.match(mre);
+      if (m && date) { const h = actNm(m[1]), a = actNm(m[4]); out[actKey(date,h,a)] = {home:h, away:a, hs:+m[2], as:+m[3]}; }
+    });
+    return out;
+  }
+  function actualFor(mm){
+    const r = ACTUALS[actKey(mm.date, mm.home, mm.away)];
+    if (!r) return null;
+    return r.home===mm.home ? {hs:r.hs, as:r.as} : {hs:r.as, as:r.hs};
+  }
+  function applyActuals(){ render(); renderSchedule(); }
+  function liveWindow(){
+    // a fixture counts as in-play from kickoff to +2.5h; also report the next start
+    const now = Date.now(); let live = false, next = Infinity;
+    const GM = MODELS[CUR].group_matches;
+    Object.keys(GM).forEach(g => GM[g].forEach(m => {
+      const ko = Date.parse(m.kickoff_utc); if (isNaN(ko)) return;
+      if (now >= ko && now <= ko + 9e6) live = true;
+      if (ko > now) next = Math.min(next, ko - now);
+    }));
+    return {live, next};
+  }
+  function scheduleNextRefresh(){
+    if (ACT_TIMER) clearTimeout(ACT_TIMER);
+    if (document.hidden) return;                       // paused while the tab is hidden
+    const w = liveWindow();
+    const delay = w.live ? 60e3                        // a match in play: refresh each minute
+                : w.next < 30*60e3 ? 5*60e3            // kickoff within half an hour: every 5 min
+                : 30*60e3;                             // otherwise a light background touch
+    ACT_TIMER = setTimeout(loadActuals, delay);
+  }
+  function loadActuals(){
+    if (!ACT_HYDRATED) {                                // first call: show cached results instantly, offline-safe
+      ACT_HYDRATED = true;
+      try { const c = JSON.parse(localStorage.getItem('wc2026_actuals')||'null');
+            if (c && c.data) { ACTUALS = c.data; ACT_SYNC = c.t||0; ACT_STATE = 'cache';
+                               ACT_SIG = JSON.stringify(c.data); applyActuals(); } } catch(e){}
+    }
+    fetch(ACT_SRC, {cache:'no-store'})
+      .then(r => { if (!r.ok) throw 0; return r.text(); })
+      .then(txt => {
+        const parsed = parseActuals(txt), sig = JSON.stringify(parsed);
+        ACTUALS = parsed; ACT_SYNC = Date.now(); ACT_STATE = 'live';
+        try { localStorage.setItem('wc2026_actuals', JSON.stringify({t:ACT_SYNC, data:parsed})); } catch(e){}
+        if (sig !== ACT_SIG) { ACT_SIG = sig; applyActuals(); }   // re-render only when a result actually changed
+        else renderSchedule();                                   // otherwise just refresh the synced-time line
+        scheduleNextRefresh();
+      })
+      .catch(() => { ACT_STATE = ACT_SYNC ? 'cache' : 'off'; renderSchedule(); scheduleNextRefresh(); });
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) loadActuals();               // catch up the moment the tab is seen again
+    else if (ACT_TIMER) { clearTimeout(ACT_TIMER); ACT_TIMER = null; }
+  });
 
   // ---- static chrome ----
   const oo = META.oos_logloss || {};
@@ -485,6 +624,7 @@
     CUR=b.dataset.m;
     document.querySelectorAll('.mbtn').forEach(x=>x.classList.toggle('on',x.dataset.m===CUR));
     render();
+    renderSchedule();
     renderHint();
     if(typeof renderNL==='function') renderNL();
   }));
@@ -542,13 +682,26 @@
           <div class="gp" data-tip="${t}: ${fmt(T[t].win_group)}% chance of finishing top of Group ${g}, under the ${LABELS[CUR]} model.">${Math.round(T[t].win_group)}%</div>
           <div class="gbar"><i style="width:${(T[t].win_group/maxw)*100}%"></i></div>
         </div>`).join('');
-      const matches = GM[g].map(mm=>{
+      const matches = GM[g].slice().sort(byKO).map(mm=>{
         const tot=mm.p_home+mm.p_draw+mm.p_away;
         const alts = mm.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
+        const a = actualFor(mm);
+        let chip, res='';
+        if (a) {
+          const up = favOutcome(mm)!==actOutcome(a);
+          chip = `<div class="sc ft" data-tip="The result, full time.">${a.hs}-${a.as}</div>`;
+          res = `<div class="mres"><span class="fttag">Full time</span><span>model had <b>${mm.modal[0]}-${mm.modal[1]}</b></span>`
+              + (up ? `<span class="tag up" data-tip="The result went against the model: the outcome it rated most likely did not happen.">against model</span>`
+                    : `<span class="tag hit" data-tip="The result matched the model's most likely outcome.">as modelled</span>`) + `</div>`;
+        } else {
+          chip = `<div class="sc" data-tip="The model's single most likely scoreline. Trust the win/draw/loss split more than this exact number.">${mm.modal[0]}-${mm.modal[1]}</div>`;
+        }
         return `<div class="m">
-          <div class="top"><div class="ta">${mm.home}</div><div class="sc">${mm.modal[0]}-${mm.modal[1]}</div><div class="tb">${mm.away}</div></div>
+          <div class="mcap">${fmtDay(mm.date)} &middot; ${mm.venue}</div>
+          <div class="top"><div class="ta">${mm.home}</div>${chip}<div class="tb">${mm.away}</div></div>
           <div class="wdl"><i class="w" style="width:${mm.p_home/tot*100}%"></i><i class="d" style="width:${mm.p_draw/tot*100}%"></i><i class="l" style="width:${mm.p_away/tot*100}%"></i></div>
           <div class="det"><span>W ${fmt(mm.p_home)}% · D ${fmt(mm.p_draw)}% · L ${fmt(mm.p_away)}%</span><span class="alts">also: <span>${alts}</span></span></div>
+          ${res}
         </div>`;
       }).join('');
       return `<div class="gcard"><div class="ghd"><div class="g">${g}</div><div class="t">Group ${g}</div></div>
@@ -564,7 +717,54 @@
         `<td style="color:var(--gold)">${MKT[t]!=null?MKT[t]+'%':'n/a'}</td></tr>`).join('');
   }
 
+  // ---- schedule (all fixtures, by date, with live results) ----
+  function renderSchedule(){
+    const host = document.getElementById('schedList'); if (!host) return;
+    const GM = MODELS[CUR].group_matches;
+    const all = [];
+    Object.keys(GM).forEach(g => GM[g].forEach(m => all.push(m)));
+    all.sort(byKO);
+    const dayCount = {};
+    all.forEach(m => { dayCount[m.date] = (dayCount[m.date]||0)+1; });
+    let played = 0, against = 0, html = '', curDay = null;
+    all.forEach(mm => {
+      if (mm.date !== curDay) {
+        curDay = mm.date; const c = dayCount[curDay];
+        html += `<div class="sday">${fmtDayLong(curDay)} <span class="cnt">${c} ${c>1?'matches':'match'}</span></div>`;
+      }
+      const a = actualFor(mm), fav = favOutcome(mm);
+      const favName = fav==='H' ? mm.home : (fav==='A' ? mm.away : 'Draw');
+      let right;
+      if (a) {
+        played++; const up = fav!==actOutcome(a); if (up) against++;
+        right = `<div class="sact">${a.hs}-${a.as}<small>full time</small></div>`
+              + (up ? `<span class="tag up" data-tip="The result went against the model.">upset</span>`
+                    : `<span class="tag hit" data-tip="The result matched the model.">on model</span>`);
+      } else {
+        right = `<div class="spred">pred <b>${mm.modal[0]}-${mm.modal[1]}</b><small>${favName==='Draw'?'lean draw':favName+' favoured'}</small></div>`;
+      }
+      html += `<div class="srow">
+        <div class="stime">${mm.local_time}<small>${mm.tz}</small></div>
+        <div class="smatch"><div class="teams"><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span>${mm.home} <i>v</i> ${mm.away}</div><div class="sub">${mm.venue}</div></div>
+        <div class="sright">${right}</div>
+      </div>`;
+    });
+    host.innerHTML = html;
+    const sync = document.getElementById('schedSync'); if (!sync) return;
+    const when = ACT_SYNC ? new Date(ACT_SYNC).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+    if (ACT_STATE==='live' || ACT_STATE==='cache')
+      sync.innerHTML = `<span class="dotlive"></span>Live results &middot; ${played} of ${all.length} played`
+                     + (against ? ` &middot; ${against} against the model so far` : '')
+                     + (when ? ` &middot; synced ${when}` : '');
+    else if (ACT_STATE==='off')
+      sync.innerHTML = `<span class="dotoff"></span>Live results unavailable, showing predictions only`;
+    else
+      sync.innerHTML = `<span class="dotoff"></span>Loading results…`;
+  }
+
   render();
+  renderSchedule();
+  loadActuals();
 
   // ---- Netherlands match timeline (model-aware) ----
   // Per-model expected goals for each Dutch fixture, straight from the engine.
@@ -658,7 +858,11 @@
     document.querySelectorAll('section').forEach(s=>s.classList.remove('on'));
     btn.classList.add('on');
     document.getElementById(btn.dataset.t).classList.add('on');
-    window.scrollTo({top:0,behavior:'smooth'});
+    // only pull up to the sticky bar if it has been scrolled past, so switching
+    // tabs near the top does not jump the page around
+    const tb = document.querySelector('.topbar');
+    const tgt = tb ? tb.offsetTop : 0;
+    if (window.scrollY > tgt + 2) window.scrollTo({top:tgt, behavior:'smooth'});
   }));
 })();
 </script>

@@ -28,7 +28,9 @@ Build artifacts and source:
 - `wc2026_template.html` — the app source. Has a single `/*DATA*/` token where the JSON is injected.
   Edit this for any app change.
 - `wc2026_engine.py` — the simulation engine. All five models, market calibration, Annex C, KO logic.
-- `wc2026_results.json` — the 50k simulation output the app renders.
+- `wc2026_results.json` — the 50k simulation output the app renders, with the fixture schedule merged in.
+- `wc2026_schedule.json` — the official 72-match group schedule (date, kickoff, home/away, venue), from openfootball.
+- `merge_schedule.py` — folds the schedule into the results JSON (step 1b in How to rebuild).
 
 Parameters and data tables:
 - `model_params.json` — fitted Dixon-Coles params (intercept, home, rho, c, total, alpha), per-team
@@ -55,6 +57,13 @@ Data not shipped (live in `/home/claude` during development):
 
 1. Regenerate the simulation: `python3 wc2026_engine.py 50000` writes `wc2026_results.json`.
 Note: the app opens on Pure Market because `wc2026_template.html` hardcodes `let CUR = 'market_pure'`; the engine also emits `default_model='market_pure'` for consistency.
+
+1b. Fold the fixture schedule back in: `python3 merge_schedule.py`. The engine builds group
+   fixtures with `itertools.combinations`, so it has no dates and arbitrary home/away. This step
+   annotates each group match with its official date, kickoff, venue, and reorients home/away to
+   the official side (swapping the home/away probabilities and scores with it). It is idempotent
+   and does not touch the 50k team statistics. The schedule lives in `wc2026_schedule.json`,
+   parsed from the public openfootball World Cup 2026 dataset.
 
 2. Build the app: replace the `/*DATA*/` token in `wc2026_template.html` with the full contents of
    `wc2026_results.json`, write the result to `wc2026_predictions.html`. One-liner:

@@ -31,7 +31,9 @@ repo root as-is, so the homepage is the app.
 - `netlify.toml` - tells Netlify to serve the repo root as static files.
 - `source/` - everything real behind it:
   - `wc2026_template.html` - the app source. Edit this for any app change. Has one `/*DATA*/` token.
-  - `wc2026_results.json` - the 50,000-run output the app renders.
+  - `wc2026_results.json` - the 50,000-run output the app renders (with the fixture schedule merged in).
+  - `wc2026_schedule.json` - the official 72-match group schedule (date, kickoff, home/away, venue), parsed from the public openfootball dataset. Data, so it lives here, not in the template.
+  - `merge_schedule.py` - merges the schedule into `wc2026_results.json`: annotates each group match with its date/venue and reorients home/away to the official side. Idempotent, no re-simulation.
   - `build_app.py` - injects the JSON into the template and writes `index.html`.
   - `check_app.js` - CI sanity check: script blocks parse, five models present, file is built.
   - `wc2026_engine.py` - the simulation engine (all five models, FIFA Annex C, knockout logic).
@@ -51,14 +53,23 @@ and does. `index.html` is generated. So:
 3. Confirm it is in sync (CI runs this too): `python source/build_app.py --check`
 
 To regenerate the data itself: `python source/wc2026_engine.py 50000` (writes
-`source/wc2026_results.json`), then rebuild as above.
+`source/wc2026_results.json`), then `python source/merge_schedule.py` to fold the fixture
+schedule back in (dates and official home/away), then rebuild as above. CI does not run the
+engine or the merge; it only checks `index.html` is in sync with the committed JSON.
+
+Live actual results are not part of the build. The app fetches them in the browser at runtime
+from the openfootball feed (public, CORS-enabled, no key); see the live-results block in the
+template. They overlay onto the predictions and never change the static data.
 
 ## Front-end conventions
 
 - Plain vanilla JS in three `<script>` blocks, no libraries. The first is the injected
   `DATA`, the second is the app (one IIFE that renders everything), the third is the tooltip engine.
 - Tooltips: add a `data-tip="..."` attribute to any element. Event delegation means elements
-  that `render()`/`renderNL()` add later get tooltips for free. `data-tip` may contain simple `<b>` markup.
+  that `render()`/`renderSchedule()`/`renderNL()` add later get tooltips for free. `data-tip` may contain simple `<b>` markup.
+- Live results: fetched in the browser from a CORS-enabled feed, cached in localStorage, refreshed
+  adaptively (faster while a match is in play, paused when the tab is hidden). The render code is
+  feed-agnostic: swap `ACT_SRC` and `parseActuals` to change source. Never block render on the fetch.
 - Responsive: a single max-width column with breakpoints at 760, 520, and 360 px. Tables scroll
   horizontally on small screens. Do not try to reflow them into cards.
 - The app opens on Pure Market (`let CUR = 'market_pure'`). Keep it that way unless the
@@ -80,13 +91,13 @@ Keep the scope narrow. This is a simple, elegant forecast viewer, the same tourn
 ways, not a prediction game like Scorito. No user picks, no scorelines to fill in, no points, no
 leaderboard.
 
-Active work now (issue #1, quick wins):
-- Sort matches by date: a by-date schedule view, and the fixtures under each group card in date
-  order instead of the combinatorial order.
-- Correct home and away from the official 2026 fixture list, not the arbitrary combinations order.
-- Sticky model switcher: keep it reachable without scrolling up, and stop forcing a scroll to the
-  top on every tab switch.
+Shipped (issue #1):
+- Matches sorted by date: a Schedule tab (all fixtures by date) and date-ordered fixtures under
+  each group card. Home/away corrected from the official 2026 fixture list.
+- Sticky model switcher pinned with the tabs, and tab switches no longer force a scroll to the top.
+- Live actual results fetched in the browser and overlaid on the predictions, with a divergence
+  flag on any match that went against the model (the bracket-diff signal for now).
 
-Backlog, not active work: showing actual results next to predictions (a separate data layer kept
-distinct from the model predictions), and a bracket diff that marks where reality left the
-predicted path. The full user-prediction game is cut. Still do not overkill it.
+Still cut: the full user-prediction game (Scorito-style picks, scoring, leaderboard). Backlog: a
+full knockout bracket diff, which only becomes meaningful once the round-of-32 is set. Do not
+overkill it.
