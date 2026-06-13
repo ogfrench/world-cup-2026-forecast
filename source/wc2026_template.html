@@ -245,8 +245,13 @@
        line-height:1;cursor:pointer;align-items:center;justify-content:center;padding:0;transition:.15s}
   .minfo::before{content:"i"}
   .minfo:hover{color:var(--txt);border-color:var(--faint)}
-  /* below the tablet breakpoint, swap the pills for the dropdown and center it (with the (i)) */
-  @media(max-width:760px){ .mpills{display:none} .mdrop{display:block} .minfo{display:inline-flex} .mdmenu{left:auto;right:0} .modelbar{justify-content:center;padding-left:0} }
+  /* below the tablet breakpoint: dropdown switcher, and the sticky bar runs full width */
+  @media(max-width:760px){
+    .mpills{display:none} .mdrop{display:block} .minfo{display:inline-flex} .mdmenu{left:auto;right:0}
+    .modelbar{justify-content:center;padding:9px 18px}
+    .topbar{margin-left:-18px;margin-right:-18px}
+    nav{padding:0 18px}
+  }
   .prose .trust-h{margin:8px 0 9px}
   .prose ul.trust{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:9px}
   .prose ul.trust li{position:relative;padding-left:20px;color:var(--muted);font-size:14.5px;line-height:1.5}
@@ -382,7 +387,8 @@
   /* ---------- mobile ---------- */
   @media(max-width:520px){
     .wrap{padding:0 13px 64px}
-    .topbar{margin:0 0 22px}
+    .topbar{margin:0 -13px 22px}
+    nav{padding:0 13px}
     .sub{font-size:14px}
     .bar-row{grid-template-columns:88px 1fr 46px;gap:9px}
     .bar-row .nm{font-size:12px}
@@ -391,7 +397,7 @@
     .pod .tnm{font-size:18px}
     .pod .pct{font-size:24px}
     .cal th,.cal td{padding:8px 7px;font-size:11.5px}
-    .modelbar{padding:7px 0}
+    .modelbar{padding:7px 13px}
     .mlbl{display:none}
     .mbtn{font-size:11.5px;padding:6px 11px}
     .tab{padding:13px 11px;font-size:12.5px}
@@ -944,7 +950,7 @@
     all.forEach(mm => {
       if (mm.date !== curDay) {
         curDay = mm.date; const c = dayCount[curDay];
-        html += `<div class="sday">${fmtDayLong(curDay)} <span class="cnt">${c} ${c>1?'matches':'match'}</span></div>`;
+        html += `<div class="sday" data-date="${curDay}">${fmtDayLong(curDay)} <span class="cnt">${c} ${c>1?'matches':'match'}</span></div>`;
       }
       const a = actualFor(mm), fav = favOutcome(mm);
       const favName = fav==='H' ? mm.home : (fav==='A' ? mm.away : 'Draw');
@@ -1090,12 +1096,28 @@
   renderNL();
   renderFR();
 
+  // jump the Schedule to today's matches (or the next upcoming day) below the sticky bar
+  function scrollToCurrentDay(){
+    const list = document.getElementById('schedList'); if (!list) return;
+    const days = list.querySelectorAll('.sday'); if (!days.length) return;
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    let target = null;
+    days.forEach(d => { if (!target && d.dataset.date >= today) target = d; });
+    if (!target) target = days[days.length-1];
+    const tb = document.querySelector('.topbar');
+    const off = (tb ? tb.offsetHeight : 0) + 12;
+    const y = target.getBoundingClientRect().top + window.scrollY - off;
+    window.scrollTo({top: Math.max(0, y), behavior:'smooth'});
+  }
+
   // tabs
   document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
     document.querySelectorAll('section').forEach(s=>s.classList.remove('on'));
     btn.classList.add('on');
     document.getElementById(btn.dataset.t).classList.add('on');
+    if (btn.dataset.t === 'schedule') { scrollToCurrentDay(); return; }
     // only pull up to the sticky bar if it has been scrolled past, so switching
     // tabs near the top does not jump the page around
     const tb = document.querySelector('.topbar');
