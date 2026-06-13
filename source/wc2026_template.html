@@ -66,6 +66,13 @@
   .tab .soon{font-family:'DM Mono';font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;
        color:var(--lime-dim);border:1px solid rgba(200,255,77,.32);border-radius:4px;
        padding:1px 4px;margin-left:5px;vertical-align:middle;font-weight:500}
+  /* the two single-team pages get a distinct pill style, set apart by a divider */
+  .tabsep{flex:none;align-self:center;width:1px;height:15px;background:var(--line2);margin:0 7px}
+  .tab.team{align-self:center;border:1px solid var(--line2);border-radius:999px;padding:7px 13px}
+  .tab.team:hover{color:var(--txt);border-color:var(--faint)}
+  .tab.team.on{color:var(--bg);background:var(--lime);border-color:var(--lime)}
+  .tab.team .tdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .tab.team.on .tdot{box-shadow:0 0 0 1.5px rgba(10,11,13,.25)}
 
   section{display:none;animation:fade .35s ease}
   section.on{display:block}
@@ -232,8 +239,14 @@
   .mditem.on{color:var(--lime);background:var(--surface)}
   .mdtag{flex:none;font-family:'DM Mono';font-size:9px;letter-spacing:.08em;text-transform:uppercase;
        color:var(--lime-dim);border:1px solid rgba(200,255,77,.4);border-radius:5px;padding:1px 6px}
-  /* below the tablet breakpoint, swap the pills for the dropdown */
-  @media(max-width:760px){ .mpills{display:none} .mdrop{display:block} }
+  /* (i) shows the selected model's description on hover or tap */
+  .minfo{flex:none;width:23px;height:23px;border-radius:50%;border:1px solid var(--line2);background:var(--surface);
+       color:var(--muted);font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:700;font-size:13px;
+       line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;transition:.15s}
+  .minfo::before{content:"i"}
+  .minfo:hover{color:var(--txt);border-color:var(--faint)}
+  /* below the tablet breakpoint, swap the pills for the dropdown and push it (with the (i)) to the right */
+  @media(max-width:760px){ .mpills{display:none} .mdrop{display:block;margin-left:auto} .mdmenu{left:auto;right:0} }
   .prose .trust-h{margin:8px 0 9px}
   .prose ul.trust{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:9px}
   .prose ul.trust li{position:relative;padding-left:20px;color:var(--muted);font-size:14.5px;line-height:1.5}
@@ -290,17 +303,16 @@
   .m .predline{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:9px}
 
   /* ---------- schedule (by date) ---------- */
-  .scoreboard{display:flex;flex-wrap:wrap;align-items:stretch;background:var(--surface);
-              border:1px solid var(--line);border-radius:11px;overflow:hidden;margin:10px 0 18px}
+  /* caption sits on top, the numbers in a row below it */
+  .scoreboard{background:var(--surface);border:1px solid var(--line);border-radius:11px;overflow:hidden;margin:10px 0 18px}
   .scoreboard:empty{display:none}
-  .scoreboard .sbstat{padding:13px 18px;display:flex;flex-direction:column;justify-content:center;gap:4px}
+  .scoreboard .sbnote{padding:11px 16px;font-size:12.5px;color:var(--faint);line-height:1.45;border-bottom:1px solid var(--line)}
+  .scoreboard .sbnote b{color:var(--txt);font-weight:600}
+  .scoreboard .sbrow{display:flex;flex-wrap:wrap}
+  .scoreboard .sbstat{flex:1;min-width:90px;padding:13px 18px;display:flex;flex-direction:column;justify-content:center;gap:4px}
   .scoreboard .sbstat + .sbstat{border-left:1px solid var(--line)}
   .scoreboard .sbnum{font-family:'Anton';font-size:28px;color:var(--lime);line-height:.95;white-space:nowrap}
   .scoreboard .sbcap{font-family:'DM Mono';font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-  .scoreboard .sbnote{flex:1;min-width:210px;padding:13px 16px;display:flex;align-items:center;
-                      font-size:12.5px;color:var(--faint);line-height:1.45;border-left:1px solid var(--line)}
-  .scoreboard .sbnote:first-child{border-left:none}
-  .scoreboard .sbnote b{color:var(--txt);font-weight:600}
   .schedsync{display:flex;align-items:center;gap:8px;font-family:'DM Mono';font-size:11.5px;
              color:var(--muted);margin:4px 0 18px}
   .schedsync .dotlive{width:8px;height:8px;border-radius:50%;background:var(--win);animation:pulse 2.4s infinite}
@@ -334,9 +346,15 @@
   .predkey .k{width:12px;height:12px;border-radius:4px;display:inline-block}
   .predkey .k.exact{background:#188a4a} .predkey .k.result{background:var(--win)} .predkey .k.miss{background:var(--loss)}
   @media(max-width:520px){
-    .srow{grid-template-columns:48px 1fr;gap:7px 10px}
-    .srow .sright{grid-column:1/3;justify-self:start;align-items:flex-start;flex-direction:row;gap:10px;margin-top:3px}
-    .scoreboard .sbnote{border-left:none;border-top:1px solid var(--line);flex-basis:100%}
+    /* stack the outcome on its own line, but keep it right-aligned with a divider
+       so the big score does not orphan under the kickoff time */
+    .srow{grid-template-columns:52px 1fr;gap:6px 10px}
+    .srow .sright{grid-column:1/3;justify-self:stretch;align-items:center;justify-content:flex-end;
+                  flex-direction:row;gap:12px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line)}
+    .srow .spred{text-align:right}
+    .srow .sact{font-size:24px}
+    .scoreboard .sbstat{padding:12px 12px}
+    .scoreboard .sbnum{font-size:23px}
   }
 
   /* ---------- tooltips ---------- */
@@ -425,8 +443,10 @@
       <button class="tab" data-t="schedule">Schedule</button>
       <button class="tab" data-t="groups">Groups &amp; Scores</button>
       <button class="tab" data-t="knockout">Knockout Phase <span class="soon">soon</span></button>
-      <button class="tab" data-t="nl">Netherlands</button>
       <button class="tab" data-t="method">Method &amp; Caveats</button>
+      <span class="tabsep" aria-hidden="true"></span>
+      <button class="tab team" data-t="nl"><span class="tdot" style="background:var(--gold)"></span>Netherlands</button>
+      <button class="tab team" data-t="fr"><span class="tdot" style="background:var(--blue)"></span>France</button>
     </nav>
   </div>
 
@@ -484,6 +504,28 @@
       <div class="sec-h">How this is built, and what to trust</div>
       <p>Each card sticks to <b>one scenario</b>, so the minute, the half-time and the full-time always line up. (The classic trap: the likeliest half-time score is 0-0, but the average first goal lands near the half-hour, and those two describe different matches.)</p>
       <p>The result and the goals follow the selected model, and <b>the market and the model disagree about the Dutch</b>: the bookmakers rate them higher, so Pure Market favors the Netherlands in all three group games, even against Japan, where the data-only models see a coin flip. First-goal minutes follow the real rhythm of a match, quiet early and busiest in the last fifteen, so one tends to land around the 26th minute, or the 70th if the half stays goalless.</p>
+      <p class="trust-h"><b>What to trust, most to least:</b></p>
+      <ul class="trust">
+        <li class="s1"><b>Who is favored</b>, or that it is a coin flip. Rock solid.</li>
+        <li class="s1"><b>Two to three goals.</b> Solid.</li>
+        <li class="s2"><b>The exact score.</b> Shaky, just the likeliest of several near-equal options.</li>
+        <li class="s3"><b>The first-goal minute.</b> Shakiest of all, a league-wide average with nothing team-specific in it.</li>
+      </ul>
+      <p class="trust-foot">And none of it has ever been tested on a real World Cup.</p>
+    </div>
+  </section>
+
+  <!-- FRANCE -->
+  <section id="fr">
+    <div class="sec-h">France · match timeline</div>
+    <p class="lead">How France's tournament might play out under the selected model: a likely first-goal minute, half-time and full-time score for each game. Knockout rounds fill in once the bracket is set.</p>
+    <div class="scoreboard" id="frScore"></div>
+    <div class="nlgrid" id="frGrid"></div>
+
+    <div class="prose" style="margin-top:34px">
+      <div class="sec-h">How this is built, and what to trust</div>
+      <p>Each card sticks to <b>one scenario</b>, so the minute, the half-time and the full-time always line up. (The classic trap: the likeliest half-time score is 0-0, but the average first goal lands near the half-hour, and those two describe different matches.)</p>
+      <p>The result and the goals follow the selected model. France are clear favorites across Group I: Norway (with Haaland) and Senegal are the real tests, Iraq the softest. The market rates France a step above the results-only models, paying for squad depth the data alone cannot see, so Pure Market leans on them hardest. First-goal minutes follow the real rhythm of a match, quiet early and busiest in the last fifteen, so one tends to land around the 26th minute, or the 70th if the half stays goalless.</p>
       <p class="trust-h"><b>What to trust, most to least:</b></p>
       <ul class="trust">
         <li class="s1"><b>Who is favored</b>, or that it is a coin flip. Rock solid.</li>
@@ -573,14 +615,13 @@
     if(!s.played) return '';                 // nothing played yet: collapse (CSS :empty), no placeholder
     const sc = scope ? ' '+scope : '';
     const pct = Math.round((s.played-s.against)/s.played*100);
-    let h = `<div class="sbstat"><div class="sbnum">${s.played-s.against}/${s.played}</div><div class="sbcap">called right &middot; ${pct}%</div></div>`
-          + `<div class="sbstat"><div class="sbnum">${s.exact}</div><div class="sbcap">exact scores</div></div>`;
+    let row = `<div class="sbstat"><div class="sbnum">${s.played-s.against}/${s.played}</div><div class="sbcap">called right &middot; ${pct}%</div></div>`
+            + `<div class="sbstat"><div class="sbnum">${s.exact}</div><div class="sbcap">exact scores</div></div>`;
     if(extra){
       const tip = extra.tip ? ` data-tip="${extra.tip}"` : '';
-      h += `<div class="sbstat"${tip}><div class="sbnum">${extra.num}</div><div class="sbcap">${extra.cap}</div></div>`;
+      row += `<div class="sbstat"${tip}><div class="sbnum">${extra.num}</div><div class="sbcap">${extra.cap}</div></div>`;
     }
-    h += `<div class="sbnote"><span>How the <b>${lab}</b> model is doing${sc} so far.</span></div>`;
-    return h;
+    return `<div class="sbnote"><span>How the <b>${lab}</b> model is doing${sc} so far.</span></div><div class="sbrow">${row}</div>`;
   }
   // live group table from actual results, ranked points then goal difference then goals for
   function groupStandings(g){
@@ -727,7 +768,8 @@
     '<div class="mdrop" id="mdrop">' +
       '<button class="mdtrigger" id="mdtrigger" aria-haspopup="listbox" aria-expanded="false"></button>' +
       '<div class="mdmenu" id="mdmenu" role="listbox"></div>' +
-    '</div>';
+    '</div>' +
+    '<button class="minfo" id="minfo" type="button" aria-label="What this model is"></button>';
   const mpills = document.getElementById('mpills'),
         mdrop = document.getElementById('mdrop'),
         mdtrigger = document.getElementById('mdtrigger'),
@@ -742,12 +784,14 @@
       `<button class="mditem${k===CUR?' on':''}" role="option" aria-selected="${k===CUR}" data-m="${k}" data-tip="${MODEL_TIP[k]||''}">`
       + `<span class="mdname">${LABELS[k]}</span>${REC.has(k)?'<span class="mdtag">pick</span>':''}</button>`
     ).join('');
+    const mi=document.getElementById('minfo'); if(mi) mi.setAttribute('data-tip', MODEL_TIP[CUR]||'');
   }
   function closeDrop(){ mdrop.classList.remove('open'); mdtrigger.setAttribute('aria-expanded','false'); }
   function selectModel(k){
     CUR = k; closeDrop(); renderModel();
     render(); renderSchedule();
     if(typeof renderNL==='function') renderNL();
+    if(typeof renderFR==='function') renderFR();
   }
   renderModel();
   mpills.addEventListener('click', e=>{ const b=e.target.closest('.mbtn'); if(b) selectModel(b.dataset.m); });
@@ -818,13 +862,16 @@
         const predTip = `${t}: the ${LABELS[CUR]} model had them finishing <b>${ord(pr)}</b> in Group ${g} (${fmt(T[t].win_group)}% to win the group).`;
         if (st.anyPlayed) {
           const d = pr - st.pos[t];   // > 0 means above the predicted finish
-          const move = d>0 ? ` <span class="gmove up" data-tip="Up ${d} on the model's predicted finish.">${d}</span>`
-                     : d<0 ? ` <span class="gmove down" data-tip="Down ${-d} on the model's predicted finish.">${-d}</span>`
-                           : '';
+          // the whole "predicted Nth (arrow)" carries one combined tooltip, so a tap anywhere on it works
+          const movePhrase = d>0 ? ` They sit ${d} ${d>1?'spots':'spot'} higher than that now.`
+                           : d<0 ? ` They sit ${-d} ${-d>1?'spots':'spot'} lower than that now.`
+                           : ' Right on it so far.';
+          const move = d>0 ? ` <span class="gmove up">${d}</span>`
+                     : d<0 ? ` <span class="gmove down">${-d}</span>` : '';
           return `<div class="grow">
             <div class="tn"><span class="livepos${st.pos[t]<=2?' qual':''}" data-tip="Currently <b>${ord(st.pos[t])}</b> in Group ${g} on results. Top two and the best third-placed teams advance.">${st.pos[t]}</span>${t} <i>Elo ${T[t].elo}</i></div>
             <div class="gp" data-tip="Points so far.">${r.pts}<small>pts</small></div>
-            <div class="gsub"><span>P${r.P} · GD ${r.gd>=0?'+':''}${r.gd}</span><span class="gpred" data-tip="${predTip}">predicted ${ord(pr)}${move}</span></div>
+            <div class="gsub"><span>P${r.P} · GD ${r.gd>=0?'+':''}${r.gd}</span><span class="gpred" data-tip="${predTip}${movePhrase}">predicted ${ord(pr)}${move}</span></div>
           </div>`;
         }
         return `<div class="grow">
@@ -949,6 +996,13 @@
     {stage:'Group F \u00b7 Match 3', opp:'Tunisia'}
   ];
   const NL_LAM = {"elo":{"Japan":[1.463,1.266],"Sweden":[1.966,0.763],"Tunisia":[2.171,0.558]},"score":{"Japan":[1.205,1.476],"Sweden":[1.935,1.082],"Tunisia":[1.31,0.895]},"hybrid":{"Japan":[1.334,1.371],"Sweden":[1.951,0.922],"Tunisia":[1.74,0.726]},"market":{"Japan":[1.426,1.291],"Sweden":[1.996,0.805],"Tunisia":[1.993,0.605]},"market_pure":{"Japan":[1.517,1.211],"Sweden":[2.041,0.687],"Tunisia":[2.246,0.483]}};
+  // France, Group I (per-model expected goals oriented to France, from the engine via the results JSON)
+  const FR_FIX = [
+    {stage:'Group I · Match 1', opp:'Senegal'},
+    {stage:'Group I · Match 2', opp:'Iraq'},
+    {stage:'Group I · Match 3', opp:'Norway'}
+  ];
+  const FR_LAM = {"elo":{"Senegal":[1.87,0.86],"Iraq":[2.52,0.21],"Norway":[1.74,0.99]},"score":{"Senegal":[1.28,1.06],"Iraq":[1.52,0.7],"Norway":[1.58,1.08]},"hybrid":{"Senegal":[1.57,0.96],"Iraq":[2.02,0.46],"Norway":[1.66,1.04]},"market":{"Senegal":[1.71,0.92],"Iraq":[2.3,0.3],"Norway":[1.75,0.96]},"market_pure":{"Senegal":[1.84,0.89],"Iraq":[2.58,0.15],"Norway":[1.84,0.89]}};
   const NL_RHO = (META.rho!=null?META.rho:-0.039);
   const NL_BANDS = [[1,15,12],[16,30,14],[31,45,17],[46,60,16],[61,75,18],[76,90,23]]; // empirical 15-min goal shares
   function nlPois(k,l){let p=Math.exp(-l);for(let i=1;i<=k;i++)p*=l/i;return p;}
@@ -979,34 +1033,35 @@
     const gmin = nlFirstGoalMin(firstHalf);
     return {a,b,g,firstHalf,nedFirst,htN,htO,gmin};
   }
-  function renderNL(){
-    const host=document.getElementById('nlGrid'); if(!host) return;
+  // model-aware match timeline, shared by the Netherlands and France tabs
+  function renderTimeline(cfg){
+    const host=document.getElementById(cfg.gridId); if(!host) return;
     const mlabel = LABELS[CUR] || CUR;
-    // scoreboard scoped to the Dutch group games
-    const GMn=MODELS[CUR].group_matches, nlM=[];
-    Object.keys(GMn).forEach(g=>GMn[g].forEach(m=>{ if(m.home==='Netherlands'||m.away==='Netherlands') nlM.push(m); }));
-    const nlSb=document.getElementById('nlScore');
-    if(nlSb) nlSb.innerHTML = scoreboardHTML(scoreOver(nlM), mlabel, null, 'on the Dutch group games');
+    // scoreboard scoped to this team's group games
+    const GMx=MODELS[CUR].group_matches, list=[];
+    Object.keys(GMx).forEach(g=>GMx[g].forEach(m=>{ if(m.home===cfg.team||m.away===cfg.team) list.push(m); }));
+    const sb=document.getElementById(cfg.scoreId);
+    if(sb) sb.innerHTML = scoreboardHTML(scoreOver(list), mlabel, null, cfg.scope);
     host.innerHTML =
-      NL_FIX.map(fx=>{
-        const lam = (NL_LAM[CUR]||NL_LAM.hybrid)[fx.opp];
+      cfg.fix.map(fx=>{
+        const lam = (cfg.lam[CUR]||cfg.lam.hybrid)[fx.opp];
         const d=nlDist(lam[0],lam[1]), s=nlScenario(d);
         const gx=Math.max(4,Math.min(96, s.gmin/90*100));
         const diff=d.W-d.L, ad=Math.abs(diff);
-        const lean = ad<6 ? 'Coin flip' : ad<16 ? (diff>0?'Lean Netherlands':'Lean '+fx.opp) : (diff>0?'Netherlands favored':fx.opp+' favored');
+        const lean = ad<6 ? 'Coin flip' : ad<16 ? (diff>0?'Lean '+cfg.team:'Lean '+fx.opp) : (diff>0?cfg.team+' favored':fx.opp+' favored');
         const tops = d.top.map(x=>`${x[0]}-${x[1]} ${Math.round(x[2]*100)}%`).join(' \u00b7 ');
         const goalRead = d.over>=50 ? 'Two to three goals likely' : 'Low-scoring, under 2.5 the call';
         const timeRead = s.g===0 ? 'A goalless game is the single most likely exact line here.'
           : (s.firstHalf ? 'Enough goals expected that one comes before the break.'
                          : 'A lone goal in a tight scoreline tends to come late, so the first half projects goalless.');
-        const whoFirst = s.nedFirst?'NL':fx.opp;
+        const whoFirst = s.nedFirst?cfg.short:fx.opp;
         const goalMark = s.g>0
           ? `<div class="goal ${s.nedFirst?'ned':'opp'}" style="left:${gx}%"></div><div class="gmin" style="left:${gx}%">${s.gmin}'</div>` : '';
         const fgMeta = s.g>0 ? `<span>First goal <b>${s.gmin}'</b> (${whoFirst})</span>` : '';
         return `<div class="nlcard">
           <div class="stage">${fx.stage}</div>
           <div class="mt">
-            <div class="vs">Netherlands <em>v</em> ${fx.opp}</div>
+            <div class="vs">${cfg.team} <em>v</em> ${fx.opp}</div>
             <div class="ftbig">${s.a}\u2013${s.b}<small>PREDICTED</small></div>
           </div>
           <div class="nltl">
@@ -1026,9 +1081,16 @@
           </div>
           <div class="nlnote">${goalRead}. Most likely scores: ${tops}. ${timeRead}</div>
         </div>`;
-      }).join('') + `<div class="nlpending">Knockout fixtures appear here once Group F is decided and the round-of-32 is set.</div>`;
+      }).join('') + cfg.pending;
   }
+  const TL_NL = {gridId:'nlGrid', scoreId:'nlScore', team:'Netherlands', short:'NL', scope:'on the Dutch group games',
+                 fix:NL_FIX, lam:NL_LAM, pending:`<div class="nlpending">Knockout fixtures appear here once Group F is decided and the round-of-32 is set.</div>`};
+  const TL_FR = {gridId:'frGrid', scoreId:'frScore', team:'France', short:'FR', scope:"on France's group games",
+                 fix:FR_FIX, lam:FR_LAM, pending:`<div class="nlpending">Knockout fixtures appear here once Group I is decided and the round-of-32 is set.</div>`};
+  function renderNL(){ renderTimeline(TL_NL); }
+  function renderFR(){ renderTimeline(TL_FR); }
   renderNL();
+  renderFR();
 
   // tabs
   document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
