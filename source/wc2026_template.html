@@ -343,6 +343,10 @@
   .livelink:hover{border-color:var(--lime);background:rgba(200,255,77,.08)}
   .livelink .livedot{width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulse 1.8s infinite}
   .livelink .livearrow{color:var(--lime-dim);font-weight:400}
+  /* finished, result not posted yet: muted, no pulse */
+  .livelink.done{color:var(--muted);border-color:var(--line2)}
+  .livelink.done:hover{color:var(--txt);border-color:var(--faint);background:none}
+  .livelink.done .livearrow{color:var(--faint)}
   .sched{margin-top:4px}
   .sday{font-family:'DM Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);
         margin:22px 0 9px;display:flex;align-items:center;gap:10px}
@@ -668,16 +672,25 @@
     return r.home===mm.home ? {hs:r.hs, as:r.as} : {hs:r.as, as:r.hs};
   }
   // a match is "in play" from kickoff to +2h while no final result has landed yet
-  function matchLive(mm){
+  // a kicked-off match with no result yet: "in play" for the first ~2h, then "awaiting the feed" out to 6h
+  function matchPending(mm){
     if (actualFor(mm)) return false;
     const ko = Date.parse(mm.kickoff_utc); if (isNaN(ko)) return false;
     const now = Date.now();
-    return now >= ko && now < ko + 120*60e3;
+    return now >= ko && now < ko + 6*3600e3;
   }
-  // we can't show the running score (no live feed), so the LIVE badge links to a Google search,
-  // which shows Google's live match card for an in-progress game
+  function matchLive(mm){
+    return matchPending(mm) && Date.now() < Date.parse(mm.kickoff_utc) + 120*60e3;
+  }
+  // no live feed, so the badge links to a Google search: its live match card while in play,
+  // its finished card during the gap before openfootball posts the result
   const liveSearch = mm => 'https://www.google.com/search?q=' + encodeURIComponent(mm.home + ' vs ' + mm.away);
-  const liveBadge = mm => `<a class="livelink" href="${liveSearch(mm)}" target="_blank" rel="noopener" data-tip="In play now. Opens a Google search for the live score (we don't host a live feed)."><span class="livedot"></span>Live<span class="livearrow">&#8599;</span></a>`;
+  const liveBadge = mm => {
+    const live = matchLive(mm);
+    const tip = live ? "In play now. Opens a Google search for the live score (we do not host a live feed)."
+                     : "Full time, the result is not in our feed yet. Tap to check the score on Google.";
+    return `<a class="livelink${live?'':' done'}" href="${liveSearch(mm)}" target="_blank" rel="noopener" data-tip="${tip}">${live?'<span class="livedot"></span>Live':'Score'}<span class="livearrow">&#8599;</span></a>`;
+  };
   // one shared match card, used by both the Groups tab and the Schedule so they look identical.
   // schedule mode swaps the date caption for kickoff time, group, and venue.
   function matchCard(mm, schedule){
@@ -696,7 +709,7 @@
     } else {
       chip = `<div class="sc" data-tip="The model's most likely scoreline (a prediction). Trust the win/draw/loss split more than this exact number.">${mm.modal[0]}-${mm.modal[1]}</div>`;
       clab = 'predicted';
-      if (matchLive(mm)) predRow = `<div class="predline">${liveBadge(mm)}</div>`;
+      if (matchPending(mm)) predRow = `<div class="predline">${liveBadge(mm)}</div>`;
     }
     return `<div class="m">
       <div class="mcap">${cap}</div>
@@ -708,23 +721,25 @@
   }
   function applyActuals(){ render(); renderSchedule(); }
   function liveWindow(){
-    // a fixture counts as in-play from kickoff to +2.5h; also report the next start
-    const now = Date.now(); let live = false, next = Infinity;
+    const now = Date.now(); let inplay = false, pending = false, next = Infinity;
     const GM = MODELS[CUR].group_matches;
     Object.keys(GM).forEach(g => GM[g].forEach(m => {
       const ko = Date.parse(m.kickoff_utc); if (isNaN(ko)) return;
-      if (now >= ko && now <= ko + 9e6) live = true;
-      if (ko > now) next = Math.min(next, ko - now);
+      if (ko > now) { next = Math.min(next, ko - now); return; }
+      if (actualFor(m)) return;                        // already have the result
+      if (now < ko + 120*60e3) inplay = true;          // in play
+      else if (now < ko + 6*3600e3) pending = true;    // finished, result not in the feed yet
     }));
-    return {live, next};
+    return {inplay, pending, next};
   }
   function scheduleNextRefresh(){
     if (ACT_TIMER) clearTimeout(ACT_TIMER);
-    if (document.hidden) return;                       // paused while the tab is hidden
+    if (document.hidden) return;                        // paused while the tab is hidden
     const w = liveWindow();
-    const delay = w.live ? 60e3                        // a match in play: refresh each minute
-                : w.next < 30*60e3 ? 5*60e3            // kickoff within half an hour: every 5 min
-                : 30*60e3;                             // otherwise a light background touch
+    const delay = w.inplay ? 60e3                       // a match in play: refresh each minute
+                : w.pending ? 2*60e3                    // match over but result not posted: every 2 min
+                : w.next < 30*60e3 ? 5*60e3             // kickoff within half an hour: every 5 min
+                : 30*60e3;                              // otherwise a light background touch
     ACT_TIMER = setTimeout(loadActuals, delay);
   }
   function loadActuals(){
@@ -1008,12 +1023,12 @@
   renderSchedule();
   loadActuals();
 
-  // refresh the LIVE badges when a match kicks off or ends, without waiting on a results change
+  // refresh the badges as a match kicks off, passes into "awaiting result", or drops out, without a results change
   let LIVE_SIG = '';
   function tickLive(){
     if (!document.hidden) {
       const GM = MODELS[CUR].group_matches, now = [];
-      Object.keys(GM).forEach(g => GM[g].forEach(m => { if (matchLive(m)) now.push(m.kickoff_utc+'|'+m.home); }));
+      Object.keys(GM).forEach(g => GM[g].forEach(m => { if (matchPending(m)) now.push(m.kickoff_utc+'|'+m.home+'|'+(matchLive(m)?'L':'D')); }));
       const sig = now.sort().join(',');
       if (sig !== LIVE_SIG) { LIVE_SIG = sig; render(); renderSchedule(); }
     }
