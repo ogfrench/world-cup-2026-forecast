@@ -229,17 +229,20 @@
   .nlsrc{font-size:12.5px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--lime);border-radius:8px;padding:10px 13px;margin-bottom:4px;line-height:1.5}
   .nlsrc b{color:var(--txt);font-weight:600}
 
-  /* ---------- actual results + divergence (shared) ---------- */
-  .tag{font-family:'DM Mono';font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;
-       border-radius:5px;padding:2px 6px;border:1px solid;white-space:nowrap}
-  .tag.up{color:var(--loss);border-color:rgba(255,111,94,.5);background:rgba(255,111,94,.07)}
-  .tag.hit{color:var(--win);border-color:rgba(92,209,127,.45);background:rgba(92,209,127,.07)}
+  /* ---------- actual result vs prediction (shared) ---------- */
+  /* the model's predicted score, colour-coded against the real result:
+     green = exact score, amber = right result wrong score, red = wrong result */
+  .ppred{display:inline-flex;align-items:center;gap:7px;font-family:'DM Mono';font-weight:500;font-size:13px;
+         border-radius:999px;padding:3px 11px;line-height:1.35;white-space:nowrap}
+  .ppred .pl{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.72}
+  .ppred.exact{background:var(--win);color:#08140d}
+  .ppred.result{background:var(--gold);color:#1b1408}
+  .ppred.miss{background:var(--loss);color:#1c0b09}
   .m .mcap{font-family:'DM Mono';font-size:10px;color:var(--faint);letter-spacing:.04em;margin-bottom:7px}
-  .m .sc.ft{color:var(--lime);border-color:rgba(200,255,77,.5);background:rgba(200,255,77,.08)}
-  .m .mres{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;
-           font-family:'DM Mono';font-size:10.5px;color:var(--faint)}
-  .m .mres b{color:var(--muted);font-weight:500}
-  .m .fttag{color:var(--lime);letter-spacing:.1em;text-transform:uppercase;font-size:9px}
+  .m .sc.ft{color:var(--txt);border-color:var(--line2);background:var(--surface2)}
+  .m .mres{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:9px;
+           font-family:'DM Mono';font-size:11px;color:var(--faint)}
+  .m .fttag{color:var(--faint);letter-spacing:.1em;text-transform:uppercase;font-size:9px}
 
   /* ---------- schedule (by date) ---------- */
   .scoreboard{display:flex;flex-wrap:wrap;align-items:stretch;background:var(--surface);
@@ -273,15 +276,20 @@
   .srow .gpill{font-family:'DM Mono';font-size:9px;color:var(--bg);background:var(--faint);
                border-radius:3px;padding:1px 5px;font-weight:600}
   .srow .sub{font-family:'DM Mono';font-size:11px;color:var(--faint);margin-top:3px}
-  .srow .sright{display:flex;align-items:center;gap:9px;justify-self:end;text-align:right}
+  .srow .sright{display:flex;flex-direction:column;align-items:flex-end;gap:5px;justify-self:end;text-align:right}
   .spred{font-family:'DM Mono';font-size:12px;color:var(--faint);line-height:1.25}
   .spred small{display:block;font-size:9px;color:var(--faint)}
   .spred b{color:var(--muted);font-weight:500}
-  .sact{font-family:'Anton';font-size:19px;letter-spacing:.04em;color:var(--lime);line-height:1}
-  .sact small{display:block;font-family:'DM Mono';font-size:8.5px;color:var(--faint);letter-spacing:.1em;margin-top:3px}
+  .sact{font-family:'Anton';font-size:21px;letter-spacing:.04em;color:var(--txt);line-height:1}
+  .sact small{display:block;font-family:'DM Mono';font-size:8.5px;color:var(--faint);letter-spacing:.1em;margin-top:2px}
+  .predkey{display:flex;flex-wrap:wrap;gap:7px 15px;font-family:'DM Mono';font-size:11px;color:var(--muted);margin:0 0 14px}
+  .predkey:empty{display:none}
+  .predkey span{display:flex;align-items:center;gap:6px}
+  .predkey .k{width:12px;height:12px;border-radius:4px;display:inline-block}
+  .predkey .k.exact{background:var(--win)} .predkey .k.result{background:var(--gold)} .predkey .k.miss{background:var(--loss)}
   @media(max-width:520px){
     .srow{grid-template-columns:48px 1fr;gap:7px 10px}
-    .srow .sright{grid-column:1/3;justify-self:start;margin-top:3px}
+    .srow .sright{grid-column:1/3;justify-self:start;align-items:flex-start;flex-direction:row;gap:10px;margin-top:3px}
     .scoreboard .sbnote{border-left:none;border-top:1px solid var(--line);flex-basis:100%}
   }
 
@@ -406,6 +414,7 @@
     <div class="sec-h">The tournament, by date</div>
     <p class="lead">Every group fixture in kickoff order, shown the right way round, with the selected model's most likely scoreline. As games are played the real result slots in next to the prediction, and any match that went against the model is flagged. Knockout fixtures join the list once the bracket is set.</p>
     <div class="scoreboard" id="schedScore"></div>
+    <div class="predkey" id="predKey"></div>
     <div class="schedsync" id="schedSync"></div>
     <div class="sched" id="schedList"></div>
   </section>
@@ -488,6 +497,14 @@
   const favOutcome = m => { const x = Math.max(m.p_home,m.p_draw,m.p_away);
                             return x===m.p_home ? 'H' : (x===m.p_away ? 'A' : 'D'); };
   const actOutcome = a => a.hs>a.as ? 'H' : (a.hs<a.as ? 'A' : 'D');
+  // how the model's predicted scoreline did against the real result
+  const predTier = (mm,a) => (mm.modal[0]===a.hs && mm.modal[1]===a.as) ? 'exact'
+                           : (favOutcome(mm)===actOutcome(a) ? 'result' : 'miss');
+  const PRED_TIP = {
+    exact:'The model predicted this exact score. <b>Green</b>: exact score.',
+    result:'The model got the result right but not the exact score. <b>Amber</b>: right result, wrong score.',
+    miss:'The result went against the model. <b>Red</b>: wrong result.'
+  };
 
   // ---- live actual results -----------------------------------------------
   // Fetched in the browser from the openfootball World Cup 2026 dataset on
@@ -698,22 +715,21 @@
         const tot=mm.p_home+mm.p_draw+mm.p_away;
         const alts = mm.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
         const a = actualFor(mm);
-        let chip, res='';
+        let chip, predRow;
         if (a) {
-          const up = favOutcome(mm)!==actOutcome(a);
-          chip = `<div class="sc ft" data-tip="The result, full time.">${a.hs}-${a.as}</div>`;
-          res = `<div class="mres"><span class="fttag">Full time</span><span>model had <b>${mm.modal[0]}-${mm.modal[1]}</b></span>`
-              + (up ? `<span class="tag up" data-tip="The result went against the model: the outcome it rated most likely did not happen.">against model</span>`
-                    : `<span class="tag hit" data-tip="The result matched the model's most likely outcome.">on model</span>`) + `</div>`;
+          const tier = predTier(mm,a);
+          chip = `<div class="sc ft" data-tip="The real result, full time.">${a.hs}-${a.as}</div>`;
+          predRow = `<div class="mres"><span class="fttag">Full time &middot; predicted</span><span class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${mm.modal[0]}-${mm.modal[1]}</span></div>`;
         } else {
           chip = `<div class="sc" data-tip="The model's single most likely scoreline. Trust the win/draw/loss split more than this exact number.">${mm.modal[0]}-${mm.modal[1]}</div>`;
+          predRow = `<div class="mres"><span class="fttag">Predicted score</span></div>`;
         }
         return `<div class="m">
           <div class="mcap">${fmtDay(mm.date)} &middot; ${mm.venue}</div>
           <div class="top"><div class="ta">${mm.home}</div>${chip}<div class="tb">${mm.away}</div></div>
+          ${predRow}
           <div class="wdl"><i class="w" style="width:${mm.p_home/tot*100}%"></i><i class="d" style="width:${mm.p_draw/tot*100}%"></i><i class="l" style="width:${mm.p_away/tot*100}%"></i></div>
           <div class="det"><span>W ${fmt(mm.p_home)}% · D ${fmt(mm.p_draw)}% · L ${fmt(mm.p_away)}%</span><span class="alts">also: <span>${alts}</span></span></div>
-          ${res}
         </div>`;
       }).join('');
       return `<div class="gcard"><div class="ghd"><div class="g">${g}</div><div class="t">Group ${g}</div></div>
@@ -748,11 +764,10 @@
       const favName = fav==='H' ? mm.home : (fav==='A' ? mm.away : 'Draw');
       let right;
       if (a) {
-        played++; const up = fav!==actOutcome(a); if (up) against++;
-        if (mm.modal[0]===a.hs && mm.modal[1]===a.as) exact++;
-        right = `<div class="sact">${a.hs}-${a.as}<small>full time</small></div>`
-              + (up ? `<span class="tag up" data-tip="The result went against the model: the outcome it rated most likely did not happen.">against model</span>`
-                    : `<span class="tag hit" data-tip="The result matched the model's most likely outcome.">on model</span>`);
+        played++; const tier = predTier(mm,a);
+        if (tier==='miss') against++; else if (tier==='exact') exact++;
+        right = `<div class="sact">${a.hs}-${a.as}<small>result</small></div>`
+              + `<div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${mm.modal[0]}-${mm.modal[1]}<span class="pl">pred</span></div>`;
       } else {
         right = `<div class="spred">pred <b>${mm.modal[0]}-${mm.modal[1]}</b><small>${favName==='Draw'?'lean draw':favName+' favoured'}</small></div>`;
       }
@@ -776,6 +791,10 @@
           + `<div class="sbnote">How the <b>${lab}</b> model is doing, ${pct}% of results called. A call is the right outcome (win, draw or loss); an exact score is the precise line.</div>`;
       }
     }
+    const pk = document.getElementById('predKey');
+    if (pk) pk.innerHTML = played
+      ? `<span><i class="k exact"></i>exact score</span><span><i class="k result"></i>right result</span><span><i class="k miss"></i>wrong result</span>`
+      : '';
     const sync = document.getElementById('schedSync'); if (!sync) return;
     const when = ACT_SYNC ? new Date(ACT_SYNC).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
     if (ACT_STATE==='live' || ACT_STATE==='cache')
