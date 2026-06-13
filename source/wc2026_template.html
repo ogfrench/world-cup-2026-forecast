@@ -144,7 +144,7 @@
   .wdl{display:flex;height:5px;border-radius:3px;overflow:hidden;margin:8px 0 5px;background:var(--surface2)}
   .wdl i{height:100%}
   .wdl .w{background:var(--win)} .wdl .d{background:var(--draw)} .wdl .l{background:var(--loss)}
-  .m .det{display:flex;justify-content:space-between;font-family:'DM Mono';font-size:10px;color:var(--faint)}
+  .m .det{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 12px;font-family:'DM Mono';font-size:10px;color:var(--faint)}
   .m .det .alts span{color:var(--muted)}
 
   /* ---------- method ---------- */
@@ -328,8 +328,10 @@
     .pod .tnm{font-size:18px}
     .pod .pct{font-size:24px}
     .cal th,.cal td{padding:8px 7px;font-size:11.5px}
-    .mbtn{font-size:11.5px;padding:7px 11px}
-    .tab{padding:15px 12px}
+    .modelbar{padding:7px 0}
+    .mlbl{display:none}
+    .mbtn{font-size:11.5px;padding:6px 11px}
+    .tab{padding:13px 11px;font-size:12.5px}
     .tip{font-size:12px;padding:8px 10px}
     .nlcard{padding:15px 14px 16px}
     .nlmeta{font-size:10.5px;gap:5px 12px}
@@ -721,11 +723,11 @@
           chip = `<div class="sc ft" data-tip="The real result, full time.">${a.hs}-${a.as}</div>`;
           predRow = `<div class="mres"><span class="fttag">Full time &middot; predicted</span><span class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${mm.modal[0]}-${mm.modal[1]}</span></div>`;
         } else {
-          chip = `<div class="sc" data-tip="The model's single most likely scoreline. Trust the win/draw/loss split more than this exact number.">${mm.modal[0]}-${mm.modal[1]}</div>`;
-          predRow = `<div class="mres"><span class="fttag">Predicted score</span></div>`;
+          chip = `<div class="sc" data-tip="The model's most likely scoreline (a prediction). Trust the win/draw/loss split more than this exact number.">${mm.modal[0]}-${mm.modal[1]}</div>`;
+          predRow = '';
         }
         return `<div class="m">
-          <div class="mcap">${fmtDay(mm.date)} &middot; ${mm.venue}</div>
+          <div class="mcap">${fmtDay(mm.date)}</div>
           <div class="top"><div class="ta">${mm.home}</div>${chip}<div class="tb">${mm.away}</div></div>
           ${predRow}
           <div class="wdl"><i class="w" style="width:${mm.p_home/tot*100}%"></i><i class="d" style="width:${mm.p_draw/tot*100}%"></i><i class="l" style="width:${mm.p_away/tot*100}%"></i></div>
