@@ -125,18 +125,21 @@
   .ghd{display:flex;align-items:center;gap:10px;padding:13px 15px;background:var(--bg2);border-bottom:1px solid var(--line)}
   .ghd .g{font-family:'Anton';font-size:22px;color:var(--lime);line-height:1}
   .ghd .t{font-family:'DM Mono';font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-  .grow{display:grid;grid-template-columns:1fr 46px;align-items:center;gap:10px;padding:8px 15px}
+  .grow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:8px 15px}
   .grow .tn{font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:8px}
   .grow .tn i{font-style:normal;font-family:'DM Mono';font-size:10px;color:var(--faint)}
   .gbar{grid-column:1/3;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:-2px}
   .gbar i{display:block;height:100%;background:var(--lime-dim);border-radius:3px}
-  .grow .gp{font-family:'DM Mono';font-size:13px;color:var(--lime);text-align:right}
+  .grow .gp{font-family:'DM Mono';font-size:14px;color:var(--lime);text-align:right;white-space:nowrap}
+  .grow .gp small{font-size:9px;color:var(--faint);font-weight:400;margin-left:2px}
+  .grow .gsub{grid-column:1/3;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+              font-family:'DM Mono';font-size:10px;color:var(--faint);margin-top:3px}
+  .grow .gsub .gpred{color:var(--muted)}
 
   /* live actual standing next to the predicted group-winner odds */
   .grow .tn .livepos{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;flex:none;
        font-family:'DM Mono';font-size:10px;font-weight:600;border-radius:5px;background:var(--line2);color:var(--txt)}
   .grow .tn .livepos.qual{background:var(--lime-dim);color:var(--bg)}
-  .grow .gact{grid-column:1/3;font-family:'DM Mono';font-size:10px;color:var(--faint);margin-top:3px}
   /* collapsible match predictions */
   details.matches{border-top:1px solid var(--line)}
   details.matches > summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -249,8 +252,8 @@
   .ppred{display:inline-flex;align-items:center;gap:7px;font-family:'DM Mono';font-weight:500;font-size:13px;
          border-radius:999px;padding:3px 11px;line-height:1.35;white-space:nowrap}
   .ppred .pl{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.72}
-  .ppred.exact{background:var(--win);color:#08140d}
-  .ppred.result{background:var(--gold);color:#1b1408}
+  .ppred.exact{background:#188a4a;color:#eafff1}
+  .ppred.result{background:var(--win);color:#08140d}
   .ppred.miss{background:var(--loss);color:#1c0b09}
   .m .mcap{font-family:'DM Mono';font-size:10px;color:var(--faint);letter-spacing:.04em;margin-bottom:8px}
   .m .sc.ft{color:var(--txt);border-color:var(--line2);background:var(--surface2)}
@@ -301,7 +304,7 @@
   .predkey:empty{display:none}
   .predkey span{display:flex;align-items:center;gap:6px}
   .predkey .k{width:12px;height:12px;border-radius:4px;display:inline-block}
-  .predkey .k.exact{background:var(--win)} .predkey .k.result{background:var(--gold)} .predkey .k.miss{background:var(--loss)}
+  .predkey .k.exact{background:#188a4a} .predkey .k.result{background:var(--win)} .predkey .k.miss{background:var(--loss)}
   @media(max-width:520px){
     .srow{grid-template-columns:48px 1fr;gap:7px 10px}
     .srow .sright{grid-column:1/3;justify-self:start;align-items:flex-start;flex-direction:row;gap:10px;margin-top:3px}
@@ -514,8 +517,8 @@
   const predTier = (mm,a) => (mm.modal[0]===a.hs && mm.modal[1]===a.as) ? 'exact'
                            : (favOutcome(mm)===actOutcome(a) ? 'result' : 'miss');
   const PRED_TIP = {
-    exact:'The model predicted this exact score. <b>Green</b>: exact score.',
-    result:'The model got the result right but not the exact score. <b>Amber</b>: right result, wrong score.',
+    exact:'The model predicted this exact score. <b>Dark green</b>: exact score.',
+    result:'The model got the result right but not the exact score. <b>Green</b>: right result, wrong score.',
     miss:'The result went against the model. <b>Red</b>: wrong result.'
   };
   const ord = n => ['', '1st', '2nd', '3rd', '4th'][n] || (n+'th');
@@ -734,22 +737,27 @@
     const grid = document.getElementById('groupGrid');
     const openG = new Set([...grid.querySelectorAll('details.matches[open]')].map(d=>d.dataset.g));
     grid.innerHTML = Object.keys(G).map(g=>{
-      const teams = G[g].slice().sort((a,b)=>T[b].win_group-T[a].win_group);
-      const maxw = Math.max(...teams.map(t=>T[t].win_group)) || 1;
       const st = groupStandings(g);
+      const maxw = Math.max(...G[g].map(t=>T[t].win_group)) || 1;
+      const teams = st.anyPlayed
+        ? G[g].slice().sort((a,b)=>st.pos[a]-st.pos[b])         // live: actual table order
+        : G[g].slice().sort((a,b)=>T[b].win_group-T[a].win_group); // pre-tournament: predicted order
       const rows = teams.map(t=>{
-        const r = st.tbl[t];
-        const pos = st.anyPlayed
-          ? `<span class="livepos${st.pos[t]<=2?' qual':''}" data-tip="Currently <b>${ord(st.pos[t])}</b> in Group ${g} on actual results (P${r.P}, ${r.pts} pts, GD ${r.gd>=0?'+':''}${r.gd}). Top two plus the best third-placed teams advance.">${st.pos[t]}</span>`
-          : '';
-        const gact = st.anyPlayed
-          ? `<div class="gact" data-tip="Actual record so far in Group ${g}.">Played ${r.P} · ${r.pts} pts · GD ${r.gd>=0?'+':''}${r.gd}</div>`
-          : '';
+        const r = st.tbl[t], pred = `${Math.round(T[t].win_group)}%`;
+        const predTipTxt = `${t}: ${fmt(T[t].win_group)}% predicted chance to top Group ${g}, under the ${LABELS[CUR]} model.`;
+        const bar = `<div class="gbar"><i style="width:${(T[t].win_group/maxw)*100}%"></i></div>`;
+        if (st.anyPlayed) {
+          return `<div class="grow">
+            <div class="tn"><span class="livepos${st.pos[t]<=2?' qual':''}" data-tip="Currently <b>${ord(st.pos[t])}</b> in Group ${g}. Top two plus the best third-placed teams advance.">${st.pos[t]}</span>${t} <i>Elo ${T[t].elo}</i></div>
+            <div class="gp" data-tip="Actual points so far in Group ${g}.">${r.pts}<small>pts</small></div>
+            <div class="gsub"><span>Played ${r.P} · GD ${r.gd>=0?'+':''}${r.gd}</span><span class="gpred" data-tip="${predTipTxt}">${pred} to top, predicted</span></div>
+            ${bar}
+          </div>`;
+        }
         return `<div class="grow">
-          <div class="tn">${pos}${t} <i>Elo ${T[t].elo}</i></div>
-          <div class="gp" data-tip="${t}: ${fmt(T[t].win_group)}% predicted chance of finishing top of Group ${g}, under the ${LABELS[CUR]} model.">${Math.round(T[t].win_group)}%</div>
-          <div class="gbar"><i style="width:${(T[t].win_group/maxw)*100}%"></i></div>
-          ${gact}
+          <div class="tn">${t} <i>Elo ${T[t].elo}</i></div>
+          <div class="gp" data-tip="${predTipTxt}">${pred}</div>
+          ${bar}
         </div>`;
       }).join('');
       const matches = GM[g].slice().sort(byKO).map(mm=>{
