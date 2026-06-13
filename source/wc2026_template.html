@@ -403,7 +403,7 @@
   <header>
     <div class="kicker">104 matches &middot; five models &middot; 50,000 simulations</div>
     <h1>World Cup <span class="yr">2026</span><br>Prediction Engine</h1>
-    <p class="sub">Everyone's got a hunch about who'll win the World Cup. I built mine out of data instead. It plays the whole tournament out, all 104 matches plus the knockouts, 50,000 times, and tries five different ways to call each result, from cold hard form to what the bookies think. The short version: the bookies are usually the smartest guess, and they've got Spain on top. All five methods like Spain, but they argue over who comes second.</p>
+    <p class="sub">The whole World Cup, all 104 matches and the knockouts, simulated 50,000 times, five different ways, from cold form to the betting market. All five favor Spain; they split on who finishes second.</p>
     <div class="meta-row" id="meta"></div>
   </header>
 
@@ -690,9 +690,7 @@
   function renderHint(){
     const el=document.getElementById('mhint'); if(!el) return;
     const lab=LABELS[CUR]||CUR, d=HINT_DESC[CUR]||'';
-    el.innerHTML = `<b>${lab}</b>: ${d}.` + (FAVS.has(CUR)
-      ? ' One of the two recommended views.'
-      : ' Recommended views are <b>Pure Market</b> and <b>Hybrid</b>.');
+    el.innerHTML = `<b>${lab}</b>: ${d}.`;
     el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
   }
   document.getElementById('modelbar').innerHTML =
