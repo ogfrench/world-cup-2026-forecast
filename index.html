@@ -320,10 +320,11 @@
   .ppred.result{background:var(--win);color:#08140d}
   .ppred.miss{background:var(--loss);color:#1c0b09}
   .m .mcap{font-family:'DM Mono';font-size:10px;color:var(--faint);letter-spacing:.04em;margin-bottom:8px;
-           display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-  .m .mcap .gpill{font-family:'DM Mono';font-size:9px;color:var(--bg);background:var(--faint);border-radius:3px;padding:1px 5px;letter-spacing:0}
-  .m .mcap .captime{color:var(--muted)}
+           display:flex;align-items:center;gap:7px;flex-wrap:nowrap}
+  .m .mcap .gpill{flex:none;font-family:'DM Mono';font-size:9px;color:var(--bg);background:var(--faint);border-radius:3px;padding:1px 5px;letter-spacing:0}
+  .m .mcap .captime{flex:none;color:var(--muted)}
   .m .mcap .captz{color:var(--faint);font-size:9px}
+  .m .mcap .capven{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .m .sc.ft{color:var(--txt);border-color:var(--line2);background:var(--surface2)}
   .m .sclab{font-family:'DM Mono';font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
   .m .predline{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:9px}
@@ -609,6 +610,7 @@
   const koLocal = mm => new Date(mm.kickoff_utc);
   const localTime = mm => koLocal(mm).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
   const localDay = mm => { const d = koLocal(mm); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+  const venueName = v => (v||'').replace(/\s*\([^)]*\)\s*$/, '');   // drop the suburb in parentheses to keep the caption on one line
   let TZ = '';
   try { TZ = new Intl.DateTimeFormat(undefined,{timeZoneName:'short'}).formatToParts(new Date()).find(p=>p.type==='timeZoneName').value || ''; } catch(e){}
   const byKO = (a,b) => a.kickoff_utc < b.kickoff_utc ? -1 : (a.kickoff_utc > b.kickoff_utc ? 1 : 0);
@@ -715,7 +717,7 @@
     const alts = mm.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
     const a = actualFor(mm);
     const cap = schedule
-      ? `<span class="captime">${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span><span class="capven">${mm.venue}</span>`
+      ? `<span class="captime">${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span><span class="capven" data-tip="${mm.venue}">${venueName(mm.venue)}</span>`
       : fmtDay(localDay(mm));
     let chip, clab, predRow = '';
     if (a) {
