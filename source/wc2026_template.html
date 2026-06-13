@@ -733,7 +733,7 @@
     all.sort(byKO);
     const dayCount = {};
     all.forEach(m => { dayCount[m.date] = (dayCount[m.date]||0)+1; });
-    let played = 0, against = 0, html = '', curDay = null;
+    let played = 0, against = 0, exact = 0, html = '', curDay = null;
     all.forEach(mm => {
       if (mm.date !== curDay) {
         curDay = mm.date; const c = dayCount[curDay];
@@ -744,6 +744,7 @@
       let right;
       if (a) {
         played++; const up = fav!==actOutcome(a); if (up) against++;
+        if (mm.modal[0]===a.hs && mm.modal[1]===a.as) exact++;
         right = `<div class="sact">${a.hs}-${a.as}<small>full time</small></div>`
               + (up ? `<span class="tag up" data-tip="The result went against the model.">upset</span>`
                     : `<span class="tag hit" data-tip="The result matched the model.">on model</span>`);
@@ -764,8 +765,8 @@
       else {
         const hits = played - against, pct = Math.round(hits/played*100);
         sb.innerHTML = `<div class="big">${hits}/${played}</div>`
-          + `<div class="lbl">results the model <b>called right</b> so far (${pct}%)<br>`
-          + `<span class="pct">a call is the most likely outcome, win draw or loss, not the exact score</span></div>`;
+          + `<div class="lbl">results the model <b>called right</b> (${pct}%), <b>${exact}</b> exactly right<br>`
+          + `<span class="pct">called right = correct outcome (win, draw or loss); exactly right = the exact scoreline</span></div>`;
       }
     }
     const sync = document.getElementById('schedSync'); if (!sync) return;
