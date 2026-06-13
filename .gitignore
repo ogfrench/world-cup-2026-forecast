@@ -5,3 +5,4 @@ __pycache__/
 
 # Playwright MCP scratch output
 .playwright-mcp/
+source/.ogfonts/

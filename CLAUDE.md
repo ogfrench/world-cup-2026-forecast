@@ -32,6 +32,7 @@ repo root as-is, so the homepage is the app.
 
 - `index.html` - the deployed app, self-contained. This is a built artifact. DO NOT hand-edit.
 - `netlify.toml` - tells Netlify to serve the repo root as static files.
+- `og.png` - the 1200x630 social-share card (og:image / twitter:image). Regenerate with `python source/make_og.py`.
 - `source/` - everything real behind it:
   - `wc2026_template.html` - the app source. Edit this for any app change. Has one `/*DATA*/` token.
   - `wc2026_results.json` - the 50,000-run output the app renders (with the fixture schedule merged in).
