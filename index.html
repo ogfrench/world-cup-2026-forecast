@@ -329,6 +329,13 @@
   .schedsync .dotlive{width:8px;height:8px;border-radius:50%;background:var(--win);animation:pulse 2.4s infinite}
   .schedsync .dotoff{width:8px;height:8px;border-radius:50%;background:var(--faint)}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(92,209,127,.5)}70%{box-shadow:0 0 0 6px rgba(92,209,127,0)}100%{box-shadow:0 0 0 0 rgba(92,209,127,0)}}
+  /* in-play badge: links out to a Google search for the live score */
+  .livelink{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono';font-weight:600;font-size:10.5px;
+       letter-spacing:.1em;text-transform:uppercase;color:var(--lime);text-decoration:none;
+       border:1px solid rgba(200,255,77,.4);border-radius:999px;padding:3px 10px;transition:.15s;white-space:nowrap}
+  .livelink:hover{border-color:var(--lime);background:rgba(200,255,77,.08)}
+  .livelink .livedot{width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulse 1.8s infinite}
+  .livelink .livearrow{color:var(--lime-dim);font-weight:400}
   .sched{margin-top:4px}
   .sday{font-family:'DM Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);
         margin:22px 0 9px;display:flex;align-items:center;gap:10px}
@@ -677,6 +684,17 @@
     if (!r) return null;
     return r.home===mm.home ? {hs:r.hs, as:r.as} : {hs:r.as, as:r.hs};
   }
+  // a match is "in play" from kickoff to +2h while no final result has landed yet
+  function matchLive(mm){
+    if (actualFor(mm)) return false;
+    const ko = Date.parse(mm.kickoff_utc); if (isNaN(ko)) return false;
+    const now = Date.now();
+    return now >= ko && now < ko + 120*60e3;
+  }
+  // we can't show the running score (no live feed), so the LIVE badge links to a Google search,
+  // which shows Google's live match card for an in-progress game
+  const liveSearch = mm => 'https://www.google.com/search?q=' + encodeURIComponent(mm.home + ' vs ' + mm.away);
+  const liveBadge = mm => `<a class="livelink" href="${liveSearch(mm)}" target="_blank" rel="noopener" data-tip="In play now. Opens a Google search for the live score (we don't host a live feed)."><span class="livedot"></span>Live<span class="livearrow">&#8599;</span></a>`;
   function applyActuals(){ render(); renderSchedule(); }
   function liveWindow(){
     // a fixture counts as in-play from kickoff to +2.5h; also report the next start
@@ -912,6 +930,7 @@
           predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${mm.modal[0]}-${mm.modal[1]}</div><div class="sclab">predicted</div></div>`;
         } else {
           scoreBlock = `<div class="scwrap"><div class="sc" data-tip="The model's most likely scoreline (a prediction). Trust the win/draw/loss split more than this exact number.">${mm.modal[0]}-${mm.modal[1]}</div><div class="sclab">predicted</div></div>`;
+          if (matchLive(mm)) predRow = `<div class="predline">${liveBadge(mm)}</div>`;
         }
         return `<div class="m">
           <div class="mcap">${fmtDay(mm.date)}</div>
@@ -977,6 +996,8 @@
         if (tier==='miss') against++; else if (tier==='exact') exact++;
         right = `<div class="sact">${a.hs}-${a.as}<small>result</small></div>`
               + `<div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${mm.modal[0]}-${mm.modal[1]}<span class="pl">pred</span></div>`;
+      } else if (matchLive(mm)) {
+        right = liveBadge(mm) + `<div class="spred">pred <b>${mm.modal[0]}-${mm.modal[1]}</b></div>`;
       } else {
         right = `<div class="spred">pred <b>${mm.modal[0]}-${mm.modal[1]}</b><small>${favName==='Draw'?'lean draw':favName+' favored'}</small></div>`;
       }
@@ -1007,6 +1028,19 @@
   render();
   renderSchedule();
   loadActuals();
+
+  // refresh the LIVE badges when a match kicks off or ends, without waiting on a results change
+  let LIVE_SIG = '';
+  function tickLive(){
+    if (!document.hidden) {
+      const GM = MODELS[CUR].group_matches, now = [];
+      Object.keys(GM).forEach(g => GM[g].forEach(m => { if (matchLive(m)) now.push(m.kickoff_utc+'|'+m.home); }));
+      const sig = now.sort().join(',');
+      if (sig !== LIVE_SIG) { LIVE_SIG = sig; render(); renderSchedule(); }
+    }
+    setTimeout(tickLive, 30000);
+  }
+  tickLive();
 
   // ---- Netherlands match timeline (model-aware) ----
   // Per-model expected goals for each Dutch fixture, straight from the engine.
