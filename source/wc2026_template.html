@@ -242,12 +242,16 @@
   .m .fttag{color:var(--lime);letter-spacing:.1em;text-transform:uppercase;font-size:9px}
 
   /* ---------- schedule (by date) ---------- */
-  .scoreboard{display:flex;align-items:center;gap:15px;background:var(--surface);border:1px solid var(--line);
-              border-radius:11px;padding:14px 17px;margin:6px 0 12px}
-  .scoreboard .big{font-family:'Anton';font-size:32px;color:var(--lime);line-height:.95;white-space:nowrap}
-  .scoreboard .lbl{font-size:13px;color:var(--muted);line-height:1.45}
-  .scoreboard .lbl b{color:var(--txt);font-weight:700}
-  .scoreboard .pct{font-family:'DM Mono';font-size:11px;color:var(--faint)}
+  .scoreboard{display:flex;flex-wrap:wrap;align-items:stretch;background:var(--surface);
+              border:1px solid var(--line);border-radius:11px;overflow:hidden;margin:6px 0 12px}
+  .scoreboard .sbstat{padding:13px 18px;display:flex;flex-direction:column;justify-content:center;gap:4px}
+  .scoreboard .sbstat + .sbstat{border-left:1px solid var(--line)}
+  .scoreboard .sbnum{font-family:'Anton';font-size:28px;color:var(--lime);line-height:.95;white-space:nowrap}
+  .scoreboard .sbcap{font-family:'DM Mono';font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .scoreboard .sbnote{flex:1;min-width:210px;padding:13px 16px;display:flex;align-items:center;
+                      font-size:12.5px;color:var(--faint);line-height:1.45;border-left:1px solid var(--line)}
+  .scoreboard .sbnote:first-child{border-left:none}
+  .scoreboard .sbnote b{color:var(--txt);font-weight:600}
   .schedsync{display:flex;align-items:center;gap:8px;font-family:'DM Mono';font-size:11.5px;
              color:var(--muted);margin:2px 0 6px}
   .schedsync .dotlive{width:8px;height:8px;border-radius:50%;background:var(--win);animation:pulse 2.4s infinite}
@@ -278,6 +282,7 @@
   @media(max-width:520px){
     .srow{grid-template-columns:48px 1fr;gap:7px 10px}
     .srow .sright{grid-column:1/3;justify-self:start;margin-top:3px}
+    .scoreboard .sbnote{border-left:none;border-top:1px solid var(--line);flex-basis:100%}
   }
 
   /* ---------- tooltips ---------- */
@@ -699,7 +704,7 @@
           chip = `<div class="sc ft" data-tip="The result, full time.">${a.hs}-${a.as}</div>`;
           res = `<div class="mres"><span class="fttag">Full time</span><span>model had <b>${mm.modal[0]}-${mm.modal[1]}</b></span>`
               + (up ? `<span class="tag up" data-tip="The result went against the model: the outcome it rated most likely did not happen.">against model</span>`
-                    : `<span class="tag hit" data-tip="The result matched the model's most likely outcome.">as modelled</span>`) + `</div>`;
+                    : `<span class="tag hit" data-tip="The result matched the model's most likely outcome.">on model</span>`) + `</div>`;
         } else {
           chip = `<div class="sc" data-tip="The model's single most likely scoreline. Trust the win/draw/loss split more than this exact number.">${mm.modal[0]}-${mm.modal[1]}</div>`;
         }
@@ -746,8 +751,8 @@
         played++; const up = fav!==actOutcome(a); if (up) against++;
         if (mm.modal[0]===a.hs && mm.modal[1]===a.as) exact++;
         right = `<div class="sact">${a.hs}-${a.as}<small>full time</small></div>`
-              + (up ? `<span class="tag up" data-tip="The result went against the model.">upset</span>`
-                    : `<span class="tag hit" data-tip="The result matched the model.">on model</span>`);
+              + (up ? `<span class="tag up" data-tip="The result went against the model: the outcome it rated most likely did not happen.">against model</span>`
+                    : `<span class="tag hit" data-tip="The result matched the model's most likely outcome.">on model</span>`);
       } else {
         right = `<div class="spred">pred <b>${mm.modal[0]}-${mm.modal[1]}</b><small>${favName==='Draw'?'lean draw':favName+' favoured'}</small></div>`;
       }
@@ -760,20 +765,21 @@
     host.innerHTML = html;
     const sb = document.getElementById('schedScore');
     if (sb) {
+      const lab = LABELS[CUR] || CUR;
       if (!played)
-        sb.innerHTML = `<div class="big">&ndash;</div><div class="lbl">No results in yet. <span class="pct">The model's calls get scored here as games are played.</span></div>`;
+        sb.innerHTML = `<div class="sbnote">No results in yet. How the <b>${lab}</b> model's predictions hold up gets scored here as games are played.</div>`;
       else {
-        const hits = played - against, pct = Math.round(hits/played*100);
-        sb.innerHTML = `<div class="big">${hits}/${played}</div>`
-          + `<div class="lbl">results the model <b>called right</b> (${pct}%), <b>${exact}</b> exactly right<br>`
-          + `<span class="pct">called right = correct outcome (win, draw or loss); exactly right = the exact scoreline</span></div>`;
+        const pct = Math.round((played-against)/played*100);
+        sb.innerHTML =
+            `<div class="sbstat"><div class="sbnum">${played-against}/${played}</div><div class="sbcap">called right</div></div>`
+          + `<div class="sbstat"><div class="sbnum">${exact}</div><div class="sbcap">exact scores</div></div>`
+          + `<div class="sbnote">How the <b>${lab}</b> model is doing, ${pct}% of results called. A call is the right outcome (win, draw or loss); an exact score is the precise line.</div>`;
       }
     }
     const sync = document.getElementById('schedSync'); if (!sync) return;
     const when = ACT_SYNC ? new Date(ACT_SYNC).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
     if (ACT_STATE==='live' || ACT_STATE==='cache')
       sync.innerHTML = `<span class="dotlive"></span>Live results &middot; ${played} of ${all.length} played`
-                     + (against ? ` &middot; ${against} against the model so far` : '')
                      + (when ? ` &middot; synced ${when}` : '');
     else if (ACT_STATE==='off')
       sync.innerHTML = `<span class="dotoff"></span>Live results unavailable, showing predictions only`;
