@@ -61,6 +61,23 @@ Open `index.html` in a browser, or run `python -m http.server` from the reposito
 Deployed on Netlify at <https://world-cup-2026-model-predictions.netlify.app/>, served from the
 repository root and redeployed on each push to `main`.
 
+## Live results
+
+As games are played, the real result appears next to each prediction. The page fetches results in
+the browser from the public, CORS-enabled [openfootball](https://github.com/openfootball/worldcup)
+World Cup 2026 feed (no key, no backend), caches them in local storage, and refreshes adaptively
+(faster while a match is in play, paused when the tab is hidden). Any match that went against the
+model is flagged. The static prediction data never changes; results only overlay on top. If the
+feed is unreachable, the page falls back to predictions only.
+
+## Roadmap
+
+Intentionally narrow. This stays a forecast viewer, not a prediction game. Tracked in
+[issue #1](https://github.com/ogfrench/world-cup-2026-prediction/issues/1). Shipped: matches sorted
+by date, home/away corrected from the official fixture list, a sticky model switcher, and live
+results overlaid on the predictions with a divergence flag. A full knockout bracket diff waits for
+the round-of-32 to be set. User picks, scoring, and a leaderboard are out of scope.
+
 ## Disclaimer
 
 A transparent baseline built from public data, not tested against a real World Cup. Not betting advice.

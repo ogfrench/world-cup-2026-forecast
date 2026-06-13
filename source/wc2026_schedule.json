@@ -1,0 +1,722 @@
+[
+{
+"group": "A",
+"home": "Mexico",
+"away": "South Africa",
+"date": "2026-06-11",
+"local_time": "13:00",
+"tz": "UTC-6",
+"kickoff_utc": "2026-06-11T19:00Z",
+"venue": "Mexico City"
+},
+{
+"group": "A",
+"home": "South Korea",
+"away": "Czechia",
+"date": "2026-06-11",
+"local_time": "20:00",
+"tz": "UTC-6",
+"kickoff_utc": "2026-06-12T02:00Z",
+"venue": "Guadalajara (Zapopan)"
+},
+{
+"group": "A",
+"home": "Czechia",
+"away": "South Africa",
+"date": "2026-06-18",
+"local_time": "12:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-18T16:00Z",
+"venue": "Atlanta"
+},
+{
+"group": "A",
+"home": "Mexico",
+"away": "South Korea",
+"date": "2026-06-18",
+"local_time": "19:00",
+"tz": "UTC-6",
+"kickoff_utc": "2026-06-19T01:00Z",
+"venue": "Guadalajara (Zapopan)"
+},
+{
+"group": "A",
+"home": "Czechia",
+"away": "Mexico",
+"date": "2026-06-24",
+"local_time": "19:00",
+"tz": "UTC-6",
+"kickoff_utc": "2026-06-25T01:00Z",
+"venue": "Mexico City"
+},
+{
+"group": "A",
+"home": "South Africa",
+"away": "South Korea",
+"date": "2026-06-24",
+"local_time": "19:00",
+"tz": "UTC-6",
+"kickoff_utc": "2026-06-25T01:00Z",
+"venue": "Monterrey (Guadalupe)"
+},
+{
+"group": "B",
+"home": "Canada",
+"away": "Bosnia-Herzegovina",
+"date": "2026-06-12",
+"local_time": "15:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-12T19:00Z",
+"venue": "Toronto"
+},
+{
+"group": "B",
+"home": "Qatar",
+"away": "Switzerland",
+"date": "2026-06-13",
+"local_time": "12:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-13T19:00Z",
+"venue": "San Francisco Bay Area (Santa Clara)"
+},
+{
+"group": "B",
+"home": "Switzerland",
+"away": "Bosnia-Herzegovina",
+"date": "2026-06-18",
+"local_time": "12:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-18T19:00Z",
+"venue": "Los Angeles (Inglewood)"
+},
+{
+"group": "B",
+"home": "Canada",
+"away": "Qatar",
+"date": "2026-06-18",
+"local_time": "15:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-18T22:00Z",
+"venue": "Vancouver"
+},
+{
+"group": "B",
+"home": "Switzerland",
+"away": "Canada",
+"date": "2026-06-24",
+"local_time": "12:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-24T19:00Z",
+"venue": "Vancouver"
+},
+{
+"group": "B",
+"home": "Bosnia-Herzegovina",
+"away": "Qatar",
+"date": "2026-06-24",
+"local_time": "12:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-24T19:00Z",
+"venue": "Seattle"
+},
+{
+"group": "C",
+"home": "Brazil",
+"away": "Morocco",
+"date": "2026-06-13",
+"local_time": "18:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-13T22:00Z",
+"venue": "New York/New Jersey (East Rutherford)"
+},
+{
+"group": "C",
+"home": "Haiti",
+"away": "Scotland",
+"date": "2026-06-13",
+"local_time": "21:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-14T01:00Z",
+"venue": "Boston (Foxborough)"
+},
+{
+"group": "C",
+"home": "Scotland",
+"away": "Morocco",
+"date": "2026-06-19",
+"local_time": "18:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-19T22:00Z",
+"venue": "Boston (Foxborough)"
+},
+{
+"group": "C",
+"home": "Brazil",
+"away": "Haiti",
+"date": "2026-06-19",
+"local_time": "20:30",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-20T00:30Z",
+"venue": "Philadelphia"
+},
+{
+"group": "C",
+"home": "Scotland",
+"away": "Brazil",
+"date": "2026-06-24",
+"local_time": "18:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-24T22:00Z",
+"venue": "Miami (Miami Gardens)"
+},
+{
+"group": "C",
+"home": "Morocco",
+"away": "Haiti",
+"date": "2026-06-24",
+"local_time": "18:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-24T22:00Z",
+"venue": "Atlanta"
+},
+{
+"group": "D",
+"home": "USA",
+"away": "Paraguay",
+"date": "2026-06-12",
+"local_time": "18:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-13T01:00Z",
+"venue": "Los Angeles (Inglewood)"
+},
+{
+"group": "D",
+"home": "Australia",
+"away": "Turkiye",
+"date": "2026-06-13",
+"local_time": "21:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-14T04:00Z",
+"venue": "Vancouver"
+},
+{
+"group": "D",
+"home": "USA",
+"away": "Australia",
+"date": "2026-06-19",
+"local_time": "12:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-19T19:00Z",
+"venue": "Seattle"
+},
+{
+"group": "D",
+"home": "Turkiye",
+"away": "Paraguay",
+"date": "2026-06-19",
+"local_time": "20:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-20T03:00Z",
+"venue": "San Francisco Bay Area (Santa Clara)"
+},
+{
+"group": "D",
+"home": "Turkiye",
+"away": "USA",
+"date": "2026-06-25",
+"local_time": "19:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-26T02:00Z",
+"venue": "Los Angeles (Inglewood)"
+},
+{
+"group": "D",
+"home": "Paraguay",
+"away": "Australia",
+"date": "2026-06-25",
+"local_time": "19:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-26T02:00Z",
+"venue": "San Francisco Bay Area (Santa Clara)"
+},
+{
+"group": "E",
+"home": "Germany",
+"away": "Curacao",
+"date": "2026-06-14",
+"local_time": "12:00",
+"tz": "UTC-5",
+"kickoff_utc": "2026-06-14T17:00Z",
+"venue": "Houston"
+},
+{
+"group": "E",
+"home": "Ivory Coast",
+"away": "Ecuador",
+"date": "2026-06-14",
+"local_time": "19:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-14T23:00Z",
+"venue": "Philadelphia"
+},
+{
+"group": "E",
+"home": "Germany",
+"away": "Ivory Coast",
+"date": "2026-06-20",
+"local_time": "16:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-20T20:00Z",
+"venue": "Toronto"
+},
+{
+"group": "E",
+"home": "Ecuador",
+"away": "Curacao",
+"date": "2026-06-20",
+"local_time": "19:00",
+"tz": "UTC-5",
+"kickoff_utc": "2026-06-21T00:00Z",
+"venue": "Kansas City"
+},
+{
+"group": "E",
+"home": "Curacao",
+"away": "Ivory Coast",
+"date": "2026-06-25",
+"local_time": "16:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-25T20:00Z",
+"venue": "Philadelphia"
+},
+{
+"group": "E",
+"home": "Ecuador",
+"away": "Germany",
+"date": "2026-06-25",
+"local_time": "16:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-25T20:00Z",
+"venue": "New York/New Jersey (East Rutherford)"
+},
+{
+"group": "F",
+"home": "Netherlands",
+"away": "Japan",
+"date": "2026-06-14",
+"local_time": "15:00",
+"tz": "UTC-5",
+"kickoff_utc": "2026-06-14T20:00Z",
+"venue": "Dallas (Arlington)"
+},
+{
+"group": "F",
+"home": "Sweden",
+"away": "Tunisia",
+"date": "2026-06-14",
+"local_time": "20:00",
+"tz": "UTC-6",
+"kickoff_utc": "2026-06-15T02:00Z",
+"venue": "Monterrey (Guadalupe)"
+},
+{
+"group": "F",
+"home": "Netherlands",
+"away": "Sweden",
+"date": "2026-06-20",
+"local_time": "12:00",
+"tz": "UTC-5",
+"kickoff_utc": "2026-06-20T17:00Z",
+"venue": "Houston"
+},
+{
+"group": "F",
+"home": "Tunisia",
+"away": "Japan",
+"date": "2026-06-20",
+"local_time": "22:00",
+"tz": "UTC-6",
+"kickoff_utc": "2026-06-21T04:00Z",
+"venue": "Monterrey (Guadalupe)"
+},
+{
+"group": "F",
+"home": "Japan",
+"away": "Sweden",
+"date": "2026-06-25",
+"local_time": "18:00",
+"tz": "UTC-5",
+"kickoff_utc": "2026-06-25T23:00Z",
+"venue": "Dallas (Arlington)"
+},
+{
+"group": "F",
+"home": "Tunisia",
+"away": "Netherlands",
+"date": "2026-06-25",
+"local_time": "18:00",
+"tz": "UTC-5",
+"kickoff_utc": "2026-06-25T23:00Z",
+"venue": "Kansas City"
+},
+{
+"group": "G",
+"home": "Belgium",
+"away": "Egypt",
+"date": "2026-06-15",
+"local_time": "12:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-15T19:00Z",
+"venue": "Seattle"
+},
+{
+"group": "G",
+"home": "Iran",
+"away": "New Zealand",
+"date": "2026-06-15",
+"local_time": "18:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-16T01:00Z",
+"venue": "Los Angeles (Inglewood)"
+},
+{
+"group": "G",
+"home": "Belgium",
+"away": "Iran",
+"date": "2026-06-21",
+"local_time": "12:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-21T19:00Z",
+"venue": "Los Angeles (Inglewood)"
+},
+{
+"group": "G",
+"home": "New Zealand",
+"away": "Egypt",
+"date": "2026-06-21",
+"local_time": "18:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-22T01:00Z",
+"venue": "Vancouver"
+},
+{
+"group": "G",
+"home": "Egypt",
+"away": "Iran",
+"date": "2026-06-26",
+"local_time": "20:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-27T03:00Z",
+"venue": "Seattle"
+},
+{
+"group": "G",
+"home": "New Zealand",
+"away": "Belgium",
+"date": "2026-06-26",
+"local_time": "20:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-27T03:00Z",
+"venue": "Vancouver"
+},
+{
+"group": "H",
+"home": "Spain",
+"away": "Cape Verde",
+"date": "2026-06-15",
+"local_time": "12:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-15T16:00Z",
+"venue": "Atlanta"
+},
+{
+"group": "H",
+"home": "Saudi Arabia",
+"away": "Uruguay",
+"date": "2026-06-15",
+"local_time": "18:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-15T22:00Z",
+"venue": "Miami (Miami Gardens)"
+},
+{
+"group": "H",
+"home": "Spain",
+"away": "Saudi Arabia",
+"date": "2026-06-21",
+"local_time": "12:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-21T16:00Z",
+"venue": "Atlanta"
+},
+{
+"group": "H",
+"home": "Uruguay",
+"away": "Cape Verde",
+"date": "2026-06-21",
+"local_time": "18:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-21T22:00Z",
+"venue": "Miami (Miami Gardens)"
+},
+{
+"group": "H",
+"home": "Cape Verde",
+"away": "Saudi Arabia",
+"date": "2026-06-26",
+"local_time": "19:00",
+"tz": "UTC-5",
+"kickoff_utc": "2026-06-27T00:00Z",
+"venue": "Houston"
+},
+{
+"group": "H",
+"home": "Uruguay",
+"away": "Spain",
+"date": "2026-06-26",
+"local_time": "18:00",
+"tz": "UTC-6",
+"kickoff_utc": "2026-06-27T00:00Z",
+"venue": "Guadalajara (Zapopan)"
+},
+{
+"group": "I",
+"home": "France",
+"away": "Senegal",
+"date": "2026-06-16",
+"local_time": "15:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-16T19:00Z",
+"venue": "New York/New Jersey (East Rutherford)"
+},
+{
+"group": "I",
+"home": "Iraq",
+"away": "Norway",
+"date": "2026-06-16",
+"local_time": "18:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-16T22:00Z",
+"venue": "Boston (Foxborough)"
+},
+{
+"group": "I",
+"home": "France",
+"away": "Iraq",
+"date": "2026-06-22",
+"local_time": "17:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-22T21:00Z",
+"venue": "Philadelphia"
+},
+{
+"group": "I",
+"home": "Norway",
+"away": "Senegal",
+"date": "2026-06-22",
+"local_time": "20:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-23T00:00Z",
+"venue": "New York/New Jersey (East Rutherford)"
+},
+{
+"group": "I",
+"home": "Norway",
+"away": "France",
+"date": "2026-06-26",
+"local_time": "15:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-26T19:00Z",
+"venue": "Boston (Foxborough)"
+},
+{
+"group": "I",
+"home": "Senegal",
+"away": "Iraq",
+"date": "2026-06-26",
+"local_time": "15:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-26T19:00Z",
+"venue": "Toronto"
+},
+{
+"group": "J",
+"home": "Argentina",
+"away": "Algeria",
+"date": "2026-06-16",
+"local_time": "20:00",
+"tz": "UTC-5",
+"kickoff_utc": "2026-06-17T01:00Z",
+"venue": "Kansas City"
+},
+{
+"group": "J",
+"home": "Austria",
+"away": "Jordan",
+"date": "2026-06-16",
+"local_time": "21:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-17T04:00Z",
+"venue": "San Francisco Bay Area (Santa Clara)"
+},
+{
+"group": "J",
+"home": "Argentina",
+"away": "Austria",
+"date": "2026-06-22",
+"local_time": "12:00",
+"tz": "UTC-5",
+"kickoff_utc": "2026-06-22T17:00Z",
+"venue": "Dallas (Arlington)"
+},
+{
+"group": "J",
+"home": "Jordan",
+"away": "Algeria",
+"date": "2026-06-22",
+"local_time": "20:00",
+"tz": "UTC-7",
+"kickoff_utc": "2026-06-23T03:00Z",
+"venue": "San Francisco Bay Area (Santa Clara)"
+},
+{
+"group": "J",
+"home": "Algeria",
+"away": "Austria",
+"date": "2026-06-27",
+"local_time": "21:00",
+"tz": "UTC-5",
+"kickoff_utc": "2026-06-28T02:00Z",
+"venue": "Kansas City"
+},
+{
+"group": "J",
+"home": "Jordan",
+"away": "Argentina",
+"date": "2026-06-27",
+"local_time": "21:00",
+"tz": "UTC-5",
+"kickoff_utc": "2026-06-28T02:00Z",
+"venue": "Dallas (Arlington)"
+},
+{
+"group": "K",
+"home": "Portugal",
+"away": "DR Congo",
+"date": "2026-06-17",
+"local_time": "12:00",
+"tz": "UTC-5",
+"kickoff_utc": "2026-06-17T17:00Z",
+"venue": "Houston"
+},
+{
+"group": "K",
+"home": "Uzbekistan",
+"away": "Colombia",
+"date": "2026-06-17",
+"local_time": "20:00",
+"tz": "UTC-6",
+"kickoff_utc": "2026-06-18T02:00Z",
+"venue": "Mexico City"
+},
+{
+"group": "K",
+"home": "Portugal",
+"away": "Uzbekistan",
+"date": "2026-06-23",
+"local_time": "12:00",
+"tz": "UTC-5",
+"kickoff_utc": "2026-06-23T17:00Z",
+"venue": "Houston"
+},
+{
+"group": "K",
+"home": "Colombia",
+"away": "DR Congo",
+"date": "2026-06-23",
+"local_time": "20:00",
+"tz": "UTC-6",
+"kickoff_utc": "2026-06-24T02:00Z",
+"venue": "Guadalajara (Zapopan)"
+},
+{
+"group": "K",
+"home": "Colombia",
+"away": "Portugal",
+"date": "2026-06-27",
+"local_time": "19:30",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-27T23:30Z",
+"venue": "Miami (Miami Gardens)"
+},
+{
+"group": "K",
+"home": "DR Congo",
+"away": "Uzbekistan",
+"date": "2026-06-27",
+"local_time": "19:30",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-27T23:30Z",
+"venue": "Atlanta"
+},
+{
+"group": "L",
+"home": "England",
+"away": "Croatia",
+"date": "2026-06-17",
+"local_time": "15:00",
+"tz": "UTC-5",
+"kickoff_utc": "2026-06-17T20:00Z",
+"venue": "Dallas (Arlington)"
+},
+{
+"group": "L",
+"home": "Ghana",
+"away": "Panama",
+"date": "2026-06-17",
+"local_time": "19:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-17T23:00Z",
+"venue": "Toronto"
+},
+{
+"group": "L",
+"home": "England",
+"away": "Ghana",
+"date": "2026-06-23",
+"local_time": "16:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-23T20:00Z",
+"venue": "Boston (Foxborough)"
+},
+{
+"group": "L",
+"home": "Panama",
+"away": "Croatia",
+"date": "2026-06-23",
+"local_time": "19:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-23T23:00Z",
+"venue": "Toronto"
+},
+{
+"group": "L",
+"home": "Panama",
+"away": "England",
+"date": "2026-06-27",
+"local_time": "17:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-27T21:00Z",
+"venue": "New York/New Jersey (East Rutherford)"
+},
+{
+"group": "L",
+"home": "Croatia",
+"away": "Ghana",
+"date": "2026-06-27",
+"local_time": "17:00",
+"tz": "UTC-4",
+"kickoff_utc": "2026-06-27T21:00Z",
+"venue": "Philadelphia"
+}
+]

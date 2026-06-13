@@ -51,10 +51,10 @@
         border:1px solid var(--line2);border-radius:999px;padding:5px 11px;white-space:nowrap}
   .chip b{color:var(--txt);font-weight:500}
 
-  /* ---------- tabs ---------- */
-  nav{position:sticky;top:0;z-index:20;background:rgba(10,11,13,.86);backdrop-filter:blur(10px);
-      border-bottom:1px solid var(--line);margin:0 -18px 26px;padding:0 18px;
-      display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+  /* ---------- sticky top bar (model switcher + tabs) ---------- */
+  .topbar{position:sticky;top:0;z-index:20;background:rgba(10,11,13,.9);backdrop-filter:blur(10px);
+          border-bottom:1px solid var(--line);margin:0 -18px 26px;padding:0 18px}
+  nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
   nav::-webkit-scrollbar{display:none}
   .tab{font-family:'Archivo';font-weight:700;font-size:13px;letter-spacing:.02em;
        color:var(--muted);background:none;border:none;cursor:pointer;
@@ -125,15 +125,39 @@
   .ghd{display:flex;align-items:center;gap:10px;padding:13px 15px;background:var(--bg2);border-bottom:1px solid var(--line)}
   .ghd .g{font-family:'Anton';font-size:22px;color:var(--lime);line-height:1}
   .ghd .t{font-family:'DM Mono';font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-  .grow{display:grid;grid-template-columns:1fr 46px;align-items:center;gap:10px;padding:8px 15px}
+  .grow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:8px 15px}
   .grow .tn{font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:8px}
   .grow .tn i{font-style:normal;font-family:'DM Mono';font-size:10px;color:var(--faint)}
   .gbar{grid-column:1/3;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:-2px}
   .gbar i{display:block;height:100%;background:var(--lime-dim);border-radius:3px}
-  .grow .gp{font-family:'DM Mono';font-size:13px;color:var(--lime);text-align:right}
+  .grow .gp{font-family:'DM Mono';font-size:14px;color:var(--lime);text-align:right;white-space:nowrap}
+  .grow .gp small{font-size:9px;color:var(--faint);font-weight:400;margin-left:2px}
+  .grow .gsub{grid-column:1/3;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+              font-family:'DM Mono';font-size:10px;color:var(--faint);margin-top:3px}
+  .grow .gsub .gpred{color:var(--muted)}
 
-  .matches{border-top:1px solid var(--line);padding:6px 0 4px}
-  .matches .mh{font-family:'DM Mono';font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);padding:8px 15px 4px}
+  /* live actual standing next to the predicted group-winner odds */
+  .grow .tn .livepos{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;flex:none;
+       font-family:'DM Mono';font-size:10px;font-weight:600;border-radius:5px;background:var(--line2);color:var(--txt)}
+  .grow .tn .livepos.qual{background:var(--lime-dim);color:var(--bg)}
+  .grow .tn .predrank{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;flex:none;
+       font-family:'DM Mono';font-size:10px;font-weight:600;border-radius:5px;background:transparent;border:1px solid var(--line2);color:var(--muted)}
+  .grow .gmove{display:inline-flex;align-items:center;gap:3px;font-weight:700;margin-left:5px}
+  .grow .gmove::before{content:"";width:0;height:0;border-left:3.5px solid transparent;border-right:3.5px solid transparent}
+  .grow .gmove.up{color:var(--win)} .grow .gmove.up::before{border-bottom:6px solid var(--win)}
+  .grow .gmove.down{color:var(--loss)} .grow .gmove.down::before{border-top:6px solid var(--loss)}
+  .grow .gmove.even{color:var(--faint)}
+  /* collapsible match predictions */
+  details.matches{border-top:1px solid var(--line)}
+  details.matches > summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;
+       padding:11px 15px;font-family:'DM Mono';font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  details.matches > summary::-webkit-details-marker{display:none}
+  details.matches > summary:hover{color:var(--muted)}
+  details.matches[open] > summary{border-bottom:1px solid var(--line);color:var(--muted)}
+  details.matches .mpc{color:var(--lime);margin-left:8px}
+  details.matches .chev{flex:none;width:7px;height:7px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;
+       transform:rotate(45deg);transition:transform .2s}
+  details.matches[open] .chev{transform:rotate(-135deg)}
   .m{padding:9px 15px;border-top:1px solid var(--line)}
   .m:first-of-type{border-top:none}
   .m .top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
@@ -144,7 +168,7 @@
   .wdl{display:flex;height:5px;border-radius:3px;overflow:hidden;margin:8px 0 5px;background:var(--surface2)}
   .wdl i{height:100%}
   .wdl .w{background:var(--win)} .wdl .d{background:var(--draw)} .wdl .l{background:var(--loss)}
-  .m .det{display:flex;justify-content:space-between;font-family:'DM Mono';font-size:10px;color:var(--faint)}
+  .m .det{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 12px;font-family:'DM Mono';font-size:10px;color:var(--faint)}
   .m .det .alts span{color:var(--muted)}
 
   /* ---------- method ---------- */
@@ -172,16 +196,30 @@
   .madeby a svg{width:14px;height:14px;display:block}
   .madeby .sep{color:var(--line2)}
 
-  /* ---------- model switcher ---------- */
-  .modelbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:22px 0 10px}
-  .mlbl{font-family:'DM Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-right:3px}
-  .mbtn{font-family:'Archivo';font-weight:700;font-size:12.5px;color:var(--txt);
-        background:var(--surface);border:1px solid var(--line2);border-radius:999px;
-        padding:8px 14px;cursor:pointer;transition:.15s;white-space:nowrap;opacity:1}
-  .mbtn.rec{border-color:rgba(200,255,77,.55)}
-  .mbtn.dim{color:var(--muted);border-color:var(--line)}
-  .mbtn:hover{opacity:1;color:var(--txt);border-color:var(--faint)}
-  .mbtn.on{color:var(--bg);background:var(--lime);border-color:var(--lime);opacity:1}
+  /* ---------- model switcher (dropdown) ---------- */
+  .modelbar{display:flex;align-items:center;gap:10px;margin:0;padding:9px 0;border-bottom:1px solid var(--line)}
+  .mlbl{font-family:'DM Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-right:1px}
+  .mdrop{position:relative}
+  .mdtrigger{display:inline-flex;align-items:center;gap:10px;font-family:'Archivo';font-weight:700;font-size:13px;
+       color:var(--txt);background:var(--surface);border:1px solid var(--line2);border-radius:999px;
+       padding:8px 15px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .mdtrigger:hover{border-color:var(--faint)}
+  .mdrop.open .mdtrigger{border-color:var(--lime);color:var(--lime)}
+  .mdcaret{width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;
+       transform:rotate(45deg) translate(-1px,-1px);transition:transform .2s}
+  .mdrop.open .mdcaret{transform:rotate(-135deg) translate(-1px,-1px)}
+  .mdmenu{position:absolute;top:calc(100% + 9px);left:0;z-index:40;min-width:240px;max-width:min(300px,calc(100vw - 26px));
+       background:var(--surface2);border:1px solid var(--line2);border-radius:13px;padding:6px;
+       box-shadow:0 18px 44px rgba(0,0,0,.55);opacity:0;transform:translateY(-7px);pointer-events:none;
+       transition:opacity .15s ease,transform .15s ease}
+  .mdrop.open .mdmenu{opacity:1;transform:none;pointer-events:auto}
+  .mditem{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+       font-family:'Archivo';font-weight:600;font-size:13px;color:var(--txt);background:none;border:none;
+       border-radius:9px;padding:10px 11px;cursor:pointer;text-align:left;transition:background .12s,color .12s}
+  .mditem:hover{background:var(--surface)}
+  .mditem.on{color:var(--lime);background:var(--surface)}
+  .mdtag{flex:none;font-family:'DM Mono';font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+       color:var(--lime-dim);border:1px solid rgba(200,255,77,.4);border-radius:5px;padding:1px 6px}
   .mhint{font-size:12px;color:var(--muted);margin:2px 0 22px;max-width:680px;line-height:1.55}
   .mhint b{color:var(--txt);font-weight:600}
   .mhint.flash{animation:hintIn .28s ease}
@@ -227,6 +265,71 @@
   .nlsrc{font-size:12.5px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--lime);border-radius:8px;padding:10px 13px;margin-bottom:4px;line-height:1.5}
   .nlsrc b{color:var(--txt);font-weight:600}
 
+  /* ---------- actual result vs prediction (shared) ---------- */
+  /* the model's predicted score, colour-coded against the real result:
+     green = exact score, amber = right result wrong score, red = wrong result */
+  .ppred{display:inline-flex;align-items:center;gap:7px;font-family:'DM Mono';font-weight:500;font-size:13px;
+         border-radius:999px;padding:3px 11px;line-height:1.35;white-space:nowrap}
+  .ppred .pl{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.72}
+  .ppred.exact{background:#188a4a;color:#eafff1}
+  .ppred.result{background:var(--win);color:#08140d}
+  .ppred.miss{background:var(--loss);color:#1c0b09}
+  .m .mcap{font-family:'DM Mono';font-size:10px;color:var(--faint);letter-spacing:.04em;margin-bottom:8px}
+  .m .sc.ft{color:var(--txt);border-color:var(--line2);background:var(--surface2)}
+  /* actual result and prediction stack centred so the two scores line up vertically */
+  .m .scwrap{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .m .sclab{font-family:'DM Mono';font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .m .predline{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:9px}
+
+  /* ---------- schedule (by date) ---------- */
+  .scoreboard{display:flex;flex-wrap:wrap;align-items:stretch;background:var(--surface);
+              border:1px solid var(--line);border-radius:11px;overflow:hidden;margin:6px 0 12px}
+  .scoreboard .sbstat{padding:13px 18px;display:flex;flex-direction:column;justify-content:center;gap:4px}
+  .scoreboard .sbstat + .sbstat{border-left:1px solid var(--line)}
+  .scoreboard .sbnum{font-family:'Anton';font-size:28px;color:var(--lime);line-height:.95;white-space:nowrap}
+  .scoreboard .sbcap{font-family:'DM Mono';font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .scoreboard .sbnote{flex:1;min-width:210px;padding:13px 16px;display:flex;align-items:center;
+                      font-size:12.5px;color:var(--faint);line-height:1.45;border-left:1px solid var(--line)}
+  .scoreboard .sbnote:first-child{border-left:none}
+  .scoreboard .sbnote b{color:var(--txt);font-weight:600}
+  .schedsync{display:flex;align-items:center;gap:8px;font-family:'DM Mono';font-size:11.5px;
+             color:var(--muted);margin:2px 0 6px}
+  .schedsync .dotlive{width:8px;height:8px;border-radius:50%;background:var(--win);animation:pulse 2.4s infinite}
+  .schedsync .dotoff{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(92,209,127,.5)}70%{box-shadow:0 0 0 6px rgba(92,209,127,0)}100%{box-shadow:0 0 0 0 rgba(92,209,127,0)}}
+  .sched{margin-top:4px}
+  .sday{font-family:'DM Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);
+        margin:22px 0 9px;display:flex;align-items:center;gap:10px}
+  .sday:first-child{margin-top:6px}
+  .sday::after{content:"";flex:1;height:1px;background:var(--line)}
+  .sday .cnt{color:var(--faint);letter-spacing:.04em}
+  .srow{display:grid;grid-template-columns:58px 1fr auto;align-items:center;gap:12px;
+        padding:10px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-bottom:8px}
+  .srow .stime{font-family:'DM Mono';font-size:12.5px;color:var(--muted);line-height:1.25}
+  .srow .stime small{display:block;font-size:9px;color:var(--faint)}
+  .srow .smatch{min-width:0}
+  .srow .teams{display:flex;align-items:center;gap:7px;font-weight:600;font-size:14px;flex-wrap:wrap}
+  .srow .teams i{font-style:normal;color:var(--faint);font-family:'DM Mono';font-size:11px}
+  .srow .gpill{font-family:'DM Mono';font-size:9px;color:var(--bg);background:var(--faint);
+               border-radius:3px;padding:1px 5px;font-weight:600}
+  .srow .sub{font-family:'DM Mono';font-size:11px;color:var(--faint);margin-top:3px}
+  .srow .sright{display:flex;flex-direction:column;align-items:flex-end;gap:5px;justify-self:end;text-align:right}
+  .spred{font-family:'DM Mono';font-size:12px;color:var(--faint);line-height:1.25}
+  .spred small{display:block;font-size:9px;color:var(--faint)}
+  .spred b{color:var(--muted);font-weight:500}
+  .sact{font-family:'Anton';font-size:21px;letter-spacing:.04em;color:var(--txt);line-height:1}
+  .sact small{display:block;font-family:'DM Mono';font-size:8.5px;color:var(--faint);letter-spacing:.1em;margin-top:2px}
+  .predkey{display:flex;flex-wrap:wrap;gap:7px 15px;font-family:'DM Mono';font-size:11px;color:var(--muted);margin:0 0 14px}
+  .predkey:empty{display:none}
+  .predkey span{display:flex;align-items:center;gap:6px}
+  .predkey .k{width:12px;height:12px;border-radius:4px;display:inline-block}
+  .predkey .k.exact{background:#188a4a} .predkey .k.result{background:var(--win)} .predkey .k.miss{background:var(--loss)}
+  @media(max-width:520px){
+    .srow{grid-template-columns:48px 1fr;gap:7px 10px}
+    .srow .sright{grid-column:1/3;justify-self:start;align-items:flex-start;flex-direction:row;gap:10px;margin-top:3px}
+    .scoreboard .sbnote{border-left:none;border-top:1px solid var(--line);flex-basis:100%}
+  }
+
   /* ---------- tooltips ---------- */
   [data-tip]{cursor:help}
   button[data-tip],a[data-tip],.tab[data-tip]{cursor:pointer}
@@ -253,7 +356,7 @@
   /* ---------- mobile ---------- */
   @media(max-width:520px){
     .wrap{padding:0 13px 64px}
-    nav{margin:0 -13px 22px;padding:0 13px}
+    .topbar{margin:0 -13px 22px;padding:0 13px}
     .sub{font-size:14px}
     .bar-row{grid-template-columns:88px 1fr 46px;gap:9px}
     .bar-row .nm{font-size:12px}
@@ -262,8 +365,10 @@
     .pod .tnm{font-size:18px}
     .pod .pct{font-size:24px}
     .cal th,.cal td{padding:8px 7px;font-size:11.5px}
-    .mbtn{font-size:11.5px;padding:7px 11px}
-    .tab{padding:15px 12px}
+    .modelbar{padding:7px 0}
+    .mlbl{display:none}
+    .mbtn{font-size:11.5px;padding:6px 11px}
+    .tab{padding:13px 11px;font-size:12.5px}
     .tip{font-size:12px;padding:8px 10px}
     .nlcard{padding:15px 14px 16px}
     .nlmeta{font-size:10.5px;gap:5px 12px}
@@ -280,8 +385,7 @@
   /* ---------- web: a little more breathing room ---------- */
   @media(min-width:761px){
     header{padding:54px 0 30px}
-    .modelbar{margin:26px 0 10px}
-    nav{margin:0 -18px 34px}
+    .topbar{margin:0 -18px 30px}
     .sec-h{margin:44px 0 18px}
     .lead{margin-bottom:22px;font-size:14.5px}
     .podium{margin-bottom:34px;gap:14px}
@@ -303,19 +407,20 @@
     <div class="meta-row" id="meta"></div>
   </header>
 
-  <div class="modelbar" id="modelbar"></div>
+  <div class="topbar">
+    <div class="modelbar" id="modelbar"></div>
+    <nav>
+      <button class="tab on" data-t="schedule">Schedule</button>
+      <button class="tab" data-t="groups">Groups &amp; Scores</button>
+      <button class="tab" data-t="race">Title &amp; Knockout</button>
+      <button class="tab" data-t="nl">Netherlands</button>
+      <button class="tab" data-t="method">Method &amp; Caveats</button>
+    </nav>
+  </div>
   <div class="mhint" id="mhint"></div>
 
-  <nav>
-    <button class="tab on" data-t="race">Title Race</button>
-    <button class="tab" data-t="ko">Knockout Odds</button>
-    <button class="tab" data-t="groups">Groups &amp; Scores</button>
-    <button class="tab" data-t="nl">Netherlands</button>
-    <button class="tab" data-t="method">Method &amp; Caveats</button>
-  </nav>
-
   <!-- TITLE RACE -->
-  <section class="on" id="race">
+  <section id="race">
     <div class="podium" id="podium"></div>
     <div class="sec-h">Who lifts the trophy</div>
     <p class="lead">Every bar is a team's chance of going all the way under the selected model. The dots show where Opta's supercomputer and the betting market land, as a sanity check.</p>
@@ -326,10 +431,7 @@
       <span style="color:var(--faint)" data-tip="Monte Carlo standard error: how much this number would wobble if you re-ran the 50,000 tournaments. Small means the estimate is stable."><span class="has-tip">± = Monte Carlo standard error</span></span>
     </div>
     <div id="raceBars"></div>
-  </section>
 
-  <!-- KNOCKOUT -->
-  <section id="ko">
     <div class="sec-h">Road to the final</div>
     <p class="lead">How far each team gets. Every number is how often that team reached that round across the 50,000 simulations, and the odds pile onto the favourites as the field thins out.</p>
     <div class="tbl-scroll"><table id="koTable"></table></div>
@@ -338,8 +440,18 @@
   <!-- GROUPS -->
   <section id="groups">
     <div class="sec-h">Group winner odds &amp; match-by-match</div>
-    <p class="lead">The percentage is each team's chance of topping its group, under the selected model. Each fixture below shows its most likely scoreline, the win/draw/loss split, and the next-likeliest scores. One honest note: that single "most likely score" is a near coin toss between a few options, so trust the win/draw/loss bar more than the exact number.</p>
+    <p class="lead">The live table against where the model predicted each team to finish. The arrow shows who is beating or missing the forecast. Expand a group for the match-by-match predictions and results.</p>
     <div class="grid" id="groupGrid"></div>
+  </section>
+
+  <!-- SCHEDULE -->
+  <section class="on" id="schedule">
+    <div class="sec-h">The tournament, by date</div>
+    <p class="lead">Every fixture by kickoff time, with the model's predicted score. Real results slot in as games are played. Knockouts join once the bracket is set.</p>
+    <div class="scoreboard" id="schedScore"></div>
+    <div class="predkey" id="predKey"></div>
+    <div class="schedsync" id="schedSync"></div>
+    <div class="sched" id="schedList"></div>
   </section>
 
   <!-- NETHERLANDS -->
@@ -411,6 +523,113 @@
   const se = p => 100*Math.sqrt((p/100)*(1-p/100)/n);
   let CUR = 'market_pure';   // app opens on Pure Market, the recommended forecast
 
+  // ---- date + fixture helpers ----
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const fmtDay = iso => { const p = iso.split('-'); return MON[+p[1]-1] + ' ' + (+p[2]); };
+  const fmtDayLong = iso => WD[new Date(iso+'T12:00:00Z').getUTCDay()] + ' ' + fmtDay(iso);
+  const byKO = (a,b) => a.kickoff_utc < b.kickoff_utc ? -1 : (a.kickoff_utc > b.kickoff_utc ? 1 : 0);
+  const favOutcome = m => { const x = Math.max(m.p_home,m.p_draw,m.p_away);
+                            return x===m.p_home ? 'H' : (x===m.p_away ? 'A' : 'D'); };
+  const actOutcome = a => a.hs>a.as ? 'H' : (a.hs<a.as ? 'A' : 'D');
+  // how the model's predicted scoreline did against the real result
+  const predTier = (mm,a) => (mm.modal[0]===a.hs && mm.modal[1]===a.as) ? 'exact'
+                           : (favOutcome(mm)===actOutcome(a) ? 'result' : 'miss');
+  const PRED_TIP = {
+    exact:'The model predicted this exact score. <b>Dark green</b>: exact score.',
+    result:'The model got the result right but not the exact score. <b>Green</b>: right result, wrong score.',
+    miss:'The result went against the model. <b>Red</b>: wrong result.'
+  };
+  const ord = n => ['', '1st', '2nd', '3rd', '4th'][n] || (n+'th');
+  // live group table from actual results, ranked points then goal difference then goals for
+  function groupStandings(g){
+    const teams = G[g];
+    const tbl = {}; teams.forEach(t => tbl[t] = {P:0,pts:0,gf:0,ga:0,gd:0});
+    MODELS[CUR].group_matches[g].forEach(m => {
+      const a = actualFor(m); if (!a) return;
+      const h = m.home, aw = m.away;
+      tbl[h].P++; tbl[aw].P++; tbl[h].gf += a.hs; tbl[h].ga += a.as; tbl[aw].gf += a.as; tbl[aw].ga += a.hs;
+      if (a.hs > a.as) tbl[h].pts += 3; else if (a.hs < a.as) tbl[aw].pts += 3; else { tbl[h].pts++; tbl[aw].pts++; }
+    });
+    teams.forEach(t => tbl[t].gd = tbl[t].gf - tbl[t].ga);
+    const order = teams.slice().sort((x,y) => tbl[y].pts-tbl[x].pts || tbl[y].gd-tbl[x].gd || tbl[y].gf-tbl[x].gf || x.localeCompare(y));
+    const pos = {}; order.forEach((t,i) => pos[t] = i+1);
+    return {tbl, pos, anyPlayed: teams.some(t => tbl[t].P>0)};
+  }
+
+  // ---- live actual results -----------------------------------------------
+  // Fetched in the browser from the openfootball World Cup 2026 dataset on
+  // raw.githubusercontent.com: public, CORS-enabled, no key, the same source
+  // as the embedded schedule so team names line up. Swap ACT_SRC + parseActuals
+  // for any JSON feed (e.g. TheSportsDB) without touching the render code.
+  const ACT_SRC = 'https://raw.githubusercontent.com/openfootball/worldcup/master/2026--usa/cup.txt';
+  const ACT_NAME = {'Czech Republic':'Czechia','Bosnia & Herzegovina':'Bosnia-Herzegovina','Turkey':'Turkiye','Curaçao':'Curacao'};
+  const ACT_MON = {May:5,June:6,July:7};
+  let ACTUALS = {}, ACT_SYNC = 0, ACT_STATE = 'init', ACT_TIMER = null, ACT_SIG = '', ACT_HYDRATED = false;
+  const actNm = s => { s = s.trim(); return ACT_NAME[s] || s; };
+  const actKey = (d,a,b) => d + '|' + [a,b].slice().sort().join('|');
+  function parseActuals(txt){
+    const out = {}; let date = null;
+    const dre = /^[A-Z][a-z]{2}\s+([A-Z][a-z]+)\s+(\d{1,2})\s*$/;
+    const mre = /^\s*\d{1,2}:\d{2}\s+UTC[+-]\d+\s+(.+?)\s+(\d+)-(\d+)\s+\([0-9-]+\)\s+(.+?)\s+@\s+/;
+    txt.split('\n').forEach(ln => {
+      const d = ln.match(dre);
+      if (d) { const mo = ACT_MON[d[1]]; if (mo) date = '2026-'+String(mo).padStart(2,'0')+'-'+String(+d[2]).padStart(2,'0'); return; }
+      const m = ln.match(mre);
+      if (m && date) { const h = actNm(m[1]), a = actNm(m[4]); out[actKey(date,h,a)] = {home:h, away:a, hs:+m[2], as:+m[3]}; }
+    });
+    return out;
+  }
+  function actualFor(mm){
+    const r = ACTUALS[actKey(mm.date, mm.home, mm.away)];
+    if (!r) return null;
+    return r.home===mm.home ? {hs:r.hs, as:r.as} : {hs:r.as, as:r.hs};
+  }
+  function applyActuals(){ render(); renderSchedule(); }
+  function liveWindow(){
+    // a fixture counts as in-play from kickoff to +2.5h; also report the next start
+    const now = Date.now(); let live = false, next = Infinity;
+    const GM = MODELS[CUR].group_matches;
+    Object.keys(GM).forEach(g => GM[g].forEach(m => {
+      const ko = Date.parse(m.kickoff_utc); if (isNaN(ko)) return;
+      if (now >= ko && now <= ko + 9e6) live = true;
+      if (ko > now) next = Math.min(next, ko - now);
+    }));
+    return {live, next};
+  }
+  function scheduleNextRefresh(){
+    if (ACT_TIMER) clearTimeout(ACT_TIMER);
+    if (document.hidden) return;                       // paused while the tab is hidden
+    const w = liveWindow();
+    const delay = w.live ? 60e3                        // a match in play: refresh each minute
+                : w.next < 30*60e3 ? 5*60e3            // kickoff within half an hour: every 5 min
+                : 30*60e3;                             // otherwise a light background touch
+    ACT_TIMER = setTimeout(loadActuals, delay);
+  }
+  function loadActuals(){
+    if (!ACT_HYDRATED) {                                // first call: show cached results instantly, offline-safe
+      ACT_HYDRATED = true;
+      try { const c = JSON.parse(localStorage.getItem('wc2026_actuals')||'null');
+            if (c && c.data) { ACTUALS = c.data; ACT_SYNC = c.t||0; ACT_STATE = 'cache';
+                               ACT_SIG = JSON.stringify(c.data); applyActuals(); } } catch(e){}
+    }
+    fetch(ACT_SRC, {cache:'no-store'})
+      .then(r => { if (!r.ok) throw 0; return r.text(); })
+      .then(txt => {
+        const parsed = parseActuals(txt), sig = JSON.stringify(parsed);
+        ACTUALS = parsed; ACT_SYNC = Date.now(); ACT_STATE = 'live';
+        try { localStorage.setItem('wc2026_actuals', JSON.stringify({t:ACT_SYNC, data:parsed})); } catch(e){}
+        if (sig !== ACT_SIG) { ACT_SIG = sig; applyActuals(); }   // re-render only when a result actually changed
+        else renderSchedule();                                   // otherwise just refresh the synced-time line
+        scheduleNextRefresh();
+      })
+      .catch(() => { ACT_STATE = ACT_SYNC ? 'cache' : 'off'; renderSchedule(); scheduleNextRefresh(); });
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) loadActuals();               // catch up the moment the tab is seen again
+    else if (ACT_TIMER) { clearTimeout(ACT_TIMER); ACT_TIMER = null; }
+  });
+
   // ---- static chrome ----
   const oo = META.oos_logloss || {};
   const CHIP_TIP = {
@@ -476,18 +695,42 @@
       : `You're looking at <b>${lab}</b>: ${d}. My two favourites are <b>Pure Market</b> and <b>Hybrid</b>, but the spread across all five shows how much the winner depends on the method.`;
     el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
   }
-  document.getElementById('modelbar').innerHTML = '<span class="mlbl">Model</span>'+
-    order.map(k=>{
-      const c='mbtn'+(REC.has(k)?' rec':' dim')+(k===CUR?' on':'');
-      return `<button class="${c}" data-m="${k}" data-tip="${MODEL_TIP[k]||''}">${LABELS[k]}</button>`;
-    }).join('');
-  document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',()=>{
-    CUR=b.dataset.m;
-    document.querySelectorAll('.mbtn').forEach(x=>x.classList.toggle('on',x.dataset.m===CUR));
+  document.getElementById('modelbar').innerHTML =
+    '<span class="mlbl">Model</span>' +
+    '<div class="mdrop" id="mdrop">' +
+      '<button class="mdtrigger" id="mdtrigger" aria-haspopup="listbox" aria-expanded="false"></button>' +
+      '<div class="mdmenu" id="mdmenu" role="listbox"></div>' +
+    '</div>';
+  const mdrop = document.getElementById('mdrop'),
+        mdtrigger = document.getElementById('mdtrigger'),
+        mdmenu = document.getElementById('mdmenu');
+  function renderModelDrop(){
+    mdtrigger.innerHTML = `<span class="mdcur">${LABELS[CUR]}</span><span class="mdcaret"></span>`;
+    mdmenu.innerHTML = order.map(k=>
+      `<button class="mditem${k===CUR?' on':''}" role="option" aria-selected="${k===CUR}" data-m="${k}" data-tip="${MODEL_TIP[k]||''}">`
+      + `<span class="mdname">${LABELS[k]}</span>${REC.has(k)?'<span class="mdtag">pick</span>':''}</button>`
+    ).join('');
+  }
+  function closeDrop(){ mdrop.classList.remove('open'); mdtrigger.setAttribute('aria-expanded','false'); }
+  renderModelDrop();
+  mdtrigger.addEventListener('click', e=>{
+    e.stopPropagation();
+    const open = !mdrop.classList.contains('open');
+    mdrop.classList.toggle('open', open);
+    mdtrigger.setAttribute('aria-expanded', open);
+  });
+  mdmenu.addEventListener('click', e=>{
+    const it = e.target.closest('.mditem'); if(!it) return;
+    CUR = it.dataset.m;
+    closeDrop();
+    renderModelDrop();
     render();
+    renderSchedule();
     renderHint();
     if(typeof renderNL==='function') renderNL();
-  }));
+  });
+  document.addEventListener('click', closeDrop);
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDrop(); });
   renderHint();
 
   function render(){
@@ -532,27 +775,63 @@
     }).join('')+'</tbody>';
     document.getElementById('koTable').innerHTML=head+body;
 
-    // groups
-    document.getElementById('groupGrid').innerHTML = Object.keys(G).map(g=>{
-      const teams = G[g].slice().sort((a,b)=>T[b].win_group-T[a].win_group);
-      const maxw = Math.max(...teams.map(t=>T[t].win_group)) || 1;
-      const rows = teams.map(t=>`
-        <div class="grow">
-          <div class="tn">${t} <i>Elo ${T[t].elo}</i></div>
-          <div class="gp" data-tip="${t}: ${fmt(T[t].win_group)}% chance of finishing top of Group ${g}, under the ${LABELS[CUR]} model.">${Math.round(T[t].win_group)}%</div>
+    // groups: predicted group-winner odds + live actual table + collapsible match predictions
+    const grid = document.getElementById('groupGrid');
+    const openG = new Set([...grid.querySelectorAll('details.matches[open]')].map(d=>d.dataset.g));
+    grid.innerHTML = Object.keys(G).map(g=>{
+      const st = groupStandings(g);
+      const maxw = Math.max(...G[g].map(t=>T[t].win_group)) || 1;
+      // the model's predicted finishing order, strongest first
+      const predOrder = G[g].slice().sort((a,b)=> T[b].win_group-T[a].win_group || T[b].advance-T[a].advance || T[b].elo-T[a].elo);
+      const predRank = {}; predOrder.forEach((t,i)=>predRank[t]=i+1);
+      const teams = st.anyPlayed ? G[g].slice().sort((a,b)=>st.pos[a]-st.pos[b]) : predOrder;
+      const rows = teams.map(t=>{
+        const r = st.tbl[t], pr = predRank[t];
+        const predTip = `${t}: the ${LABELS[CUR]} model had them finishing <b>${ord(pr)}</b> in Group ${g} (${fmt(T[t].win_group)}% to win the group).`;
+        if (st.anyPlayed) {
+          const d = pr - st.pos[t];   // > 0 means above the predicted finish
+          const move = d>0 ? `<span class="gmove up" data-tip="Above the model's predicted finish by ${d}.">${d}</span>`
+                     : d<0 ? `<span class="gmove down" data-tip="Below the model's predicted finish by ${-d}.">${-d}</span>`
+                           : `<span class="gmove even" data-tip="Exactly where the model predicted.">on track</span>`;
+          return `<div class="grow">
+            <div class="tn"><span class="livepos${st.pos[t]<=2?' qual':''}" data-tip="Currently <b>${ord(st.pos[t])}</b> in Group ${g} on results. Top two and the best third-placed teams advance.">${st.pos[t]}</span>${t} <i>Elo ${T[t].elo}</i></div>
+            <div class="gp" data-tip="Points so far.">${r.pts}<small>pts</small></div>
+            <div class="gsub"><span>P${r.P} · GD ${r.gd>=0?'+':''}${r.gd}</span><span class="gpred" data-tip="${predTip}">model had ${ord(pr)} ${move}</span></div>
+          </div>`;
+        }
+        return `<div class="grow">
+          <div class="tn"><span class="predrank" data-tip="The model's predicted finishing order.">${pr}</span>${t} <i>Elo ${T[t].elo}</i></div>
+          <div class="gp" data-tip="${predTip}">${Math.round(T[t].win_group)}<small>%</small></div>
           <div class="gbar"><i style="width:${(T[t].win_group/maxw)*100}%"></i></div>
-        </div>`).join('');
-      const matches = GM[g].map(mm=>{
+        </div>`;
+      }).join('');
+      const matches = GM[g].slice().sort(byKO).map(mm=>{
         const tot=mm.p_home+mm.p_draw+mm.p_away;
         const alts = mm.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
+        const a = actualFor(mm);
+        let scoreBlock, predRow = '';
+        if (a) {
+          const tier = predTier(mm,a);
+          scoreBlock = `<div class="scwrap"><div class="sc ft" data-tip="The real result, full time.">${a.hs}-${a.as}</div><div class="sclab">result</div></div>`;
+          predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${mm.modal[0]}-${mm.modal[1]}</div><div class="sclab">predicted</div></div>`;
+        } else {
+          scoreBlock = `<div class="scwrap"><div class="sc" data-tip="The model's most likely scoreline (a prediction). Trust the win/draw/loss split more than this exact number.">${mm.modal[0]}-${mm.modal[1]}</div><div class="sclab">predicted</div></div>`;
+        }
         return `<div class="m">
-          <div class="top"><div class="ta">${mm.home}</div><div class="sc">${mm.modal[0]}-${mm.modal[1]}</div><div class="tb">${mm.away}</div></div>
+          <div class="mcap">${fmtDay(mm.date)}</div>
+          <div class="top"><div class="ta">${mm.home}</div>${scoreBlock}<div class="tb">${mm.away}</div></div>
+          ${predRow}
           <div class="wdl"><i class="w" style="width:${mm.p_home/tot*100}%"></i><i class="d" style="width:${mm.p_draw/tot*100}%"></i><i class="l" style="width:${mm.p_away/tot*100}%"></i></div>
           <div class="det"><span>W ${fmt(mm.p_home)}% · D ${fmt(mm.p_draw)}% · L ${fmt(mm.p_away)}%</span><span class="alts">also: <span>${alts}</span></span></div>
         </div>`;
       }).join('');
-      return `<div class="gcard"><div class="ghd"><div class="g">${g}</div><div class="t">Group ${g}</div></div>
-        ${rows}<div class="matches"><div class="mh">Match predictions</div>${matches}</div></div>`;
+      const mp = MODELS[CUR].group_matches[g].filter(m=>actualFor(m)).length;
+      return `<div class="gcard"><div class="ghd"><div class="g">${g}</div><div class="t">${st.anyPlayed?'Live vs predicted':'Group '+g}</div></div>
+        ${rows}
+        <details class="matches" data-g="${g}"${openG.has(g)?' open':''}>
+          <summary><span>Match predictions${mp?` <span class="mpc">${mp} played</span>`:''}</span><span class="chev"></span></summary>
+          ${matches}
+        </details></div>`;
     }).join('');
 
     // calibration table (selected model vs Opta/market)
@@ -564,7 +843,70 @@
         `<td style="color:var(--gold)">${MKT[t]!=null?MKT[t]+'%':'n/a'}</td></tr>`).join('');
   }
 
+  // ---- schedule (all fixtures, by date, with live results) ----
+  function renderSchedule(){
+    const host = document.getElementById('schedList'); if (!host) return;
+    const GM = MODELS[CUR].group_matches;
+    const all = [];
+    Object.keys(GM).forEach(g => GM[g].forEach(m => all.push(m)));
+    all.sort(byKO);
+    const dayCount = {};
+    all.forEach(m => { dayCount[m.date] = (dayCount[m.date]||0)+1; });
+    let played = 0, against = 0, exact = 0, html = '', curDay = null;
+    all.forEach(mm => {
+      if (mm.date !== curDay) {
+        curDay = mm.date; const c = dayCount[curDay];
+        html += `<div class="sday">${fmtDayLong(curDay)} <span class="cnt">${c} ${c>1?'matches':'match'}</span></div>`;
+      }
+      const a = actualFor(mm), fav = favOutcome(mm);
+      const favName = fav==='H' ? mm.home : (fav==='A' ? mm.away : 'Draw');
+      let right;
+      if (a) {
+        played++; const tier = predTier(mm,a);
+        if (tier==='miss') against++; else if (tier==='exact') exact++;
+        right = `<div class="sact">${a.hs}-${a.as}<small>result</small></div>`
+              + `<div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${mm.modal[0]}-${mm.modal[1]}<span class="pl">pred</span></div>`;
+      } else {
+        right = `<div class="spred">pred <b>${mm.modal[0]}-${mm.modal[1]}</b><small>${favName==='Draw'?'lean draw':favName+' favoured'}</small></div>`;
+      }
+      html += `<div class="srow">
+        <div class="stime">${mm.local_time}<small>${mm.tz}</small></div>
+        <div class="smatch"><div class="teams"><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span>${mm.home} <i>v</i> ${mm.away}</div><div class="sub">${mm.venue}</div></div>
+        <div class="sright">${right}</div>
+      </div>`;
+    });
+    host.innerHTML = html;
+    const sb = document.getElementById('schedScore');
+    if (sb) {
+      const lab = LABELS[CUR] || CUR;
+      if (!played)
+        sb.innerHTML = `<div class="sbnote"><span>How the <b>${lab}</b> model is doing will show here once games are played.</span></div>`;
+      else {
+        const pct = Math.round((played-against)/played*100);
+        sb.innerHTML =
+            `<div class="sbstat"><div class="sbnum">${played-against}/${played}</div><div class="sbcap">called right &middot; ${pct}%</div></div>`
+          + `<div class="sbstat"><div class="sbnum">${exact}</div><div class="sbcap">exact scores</div></div>`
+          + `<div class="sbnote"><span>How the <b>${lab}</b> model is doing so far.</span></div>`;
+      }
+    }
+    const pk = document.getElementById('predKey');
+    if (pk) pk.innerHTML = played
+      ? `<span><i class="k exact"></i>exact score</span><span><i class="k result"></i>right result</span><span><i class="k miss"></i>wrong result</span>`
+      : '';
+    const sync = document.getElementById('schedSync'); if (!sync) return;
+    const when = ACT_SYNC ? new Date(ACT_SYNC).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+    if (ACT_STATE==='live' || ACT_STATE==='cache')
+      sync.innerHTML = `<span class="dotlive"></span>Live results &middot; ${played} of ${all.length} played`
+                     + (when ? ` &middot; synced ${when}` : '');
+    else if (ACT_STATE==='off')
+      sync.innerHTML = `<span class="dotoff"></span>Live results unavailable, showing predictions only`;
+    else
+      sync.innerHTML = `<span class="dotoff"></span>Loading results…`;
+  }
+
   render();
+  renderSchedule();
+  loadActuals();
 
   // ---- Netherlands match timeline (model-aware) ----
   // Per-model expected goals for each Dutch fixture, straight from the engine.
@@ -629,7 +971,7 @@
           <div class="stage">${fx.stage}</div>
           <div class="mt">
             <div class="vs">Netherlands <em>v</em> ${fx.opp}</div>
-            <div class="ftbig">${s.a}\u2013${s.b}<small>FULL TIME</small></div>
+            <div class="ftbig">${s.a}\u2013${s.b}<small>PREDICTED</small></div>
           </div>
           <div class="nltl">
             <div class="cap l">KO 0'</div>
@@ -658,7 +1000,11 @@
     document.querySelectorAll('section').forEach(s=>s.classList.remove('on'));
     btn.classList.add('on');
     document.getElementById(btn.dataset.t).classList.add('on');
-    window.scrollTo({top:0,behavior:'smooth'});
+    // only pull up to the sticky bar if it has been scrolled past, so switching
+    // tabs near the top does not jump the page around
+    const tb = document.querySelector('.topbar');
+    const tgt = tb ? tb.offsetTop : 0;
+    if (window.scrollY > tgt + 2) window.scrollTo({top:tgt, behavior:'smooth'});
   }));
 })();
 </script>
