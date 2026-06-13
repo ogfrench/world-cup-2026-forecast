@@ -242,6 +242,12 @@
   .m .fttag{color:var(--lime);letter-spacing:.1em;text-transform:uppercase;font-size:9px}
 
   /* ---------- schedule (by date) ---------- */
+  .scoreboard{display:flex;align-items:center;gap:15px;background:var(--surface);border:1px solid var(--line);
+              border-radius:11px;padding:14px 17px;margin:6px 0 12px}
+  .scoreboard .big{font-family:'Anton';font-size:32px;color:var(--lime);line-height:.95;white-space:nowrap}
+  .scoreboard .lbl{font-size:13px;color:var(--muted);line-height:1.45}
+  .scoreboard .lbl b{color:var(--txt);font-weight:700}
+  .scoreboard .pct{font-family:'DM Mono';font-size:11px;color:var(--faint)}
   .schedsync{display:flex;align-items:center;gap:8px;font-family:'DM Mono';font-size:11.5px;
              color:var(--muted);margin:2px 0 6px}
   .schedsync .dotlive{width:8px;height:8px;border-radius:50%;background:var(--win);animation:pulse 2.4s infinite}
@@ -394,6 +400,7 @@
   <section id="schedule">
     <div class="sec-h">The tournament, by date</div>
     <p class="lead">Every group fixture in kickoff order, shown the right way round, with the selected model's most likely scoreline. As games are played the real result slots in next to the prediction, and any match that went against the model is flagged. Knockout fixtures join the list once the bracket is set.</p>
+    <div class="scoreboard" id="schedScore"></div>
     <div class="schedsync" id="schedSync"></div>
     <div class="sched" id="schedList"></div>
   </section>
@@ -750,6 +757,17 @@
       </div>`;
     });
     host.innerHTML = html;
+    const sb = document.getElementById('schedScore');
+    if (sb) {
+      if (!played)
+        sb.innerHTML = `<div class="big">&ndash;</div><div class="lbl">No results in yet. <span class="pct">The model's calls get scored here as games are played.</span></div>`;
+      else {
+        const hits = played - against, pct = Math.round(hits/played*100);
+        sb.innerHTML = `<div class="big">${hits}/${played}</div>`
+          + `<div class="lbl">results the model <b>called right</b> so far (${pct}%)<br>`
+          + `<span class="pct">a call is the most likely outcome, win draw or loss, not the exact score</span></div>`;
+      }
+    }
     const sync = document.getElementById('schedSync'); if (!sync) return;
     const when = ACT_SYNC ? new Date(ACT_SYNC).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
     if (ACT_STATE==='live' || ACT_STATE==='cache')
