@@ -140,6 +140,13 @@
   .grow .tn .livepos{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;flex:none;
        font-family:'DM Mono';font-size:10px;font-weight:600;border-radius:5px;background:var(--line2);color:var(--txt)}
   .grow .tn .livepos.qual{background:var(--lime-dim);color:var(--bg)}
+  .grow .tn .predrank{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;flex:none;
+       font-family:'DM Mono';font-size:10px;font-weight:600;border-radius:5px;background:transparent;border:1px solid var(--line2);color:var(--muted)}
+  .grow .gmove{display:inline-flex;align-items:center;gap:3px;font-weight:700;margin-left:5px}
+  .grow .gmove::before{content:"";width:0;height:0;border-left:3.5px solid transparent;border-right:3.5px solid transparent}
+  .grow .gmove.up{color:var(--win)} .grow .gmove.up::before{border-bottom:6px solid var(--win)}
+  .grow .gmove.down{color:var(--loss)} .grow .gmove.down::before{border-top:6px solid var(--loss)}
+  .grow .gmove.even{color:var(--faint)}
   /* collapsible match predictions */
   details.matches{border-top:1px solid var(--line)}
   details.matches > summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -189,18 +196,30 @@
   .madeby a svg{width:14px;height:14px;display:block}
   .madeby .sep{color:var(--line2)}
 
-  /* ---------- model switcher ---------- */
-  .modelbar{display:flex;align-items:center;gap:8px;margin:0;padding:9px 0;
-            overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line)}
-  .modelbar::-webkit-scrollbar{display:none}
-  .mlbl{font-family:'DM Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-right:3px}
-  .mbtn{font-family:'Archivo';font-weight:700;font-size:12.5px;color:var(--txt);
-        background:var(--surface);border:1px solid var(--line2);border-radius:999px;
-        padding:8px 14px;cursor:pointer;transition:.15s;white-space:nowrap;opacity:1}
-  .mbtn.rec{border-color:rgba(200,255,77,.55)}
-  .mbtn.dim{color:var(--muted);border-color:var(--line)}
-  .mbtn:hover{opacity:1;color:var(--txt);border-color:var(--faint)}
-  .mbtn.on{color:var(--bg);background:var(--lime);border-color:var(--lime);opacity:1}
+  /* ---------- model switcher (dropdown) ---------- */
+  .modelbar{display:flex;align-items:center;gap:10px;margin:0;padding:9px 0;border-bottom:1px solid var(--line)}
+  .mlbl{font-family:'DM Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-right:1px}
+  .mdrop{position:relative}
+  .mdtrigger{display:inline-flex;align-items:center;gap:10px;font-family:'Archivo';font-weight:700;font-size:13px;
+       color:var(--txt);background:var(--surface);border:1px solid var(--line2);border-radius:999px;
+       padding:8px 15px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .mdtrigger:hover{border-color:var(--faint)}
+  .mdrop.open .mdtrigger{border-color:var(--lime);color:var(--lime)}
+  .mdcaret{width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;
+       transform:rotate(45deg) translate(-1px,-1px);transition:transform .2s}
+  .mdrop.open .mdcaret{transform:rotate(-135deg) translate(-1px,-1px)}
+  .mdmenu{position:absolute;top:calc(100% + 9px);left:0;z-index:40;min-width:240px;max-width:min(300px,calc(100vw - 26px));
+       background:var(--surface2);border:1px solid var(--line2);border-radius:13px;padding:6px;
+       box-shadow:0 18px 44px rgba(0,0,0,.55);opacity:0;transform:translateY(-7px);pointer-events:none;
+       transition:opacity .15s ease,transform .15s ease}
+  .mdrop.open .mdmenu{opacity:1;transform:none;pointer-events:auto}
+  .mditem{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+       font-family:'Archivo';font-weight:600;font-size:13px;color:var(--txt);background:none;border:none;
+       border-radius:9px;padding:10px 11px;cursor:pointer;text-align:left;transition:background .12s,color .12s}
+  .mditem:hover{background:var(--surface)}
+  .mditem.on{color:var(--lime);background:var(--surface)}
+  .mdtag{flex:none;font-family:'DM Mono';font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+       color:var(--lime-dim);border:1px solid rgba(200,255,77,.4);border-radius:5px;padding:1px 6px}
   .mhint{font-size:12px;color:var(--muted);margin:2px 0 22px;max-width:680px;line-height:1.55}
   .mhint b{color:var(--txt);font-weight:600}
   .mhint.flash{animation:hintIn .28s ease}
@@ -391,9 +410,9 @@
   <div class="topbar">
     <div class="modelbar" id="modelbar"></div>
     <nav>
-      <button class="tab on" data-t="race">Title &amp; Knockout</button>
+      <button class="tab on" data-t="schedule">Schedule</button>
       <button class="tab" data-t="groups">Groups &amp; Scores</button>
-      <button class="tab" data-t="schedule">Schedule</button>
+      <button class="tab" data-t="race">Title &amp; Knockout</button>
       <button class="tab" data-t="nl">Netherlands</button>
       <button class="tab" data-t="method">Method &amp; Caveats</button>
     </nav>
@@ -401,7 +420,7 @@
   <div class="mhint" id="mhint"></div>
 
   <!-- TITLE RACE -->
-  <section class="on" id="race">
+  <section id="race">
     <div class="podium" id="podium"></div>
     <div class="sec-h">Who lifts the trophy</div>
     <p class="lead">Every bar is a team's chance of going all the way under the selected model. The dots show where Opta's supercomputer and the betting market land, as a sanity check.</p>
@@ -421,14 +440,14 @@
   <!-- GROUPS -->
   <section id="groups">
     <div class="sec-h">Group winner odds &amp; match-by-match</div>
-    <p class="lead">The percentage is each team's chance of topping its group, under the selected model. Each fixture below shows its most likely scoreline, the win/draw/loss split, and the next-likeliest scores. One honest note: that single "most likely score" is a near coin toss between a few options, so trust the win/draw/loss bar more than the exact number.</p>
+    <p class="lead">The live table against where the model predicted each team to finish. The arrow shows who is beating or missing the forecast. Expand a group for the match-by-match predictions and results.</p>
     <div class="grid" id="groupGrid"></div>
   </section>
 
   <!-- SCHEDULE -->
-  <section id="schedule">
+  <section class="on" id="schedule">
     <div class="sec-h">The tournament, by date</div>
-    <p class="lead">Every group fixture in kickoff order, shown the right way round, with the selected model's most likely scoreline. As games are played the real result slots in next to the prediction, and any match that went against the model is flagged. Knockout fixtures join the list once the bracket is set.</p>
+    <p class="lead">Every fixture by kickoff time, with the model's predicted score. Real results slot in as games are played. Knockouts join once the bracket is set.</p>
     <div class="scoreboard" id="schedScore"></div>
     <div class="predkey" id="predKey"></div>
     <div class="schedsync" id="schedSync"></div>
@@ -676,19 +695,42 @@
       : `You're looking at <b>${lab}</b>: ${d}. My two favourites are <b>Pure Market</b> and <b>Hybrid</b>, but the spread across all five shows how much the winner depends on the method.`;
     el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
   }
-  document.getElementById('modelbar').innerHTML = '<span class="mlbl">Model</span>'+
-    order.map(k=>{
-      const c='mbtn'+(REC.has(k)?' rec':' dim')+(k===CUR?' on':'');
-      return `<button class="${c}" data-m="${k}" data-tip="${MODEL_TIP[k]||''}">${LABELS[k]}</button>`;
-    }).join('');
-  document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',()=>{
-    CUR=b.dataset.m;
-    document.querySelectorAll('.mbtn').forEach(x=>x.classList.toggle('on',x.dataset.m===CUR));
+  document.getElementById('modelbar').innerHTML =
+    '<span class="mlbl">Model</span>' +
+    '<div class="mdrop" id="mdrop">' +
+      '<button class="mdtrigger" id="mdtrigger" aria-haspopup="listbox" aria-expanded="false"></button>' +
+      '<div class="mdmenu" id="mdmenu" role="listbox"></div>' +
+    '</div>';
+  const mdrop = document.getElementById('mdrop'),
+        mdtrigger = document.getElementById('mdtrigger'),
+        mdmenu = document.getElementById('mdmenu');
+  function renderModelDrop(){
+    mdtrigger.innerHTML = `<span class="mdcur">${LABELS[CUR]}</span><span class="mdcaret"></span>`;
+    mdmenu.innerHTML = order.map(k=>
+      `<button class="mditem${k===CUR?' on':''}" role="option" aria-selected="${k===CUR}" data-m="${k}" data-tip="${MODEL_TIP[k]||''}">`
+      + `<span class="mdname">${LABELS[k]}</span>${REC.has(k)?'<span class="mdtag">pick</span>':''}</button>`
+    ).join('');
+  }
+  function closeDrop(){ mdrop.classList.remove('open'); mdtrigger.setAttribute('aria-expanded','false'); }
+  renderModelDrop();
+  mdtrigger.addEventListener('click', e=>{
+    e.stopPropagation();
+    const open = !mdrop.classList.contains('open');
+    mdrop.classList.toggle('open', open);
+    mdtrigger.setAttribute('aria-expanded', open);
+  });
+  mdmenu.addEventListener('click', e=>{
+    const it = e.target.closest('.mditem'); if(!it) return;
+    CUR = it.dataset.m;
+    closeDrop();
+    renderModelDrop();
     render();
     renderSchedule();
     renderHint();
     if(typeof renderNL==='function') renderNL();
-  }));
+  });
+  document.addEventListener('click', closeDrop);
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDrop(); });
   renderHint();
 
   function render(){
@@ -739,25 +781,28 @@
     grid.innerHTML = Object.keys(G).map(g=>{
       const st = groupStandings(g);
       const maxw = Math.max(...G[g].map(t=>T[t].win_group)) || 1;
-      const teams = st.anyPlayed
-        ? G[g].slice().sort((a,b)=>st.pos[a]-st.pos[b])         // live: actual table order
-        : G[g].slice().sort((a,b)=>T[b].win_group-T[a].win_group); // pre-tournament: predicted order
+      // the model's predicted finishing order, strongest first
+      const predOrder = G[g].slice().sort((a,b)=> T[b].win_group-T[a].win_group || T[b].advance-T[a].advance || T[b].elo-T[a].elo);
+      const predRank = {}; predOrder.forEach((t,i)=>predRank[t]=i+1);
+      const teams = st.anyPlayed ? G[g].slice().sort((a,b)=>st.pos[a]-st.pos[b]) : predOrder;
       const rows = teams.map(t=>{
-        const r = st.tbl[t], pred = `${Math.round(T[t].win_group)}%`;
-        const predTipTxt = `${t}: ${fmt(T[t].win_group)}% predicted chance to top Group ${g}, under the ${LABELS[CUR]} model.`;
-        const bar = `<div class="gbar"><i style="width:${(T[t].win_group/maxw)*100}%"></i></div>`;
+        const r = st.tbl[t], pr = predRank[t];
+        const predTip = `${t}: the ${LABELS[CUR]} model had them finishing <b>${ord(pr)}</b> in Group ${g} (${fmt(T[t].win_group)}% to win the group).`;
         if (st.anyPlayed) {
+          const d = pr - st.pos[t];   // > 0 means above the predicted finish
+          const move = d>0 ? `<span class="gmove up" data-tip="Above the model's predicted finish by ${d}.">${d}</span>`
+                     : d<0 ? `<span class="gmove down" data-tip="Below the model's predicted finish by ${-d}.">${-d}</span>`
+                           : `<span class="gmove even" data-tip="Exactly where the model predicted.">on track</span>`;
           return `<div class="grow">
-            <div class="tn"><span class="livepos${st.pos[t]<=2?' qual':''}" data-tip="Currently <b>${ord(st.pos[t])}</b> in Group ${g}. Top two plus the best third-placed teams advance.">${st.pos[t]}</span>${t} <i>Elo ${T[t].elo}</i></div>
-            <div class="gp" data-tip="Actual points so far in Group ${g}.">${r.pts}<small>pts</small></div>
-            <div class="gsub"><span>Played ${r.P} · GD ${r.gd>=0?'+':''}${r.gd}</span><span class="gpred" data-tip="${predTipTxt}">${pred} to top, predicted</span></div>
-            ${bar}
+            <div class="tn"><span class="livepos${st.pos[t]<=2?' qual':''}" data-tip="Currently <b>${ord(st.pos[t])}</b> in Group ${g} on results. Top two and the best third-placed teams advance.">${st.pos[t]}</span>${t} <i>Elo ${T[t].elo}</i></div>
+            <div class="gp" data-tip="Points so far.">${r.pts}<small>pts</small></div>
+            <div class="gsub"><span>P${r.P} · GD ${r.gd>=0?'+':''}${r.gd}</span><span class="gpred" data-tip="${predTip}">model had ${ord(pr)} ${move}</span></div>
           </div>`;
         }
         return `<div class="grow">
-          <div class="tn">${t} <i>Elo ${T[t].elo}</i></div>
-          <div class="gp" data-tip="${predTipTxt}">${pred}</div>
-          ${bar}
+          <div class="tn"><span class="predrank" data-tip="The model's predicted finishing order.">${pr}</span>${t} <i>Elo ${T[t].elo}</i></div>
+          <div class="gp" data-tip="${predTip}">${Math.round(T[t].win_group)}<small>%</small></div>
+          <div class="gbar"><i style="width:${(T[t].win_group/maxw)*100}%"></i></div>
         </div>`;
       }).join('');
       const matches = GM[g].slice().sort(byKO).map(mm=>{
@@ -781,7 +826,7 @@
         </div>`;
       }).join('');
       const mp = MODELS[CUR].group_matches[g].filter(m=>actualFor(m)).length;
-      return `<div class="gcard"><div class="ghd"><div class="g">${g}</div><div class="t">${st.anyPlayed?'Live table &amp; odds':'Group '+g}</div></div>
+      return `<div class="gcard"><div class="ghd"><div class="g">${g}</div><div class="t">${st.anyPlayed?'Live vs predicted':'Group '+g}</div></div>
         ${rows}
         <details class="matches" data-g="${g}"${openG.has(g)?' open':''}>
           <summary><span>Match predictions${mp?` <span class="mpc">${mp} played</span>`:''}</span><span class="chev"></span></summary>
@@ -835,13 +880,13 @@
     if (sb) {
       const lab = LABELS[CUR] || CUR;
       if (!played)
-        sb.innerHTML = `<div class="sbnote">How the <b>${lab}</b> model does gets scored here once games are played.</div>`;
+        sb.innerHTML = `<div class="sbnote"><span>How the <b>${lab}</b> model is doing will show here once games are played.</span></div>`;
       else {
         const pct = Math.round((played-against)/played*100);
         sb.innerHTML =
             `<div class="sbstat"><div class="sbnum">${played-against}/${played}</div><div class="sbcap">called right &middot; ${pct}%</div></div>`
           + `<div class="sbstat"><div class="sbnum">${exact}</div><div class="sbcap">exact scores</div></div>`
-          + `<div class="sbnote">How the <b>${lab}</b> model is doing so far.</div>`;
+          + `<div class="sbnote"><span>How the <b>${lab}</b> model is doing so far.</span></div>`;
       }
     }
     const pk = document.getElementById('predKey');
