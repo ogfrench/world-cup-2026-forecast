@@ -318,6 +318,7 @@
            display:flex;align-items:center;gap:7px;flex-wrap:wrap}
   .m .mcap .gpill{font-family:'DM Mono';font-size:9px;color:var(--bg);background:var(--faint);border-radius:3px;padding:1px 5px;letter-spacing:0}
   .m .mcap .captime{color:var(--muted)}
+  .m .mcap .captz{color:var(--faint);font-size:9px}
   .m .sc.ft{color:var(--txt);border-color:var(--line2);background:var(--surface2)}
   .m .sclab{font-family:'DM Mono';font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
   .m .predline{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:9px}
@@ -599,6 +600,12 @@
   const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const fmtDay = iso => { const p = iso.split('-'); return MON[+p[1]-1] + ' ' + (+p[2]); };
   const fmtDayLong = iso => WD[new Date(iso+'T12:00:00Z').getUTCDay()] + ' ' + fmtDay(iso);
+  // everything time-facing is shown in the viewer's local timezone, from the stored UTC kickoff
+  const koLocal = mm => new Date(mm.kickoff_utc);
+  const localTime = mm => koLocal(mm).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+  const localDay = mm => { const d = koLocal(mm); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+  let TZ = '';
+  try { TZ = new Intl.DateTimeFormat(undefined,{timeZoneName:'short'}).formatToParts(new Date()).find(p=>p.type==='timeZoneName').value || ''; } catch(e){}
   const byKO = (a,b) => a.kickoff_utc < b.kickoff_utc ? -1 : (a.kickoff_utc > b.kickoff_utc ? 1 : 0);
   const favOutcome = m => { const x = Math.max(m.p_home,m.p_draw,m.p_away);
                             return x===m.p_home ? 'H' : (x===m.p_away ? 'A' : 'D'); };
@@ -703,8 +710,8 @@
     const alts = mm.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
     const a = actualFor(mm);
     const cap = schedule
-      ? `<span class="captime">${mm.local_time} ${mm.tz}</span><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span><span class="capven">${mm.venue}</span>`
-      : fmtDay(mm.date);
+      ? `<span class="captime">${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span><span class="capven">${mm.venue}</span>`
+      : fmtDay(localDay(mm));
     let chip, clab, predRow = '';
     if (a) {
       const tier = predTier(mm,a);
@@ -992,14 +999,15 @@
     Object.keys(GM).forEach(g => GM[g].forEach(m => all.push(m)));
     all.sort(byKO);
     const dayCount = {};
-    all.forEach(m => { dayCount[m.date] = (dayCount[m.date]||0)+1; });
+    all.forEach(m => { const k = localDay(m); dayCount[k] = (dayCount[k]||0)+1; });
     let played = 0, against = 0, exact = 0;
     all.forEach(mm => { const a = actualFor(mm); if (a) { played++; const t = predTier(mm,a); if (t==='miss') against++; else if (t==='exact') exact++; } });
     let html = '', curDay = null, open = false;
     all.forEach(mm => {
-      if (mm.date !== curDay) {
+      const day = localDay(mm);
+      if (day !== curDay) {
         if (open) html += '</div>';
-        curDay = mm.date; const c = dayCount[curDay];
+        curDay = day; const c = dayCount[curDay];
         html += `<div class="sday" data-date="${curDay}">${fmtDayLong(curDay)} <span class="cnt">${c} ${c>1?'matches':'match'}</span></div><div class="grid sgrid">`;
         open = true;
       }
