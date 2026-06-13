@@ -132,8 +132,22 @@
   .gbar i{display:block;height:100%;background:var(--lime-dim);border-radius:3px}
   .grow .gp{font-family:'DM Mono';font-size:13px;color:var(--lime);text-align:right}
 
-  .matches{border-top:1px solid var(--line);padding:6px 0 4px}
-  .matches .mh{font-family:'DM Mono';font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);padding:8px 15px 4px}
+  /* live actual standing next to the predicted group-winner odds */
+  .grow .tn .livepos{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;flex:none;
+       font-family:'DM Mono';font-size:10px;font-weight:600;border-radius:5px;background:var(--line2);color:var(--txt)}
+  .grow .tn .livepos.qual{background:var(--lime-dim);color:var(--bg)}
+  .grow .gact{grid-column:1/3;font-family:'DM Mono';font-size:10px;color:var(--faint);margin-top:3px}
+  /* collapsible match predictions */
+  details.matches{border-top:1px solid var(--line)}
+  details.matches > summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;
+       padding:11px 15px;font-family:'DM Mono';font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  details.matches > summary::-webkit-details-marker{display:none}
+  details.matches > summary:hover{color:var(--muted)}
+  details.matches[open] > summary{border-bottom:1px solid var(--line);color:var(--muted)}
+  details.matches .mpc{color:var(--lime);margin-left:8px}
+  details.matches .chev{flex:none;width:7px;height:7px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;
+       transform:rotate(45deg);transition:transform .2s}
+  details.matches[open] .chev{transform:rotate(-135deg)}
   .m{padding:9px 15px;border-top:1px solid var(--line)}
   .m:first-of-type{border-top:none}
   .m .top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
@@ -374,8 +388,7 @@
   <div class="topbar">
     <div class="modelbar" id="modelbar"></div>
     <nav>
-      <button class="tab on" data-t="race">Title Race</button>
-      <button class="tab" data-t="ko">Knockout Odds</button>
+      <button class="tab on" data-t="race">Title &amp; Knockout</button>
       <button class="tab" data-t="groups">Groups &amp; Scores</button>
       <button class="tab" data-t="schedule">Schedule</button>
       <button class="tab" data-t="nl">Netherlands</button>
@@ -396,10 +409,7 @@
       <span style="color:var(--faint)" data-tip="Monte Carlo standard error: how much this number would wobble if you re-ran the 50,000 tournaments. Small means the estimate is stable."><span class="has-tip">± = Monte Carlo standard error</span></span>
     </div>
     <div id="raceBars"></div>
-  </section>
 
-  <!-- KNOCKOUT -->
-  <section id="ko">
     <div class="sec-h">Road to the final</div>
     <p class="lead">How far each team gets. Every number is how often that team reached that round across the 50,000 simulations, and the odds pile onto the favourites as the field thins out.</p>
     <div class="tbl-scroll"><table id="koTable"></table></div>
@@ -508,6 +518,22 @@
     result:'The model got the result right but not the exact score. <b>Amber</b>: right result, wrong score.',
     miss:'The result went against the model. <b>Red</b>: wrong result.'
   };
+  const ord = n => ['', '1st', '2nd', '3rd', '4th'][n] || (n+'th');
+  // live group table from actual results, ranked points then goal difference then goals for
+  function groupStandings(g){
+    const teams = G[g];
+    const tbl = {}; teams.forEach(t => tbl[t] = {P:0,pts:0,gf:0,ga:0,gd:0});
+    MODELS[CUR].group_matches[g].forEach(m => {
+      const a = actualFor(m); if (!a) return;
+      const h = m.home, aw = m.away;
+      tbl[h].P++; tbl[aw].P++; tbl[h].gf += a.hs; tbl[h].ga += a.as; tbl[aw].gf += a.as; tbl[aw].ga += a.hs;
+      if (a.hs > a.as) tbl[h].pts += 3; else if (a.hs < a.as) tbl[aw].pts += 3; else { tbl[h].pts++; tbl[aw].pts++; }
+    });
+    teams.forEach(t => tbl[t].gd = tbl[t].gf - tbl[t].ga);
+    const order = teams.slice().sort((x,y) => tbl[y].pts-tbl[x].pts || tbl[y].gd-tbl[x].gd || tbl[y].gf-tbl[x].gf || x.localeCompare(y));
+    const pos = {}; order.forEach((t,i) => pos[t] = i+1);
+    return {tbl, pos, anyPlayed: teams.some(t => tbl[t].P>0)};
+  }
 
   // ---- live actual results -----------------------------------------------
   // Fetched in the browser from the openfootball World Cup 2026 dataset on
@@ -704,16 +730,28 @@
     }).join('')+'</tbody>';
     document.getElementById('koTable').innerHTML=head+body;
 
-    // groups
-    document.getElementById('groupGrid').innerHTML = Object.keys(G).map(g=>{
+    // groups: predicted group-winner odds + live actual table + collapsible match predictions
+    const grid = document.getElementById('groupGrid');
+    const openG = new Set([...grid.querySelectorAll('details.matches[open]')].map(d=>d.dataset.g));
+    grid.innerHTML = Object.keys(G).map(g=>{
       const teams = G[g].slice().sort((a,b)=>T[b].win_group-T[a].win_group);
       const maxw = Math.max(...teams.map(t=>T[t].win_group)) || 1;
-      const rows = teams.map(t=>`
-        <div class="grow">
-          <div class="tn">${t} <i>Elo ${T[t].elo}</i></div>
-          <div class="gp" data-tip="${t}: ${fmt(T[t].win_group)}% chance of finishing top of Group ${g}, under the ${LABELS[CUR]} model.">${Math.round(T[t].win_group)}%</div>
+      const st = groupStandings(g);
+      const rows = teams.map(t=>{
+        const r = st.tbl[t];
+        const pos = st.anyPlayed
+          ? `<span class="livepos${st.pos[t]<=2?' qual':''}" data-tip="Currently <b>${ord(st.pos[t])}</b> in Group ${g} on actual results (P${r.P}, ${r.pts} pts, GD ${r.gd>=0?'+':''}${r.gd}). Top two plus the best third-placed teams advance.">${st.pos[t]}</span>`
+          : '';
+        const gact = st.anyPlayed
+          ? `<div class="gact" data-tip="Actual record so far in Group ${g}.">Played ${r.P} · ${r.pts} pts · GD ${r.gd>=0?'+':''}${r.gd}</div>`
+          : '';
+        return `<div class="grow">
+          <div class="tn">${pos}${t} <i>Elo ${T[t].elo}</i></div>
+          <div class="gp" data-tip="${t}: ${fmt(T[t].win_group)}% predicted chance of finishing top of Group ${g}, under the ${LABELS[CUR]} model.">${Math.round(T[t].win_group)}%</div>
           <div class="gbar"><i style="width:${(T[t].win_group/maxw)*100}%"></i></div>
-        </div>`).join('');
+          ${gact}
+        </div>`;
+      }).join('');
       const matches = GM[g].slice().sort(byKO).map(mm=>{
         const tot=mm.p_home+mm.p_draw+mm.p_away;
         const alts = mm.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
@@ -734,8 +772,13 @@
           <div class="det"><span>W ${fmt(mm.p_home)}% · D ${fmt(mm.p_draw)}% · L ${fmt(mm.p_away)}%</span><span class="alts">also: <span>${alts}</span></span></div>
         </div>`;
       }).join('');
-      return `<div class="gcard"><div class="ghd"><div class="g">${g}</div><div class="t">Group ${g}</div></div>
-        ${rows}<div class="matches"><div class="mh">Match predictions</div>${matches}</div></div>`;
+      const mp = MODELS[CUR].group_matches[g].filter(m=>actualFor(m)).length;
+      return `<div class="gcard"><div class="ghd"><div class="g">${g}</div><div class="t">${st.anyPlayed?'Live table &amp; odds':'Group '+g}</div></div>
+        ${rows}
+        <details class="matches" data-g="${g}"${openG.has(g)?' open':''}>
+          <summary><span>Match predictions${mp?` <span class="mpc">${mp} played</span>`:''}</span><span class="chev"></span></summary>
+          ${matches}
+        </details></div>`;
     }).join('');
 
     // calibration table (selected model vs Opta/market)
