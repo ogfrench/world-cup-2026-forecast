@@ -63,6 +63,9 @@
        padding:16px 14px;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s}
   .tab:hover{color:var(--txt)}
   .tab.on{color:var(--lime);border-bottom-color:var(--lime)}
+  .tab .soon{font-family:'DM Mono';font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;
+       color:var(--lime-dim);border:1px solid rgba(200,255,77,.32);border-radius:4px;
+       padding:1px 4px;margin-left:5px;vertical-align:middle;font-weight:500}
 
   section{display:none;animation:fade .35s ease}
   section.on{display:block}
@@ -418,8 +421,9 @@
   <div class="topbar">
     <div class="modelbar" id="modelbar"></div>
     <nav>
-      <button class="tab on" data-t="race">Title &amp; Knockout</button>
+      <button class="tab on" data-t="race">Title Odds</button>
       <button class="tab" data-t="groups">Groups &amp; Scores</button>
+      <button class="tab" data-t="knockout">Knockout Phase <span class="soon">soon</span></button>
       <button class="tab" data-t="schedule">Schedule</button>
       <button class="tab" data-t="nl">Netherlands</button>
       <button class="tab" data-t="method">Method &amp; Caveats</button>
@@ -447,9 +451,16 @@
   <!-- GROUPS -->
   <section id="groups">
     <div class="sec-h">Group winner odds &amp; match-by-match</div>
-    <p class="lead">The live table against where the model predicted each team to finish. The arrow shows who is beating or missing the forecast. Expand a group for the match-by-match predictions and results.</p>
+    <p class="lead">Each group's live standings next to where the model predicted the teams to finish, so you can see who is running ahead of the forecast and who is behind. Expand a group for the match-by-match predictions and results.</p>
     <div class="scoreboard" id="grpScore"></div>
     <div class="grid" id="groupGrid"></div>
+  </section>
+
+  <!-- KNOCKOUT PHASE (placeholder, built once the round of 32 is set) -->
+  <section id="knockout">
+    <div class="sec-h">Knockout phase</div>
+    <p class="lead">The bracket view arrives once the group stage finishes and the round of 32 is set.</p>
+    <div class="nlpending">Coming soon: the predicted bracket from the round of 32 to the final, with the real results slotting in and color-coded against the prediction, the same way the Schedule and Groups tabs work. The Netherlands knockout games fill in at the same time.</div>
   </section>
 
   <!-- SCHEDULE -->
