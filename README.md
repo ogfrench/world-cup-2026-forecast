@@ -61,6 +61,14 @@ Open `index.html` in a browser, or run `python -m http.server` from the reposito
 Deployed on Netlify at <https://world-cup-2026-model-predictions.netlify.app/>, served from the
 repository root and redeployed on each push to `main`.
 
+## Roadmap
+
+Intentionally narrow. This stays a forecast viewer, not a prediction game. Tracked in
+[issue #1](https://github.com/ogfrench/world-cup-2026-prediction/issues/1): sorting matches by
+date, correcting home and away from the official fixture list, and a sticky model switcher are the
+active work. Showing actual results next to the predictions, and a bracket diff, are backlog. User
+picks, scoring, and a leaderboard are out of scope.
+
 ## Disclaimer
 
 A transparent baseline built from public data, not tested against a real World Cup. Not betting advice.

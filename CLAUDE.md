@@ -76,6 +76,17 @@ Open `index.html` directly in a browser, or serve the folder: `python -m http.se
 
 ## Where it is going
 
-Issue #1 tracks making the app future-proof as the tournament unfolds: actual scores next to
-predictions, and letting users pick the knockout bracket, scorelines, and scorers themselves.
-Keep that direction in mind. Still do not overkill it.
+Keep the scope narrow. This is a simple, elegant forecast viewer, the same tournament seen five
+ways, not a prediction game like Scorito. No user picks, no scorelines to fill in, no points, no
+leaderboard.
+
+Active work now (issue #1, quick wins):
+- Sort matches by date: a by-date schedule view, and the fixtures under each group card in date
+  order instead of the combinatorial order.
+- Correct home and away from the official 2026 fixture list, not the arbitrary combinations order.
+- Sticky model switcher: keep it reachable without scrolling up, and stop forcing a scroll to the
+  top on every tab switch.
+
+Backlog, not active work: showing actual results next to predictions (a separate data layer kept
+distinct from the model predictions), and a bracket diff that marks where reality left the
+predicted path. The full user-prediction game is cut. Still do not overkill it.
