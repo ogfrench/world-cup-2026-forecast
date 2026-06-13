@@ -219,11 +219,11 @@
   .mbtn:hover{color:var(--txt);border-color:var(--faint)}
   .mbtn.on{color:var(--bg);background:var(--lime);border-color:var(--lime)}
   .mdrop{position:relative;display:none}
-  .mdtrigger{display:inline-flex;align-items:center;gap:10px;font-family:'Archivo';font-weight:700;font-size:13px;
-       color:var(--txt);background:var(--surface);border:1px solid var(--line2);border-radius:999px;
-       padding:8px 15px;cursor:pointer;transition:.15s;white-space:nowrap}
-  .mdtrigger:hover{border-color:var(--faint)}
-  .mdrop.open .mdtrigger{border-color:var(--lime);color:var(--lime)}
+  .mdtrigger{display:inline-flex;align-items:center;gap:9px;font-family:'Archivo';font-weight:700;font-size:13.5px;
+       color:var(--txt);background:none;border:none;border-radius:999px;
+       padding:6px 4px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .mdtrigger:hover{color:var(--lime)}
+  .mdrop.open .mdtrigger{color:var(--lime)}
   .mdcaret{width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;
        transform:rotate(45deg) translate(-1px,-1px);transition:transform .2s}
   .mdrop.open .mdcaret{transform:rotate(-135deg) translate(-1px,-1px)}
@@ -240,11 +240,11 @@
   .mdtag{flex:none;font-family:'DM Mono';font-size:9px;letter-spacing:.08em;text-transform:uppercase;
        color:var(--lime-dim);border:1px solid rgba(200,255,77,.4);border-radius:5px;padding:1px 6px}
   /* (i) shows the selected model's description on tap; hidden on desktop, where the pills carry hover tooltips */
-  .minfo{display:none;flex:none;width:23px;height:23px;border-radius:50%;border:1px solid var(--line2);background:var(--surface);
-       color:var(--muted);font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:700;font-size:13px;
+  .minfo{display:none;flex:none;width:21px;height:21px;border-radius:50%;border:none;background:none;
+       color:var(--faint);font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:700;font-size:14px;
        line-height:1;cursor:pointer;align-items:center;justify-content:center;padding:0;transition:.15s}
   .minfo::before{content:"i"}
-  .minfo:hover{color:var(--txt);border-color:var(--faint)}
+  .minfo:hover{color:var(--lime)}
   /* below the tablet breakpoint: dropdown switcher, and the sticky bar runs full width */
   @media(max-width:760px){
     .mpills{display:none} .mdrop{display:block} .minfo{display:inline-flex} .mdmenu{left:auto;right:0}
