@@ -724,21 +724,31 @@
     return `<div class="scrow"><span class="rk">${rk}</span><span class="who">${who}<small>${sub}</small></span><span class="v">${val}</span></div>`;
   }
   // ---- knockout bracket: predicted-vs-actual tie cards, round by round ----
+  // the real 120-minute result for a tie: the server-conditioned `played` if present, else the live
+  // browser feed (keyed by the tie's date), with the advancer derived from a decisive score. A draw
+  // goes to a shootout the feed score cannot read, so the winner is left unknown in that case.
+  function koActual(t){
+    if (t.played) return {hs:t.played.hs, as:t.played.as_, winner:t.played.winner};
+    if (!t.date) return null;
+    const a = actualFor({home:t.a, away:t.b, date:t.date});
+    if (!a) return null;
+    return {hs:a.hs, as:a.as, winner: a.hs>a.as ? t.a : a.as>a.hs ? t.b : null};
+  }
   function koCard(t){
     const favA = t.adv_a>=t.adv_b, fav = favA?t.a:t.b, favAdv = Math.max(t.adv_a,t.adv_b);
     const alts = t.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
-    const pl = t.played;
+    const a = koActual(t), mm = {home:t.a, away:t.b, date:t.date, kickoff_utc:t.kickoff_utc};
     let chip, clab, predRow='';
-    if(pl){
-      const a = {hs:pl.hs, as:pl.as_};
-      const tier = predTier({modal:t.modal, p_home:t.p_a, p_draw:t.p_draw, p_away:t.p_b}, a);
-      chip = `<div class="sc ft" data-tip="The real result over 120 minutes (regulation and extra time). A shootout decides who advances but does not change this score.">${pl.hs}-${pl.as_}</div>`;
+    if(a){
+      const tier = predTier({modal:t.modal, p_home:t.p_a, p_draw:t.p_draw, p_away:t.p_b}, {hs:a.hs, as:a.as});
+      chip = `<div class="sc ft" data-tip="The real result over 120 minutes (regulation and extra time). A shootout decides who advances but does not change this score.">${a.hs}-${a.as}</div>`;
       clab = 'result';
-      const adv = pl.winner ? `${pl.winner} advanced` : 'to a shootout';
+      const adv = a.winner ? `${a.winner} advanced` : 'to a shootout';
       predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${t.modal[0]}-${t.modal[1]}</div><div class="sclab">predicted · ${adv}</div></div>`;
     } else {
       chip = `<div class="sc" data-tip="The model's most likely 120-minute scoreline. Trust the advance odds more than this exact number.">${t.modal[0]}-${t.modal[1]}</div>`;
       clab = 'predicted';
+      if(t.kickoff_utc && matchPending(mm)) predRow = `<div class="predline">${liveBadge(mm)}</div>`;  // in-play / awaiting badge
     }
     return `<div class="m">
       <div class="mcap"><span class="capven">${fav} favored · ${fmt(favAdv)}% to advance</span></div>
@@ -763,11 +773,10 @@
     }).join('');
     // performance over played ties: scores called right / exact, plus advancers called
     let played=0, against=0, exact=0, advRight=0, advTot=0;
-    ties.forEach(t=>{ if(!t.played) return; played++;
-      const a={hs:t.played.hs, as:t.played.as_};
-      const tier=predTier({modal:t.modal,p_home:t.p_a,p_draw:t.p_draw,p_away:t.p_b}, a);
+    ties.forEach(t=>{ const a=koActual(t); if(!a) return; played++;
+      const tier=predTier({modal:t.modal,p_home:t.p_a,p_draw:t.p_draw,p_away:t.p_b}, {hs:a.hs, as:a.as});
       if(tier==='miss') against++; else if(tier==='exact') exact++;
-      if(t.played.winner){ advTot++; if((t.adv_a>=t.adv_b?t.a:t.b)===t.played.winner) advRight++; } });
+      if(a.winner){ advTot++; if((t.adv_a>=t.adv_b?t.a:t.b)===a.winner) advRight++; } });
     if(sb) sb.innerHTML = scoreboardHTML({played,against,exact}, LABELS[CUR]||CUR,
       advTot ? {num:`${advRight}/${advTot}`, cap:'advancers called',
                 tip:'Knockout ties where the model favored the team that actually advanced.'} : null,
@@ -854,9 +863,13 @@
   //      when due (adaptive cadence), paused when the tab is hidden, stopped at sundown ----
   function paintLive(){ render(); renderSchedule(); renderScorers(); renderKnockout(); }   // every live + selected-model surface
   function allMatches(){ const GM = MODELS[CUR].group_matches, a = []; Object.keys(GM).forEach(g => GM[g].forEach(m => a.push(m))); return a; }
+  // knockout ties mapped to match-like objects so the live clock and badges treat them like group games
+  function koTies(){ const KO = MODELS[CUR].knockout || {};
+    return Object.values(KO).filter(t => t.kickoff_utc).map(t => ({home:t.a, away:t.b, date:t.date, kickoff_utc:t.kickoff_utc})); }
+  function liveUnits(){ return allMatches().concat(koTies()); }    // every time-driven surface: group games + KO ties
   function liveWindow(){
     const now = Date.now(); let inplay = false, pending = false, next = Infinity;
-    allMatches().forEach(m => {
+    liveUnits().forEach(m => {
       const ko = Date.parse(m.kickoff_utc); if (isNaN(ko)) return;
       if (ko > now) { next = Math.min(next, ko - now); return; }
       if (actualFor(m)) return;                        // already have the result
@@ -871,7 +884,7 @@
   }
   function badgeSig(){                                  // which matches are pending/live right now (time-derived, no I/O)
     const on = [];
-    allMatches().forEach(m => { if (matchPending(m)) on.push(m.kickoff_utc+'|'+(matchLive(m)?'L':'D')); });
+    liveUnits().forEach(m => { if (matchPending(m)) on.push(m.kickoff_utc+'|'+(matchLive(m)?'L':'D')); });
     return on.sort().join(',');
   }
   function fetchFeed(){                                 // the one network call; repaints only on a real change

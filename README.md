@@ -33,7 +33,7 @@ One model selected at a time (pills on desktop, a dropdown on mobile), across th
 - **Title Odds** - each team's chance of winning the tournament, plus how often it reaches each round, against Opta and the betting market as a sanity check. Once games are played the odds re-condition on the results, with a Day 0 marker on each bar showing the pre-tournament starting point and the move since; the reach-round table can flip to show the change since Day 0.
 - **Schedule** - every fixture by kickoff time, the model's predicted score, and the real result as it comes in, color-coded (dark green exact, green right result, red wrong).
 - **Groups & Scores** - the live group table against where the model predicted each team to finish, marking who is ahead of the forecast and who is behind. Expand a group for its match predictions and results.
-- **Knockout Phase** - a placeholder until the round-of-32 is set, then the predicted bracket against the real results.
+- **Knockout Phase** - a placeholder until the round-of-32 is set, then the predicted bracket against the real results, live: each tie shows an in-play/awaiting badge as it kicks off and the real score as it lands.
 - **Top Scorers** - the betting market's pre-tournament Golden Boot pick next to a live leaderboard of who is actually scoring, parsed from the feed. The engine rates teams, not players, so the expected side is the market, not the simulation.
 - **Method & Caveats** - the write-up, the validation, and the honest weaknesses.
 
@@ -114,6 +114,9 @@ has bitten us, so they pin the exact edge cases:
   scorer block that spans several lines is gathered whole. CRLF line endings parse the same as LF.
 - **Live badge clock** (`test_app.js`). A played game whose result the feed has not posted yet keeps
   its "Awaiting result" badge with no upper time bound, instead of silently looking unplayed.
+- **Knockout overlay** (`test_app.js`). A knockout tie's result resolves from the server-conditioned
+  run or, failing that, the live feed keyed by date, with the advancer derived from a decisive score
+  and left unknown on a draw (a shootout the score cannot read).
 - **Score colouring** (`test_app.js`). The predicted-versus-actual colour is graded on the scoreline
   the card shows, so a drawn prediction can never read green against a decisive result.
 - **Orientation and engine invariants** (`test_pipeline.py`). Reorienting a match to the official

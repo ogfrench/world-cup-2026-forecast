@@ -140,6 +140,14 @@ decides who advances, carried separately as `played.winner`). This mirrors how S
 games. The 90-minute Poisson is only for the group cards; `ko_report` handles extra time and the
 shootout for KO ties.
 
+The bracket has the same live state as Schedule and Groups, reusing `matchState`/`liveBadge`/`actualFor`.
+`koActual(t)` resolves a tie's real result, preferring the server-conditioned `played`, else the live
+browser feed keyed by the tie's `date` (the advancer derived from a decisive score; a draw is a shootout
+the feed score cannot read, so the winner is left unknown). A tie with a `kickoff_utc` shows the
+in-play/awaiting badge, and `koTies()` folds the ties into the live heartbeat (`liveWindow`/`badgeSig`).
+For this to light up, the `knockout` ties need `date`/`kickoff_utc` attached once the R32 is set (tracked
+in its issue); the front end is already built and tested against a synthetic bracket.
+
 The per-team Netherlands and France timeline tabs were removed: prediction-only surface (a generic
 first-goal-minute curve, a derived half-time) with no live state, not worth the maintenance. The app
 is the shared forecast tabs only.
