@@ -54,12 +54,14 @@ const snippet = [
   'let ACTUALS = {};',                                            // the live feed cache koActual reads
   pull(/function actualFor\(mm\)\{[\s\S]*?\n  \}/, 'actualFor'),
   pull(/function koActual\(t\)\{[\s\S]*?\n  \}/, 'koActual'),
+  pull(/const byKO = [^\n]*/, 'byKO'),
+  pull(/function scheduleAnchor\(matches, now\)\{[\s\S]*?\n  \}/, 'scheduleAnchor'),
   'this.predTier = predTier; this.setActuals = o => { ACTUALS = o; };',
 ].join('\n');
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals, parseScorers, predTier, koActual } = sandbox;
+const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -170,7 +172,23 @@ eq(koActual(koTie({ a: 'Spain', b: 'Portugal', date: '2026-07-04', round: 'qf' }
 eq(koActual(koTie({ a: 'Spain', b: 'Uruguay', date: '2026-07-04', round: 'qf' })), null,
    'a tie whose predicted opponent never advanced shows no result, never a wrong one');
 
+// ---- scheduleAnchor: the Schedule jumps to the match in focus, by time (not by day) ----
+// x 6pm, y 10pm, z midnight. The anchor follows the clock so you land on the live game.
+const M = ko => ({ kickoff_utc: ko });
+const day = [M('2026-06-20T18:00Z'), M('2026-06-20T22:00Z'), M('2026-06-21T00:00Z')];
+const anchorAt = nowISO => { const t = scheduleAnchor(day, Date.parse(nowISO)); return t && t.kickoff_utc; };
+eq(anchorAt('2026-06-20T19:00Z'), '2026-06-20T18:00Z', '7pm: the 6pm game in play (x)');
+eq(anchorAt('2026-06-20T22:30Z'), '2026-06-20T22:00Z', '10:30pm: the 10pm game (y)');
+eq(anchorAt('2026-06-20T23:59Z'), '2026-06-20T22:00Z', '11:59pm: still y, not the upcoming midnight game');
+eq(anchorAt('2026-06-21T00:00Z'), '2026-06-21T00:00Z', 'midnight: the just-kicked-off game (z)');
+eq(anchorAt('2026-06-20T12:00Z'), '2026-06-20T18:00Z', 'before any game: the next upcoming (x)');
+eq(anchorAt('2026-06-21T05:00Z'), '2026-06-21T00:00Z', 'all done: the last game (z)');
+// the rollover bug: an 11pm game running to 1am keeps focus at 00:30, not the next day
+const lateNight = [M('2026-06-20T23:00Z'), M('2026-06-21T16:00Z')];
+eq(scheduleAnchor(lateNight, Date.parse('2026-06-21T00:30Z')).kickoff_utc, '2026-06-20T23:00Z',
+   'a game running past midnight keeps focus at 00:30, not jumping to the next day');
+
 console.log(failed
   ? `\n${failed} failed, ${passed} passed.`
-  : `OK: ${passed} assertions passed (matchState clock, parseActuals + parseScorers feed parsers, predTier scoring, koActual knockout overlay, end-to-end sample feed).`);
+  : `OK: ${passed} assertions passed (matchState clock, parseActuals + parseScorers feed parsers, predTier scoring, koActual knockout overlay, scheduleAnchor jump, end-to-end sample feed).`);
 process.exit(failed ? 1 : 0);

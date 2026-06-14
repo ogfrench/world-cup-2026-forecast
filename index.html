@@ -851,7 +851,7 @@
       clab = 'predicted';
       if (matchPending(mm)) predRow = `<div class="predline">${liveBadge(mm)}</div>`;
     }
-    return `<div class="m">
+    return `<div class="m" data-ko="${mm.kickoff_utc}">
       <div class="mcap">${cap}</div>
       <div class="top"><div class="ta">${mm.home}</div>${chip}<div class="tb">${mm.away}</div><div class="sclab clab">${clab}</div></div>
       ${predRow}
@@ -1256,18 +1256,25 @@
   // first paint + start the single live heartbeat (hydrates cached results, then polls)
   startLive();
 
-  // jump the Schedule to today's matches (or the next upcoming day) below the sticky bar
-  function scrollToCurrentDay(){
-    const list = document.getElementById('schedList'); if (!list) return;
-    const days = list.querySelectorAll('.sday'); if (!days.length) return;
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  // jump the Schedule to the match in focus: the latest one in its play window now, else the next
+  // upcoming, else the last. Time-based, not day-based, so a late game running past midnight keeps
+  // focus instead of jumping to the next day, and you land on the live game, not the top of its day.
+  // scheduleAnchor is pure (clock in, match out), so it is unit-tested against the edge cases.
+  function scheduleAnchor(matches, now){
+    const ms = matches.filter(m => !isNaN(Date.parse(m.kickoff_utc))).slice().sort(byKO);
+    if (!ms.length) return null;
     let target = null;
-    days.forEach(d => { if (!target && d.dataset.date >= today) target = d; });
-    if (!target) target = days[days.length-1];
+    for (const m of ms){ const ko = Date.parse(m.kickoff_utc); if (ko <= now && now < ko + IN_PLAY_MS) target = m; }  // latest in play
+    if (!target) target = ms.find(m => Date.parse(m.kickoff_utc) > now) || ms[ms.length-1];   // next upcoming, else the last
+    return target;
+  }
+  function scrollToCurrentMatch(){
+    const list = document.getElementById('schedList'); if (!list) return;
+    const target = scheduleAnchor(allMatches(), Date.now()); if (!target) return;
+    const el = list.querySelector(`.m[data-ko="${target.kickoff_utc}"]`); if (!el) return;
     const tb = document.querySelector('.topbar');
     const off = (tb ? tb.offsetHeight : 0) + 12;
-    const y = target.getBoundingClientRect().top + window.scrollY - off;
+    const y = el.getBoundingClientRect().top + window.scrollY - off;
     window.scrollTo({top: Math.max(0, y), behavior:'smooth'});
   }
 
@@ -1277,7 +1284,7 @@
     document.querySelectorAll('section').forEach(s=>s.classList.remove('on'));
     btn.classList.add('on');
     document.getElementById(btn.dataset.t).classList.add('on');
-    if (btn.dataset.t === 'schedule') { scrollToCurrentDay(); return; }
+    if (btn.dataset.t === 'schedule') { scrollToCurrentMatch(); return; }
     // only pull up to the sticky bar if it has been scrolled past, so switching
     // tabs near the top does not jump the page around
     const tb = document.querySelector('.topbar');
