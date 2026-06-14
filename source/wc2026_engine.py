@@ -207,6 +207,25 @@ def play_ko(a, b, rng):
     p_a = min(0.60, max(0.40, 0.5 + SHOOTOUT_COEF * (ELO[a] - ELO[b])))
     return (a, b) if rng.random() < p_a else (b, a)
 
+# bracket structure, shared by the Monte Carlo and the live bracket derivation below
+R16_PAIRS = {89: (74, 77), 90: (73, 75), 91: (76, 78), 92: (79, 80),
+             93: (83, 84), 94: (81, 82), 95: (86, 88), 96: (85, 87)}
+QF_PAIRS = {97: (89, 90), 98: (93, 94), 99: (91, 92), 100: (95, 96)}
+SF_PAIRS = {101: (97, 98), 102: (99, 100)}
+FINAL_FEEDERS = (101, 102)
+
+def _r32_map(W, R, T, tmap):
+    """The 16 round-of-32 ties as feeder slots, from group winners W, runners R, and
+    advancing thirds T (keyed by group) placed by the Annex C map tmap (slot -> group)."""
+    return {
+        73: (R['A'], R['B']), 74: (W['E'], T[tmap[74]]), 75: (W['F'], R['C']),
+        76: (W['C'], R['F']), 77: (W['I'], T[tmap[77]]), 78: (R['E'], R['I']),
+        79: (W['A'], T[tmap[79]]), 80: (W['L'], T[tmap[80]]), 81: (W['D'], T[tmap[81]]),
+        82: (W['G'], T[tmap[82]]), 83: (R['K'], R['L']), 84: (W['H'], R['J']),
+        85: (W['B'], T[tmap[85]]), 86: (W['J'], R['H']), 87: (W['K'], T[tmap[87]]),
+        88: (R['D'], R['G']),
+    }
+
 def simulate_tournament(group_results, rng):
     winners, runners, thirds, third_stats = {}, {}, {}, {}
     for g in GROUPS:
@@ -219,22 +238,11 @@ def simulate_tournament(group_results, rng):
     tmap = assign_thirds(adv_groups)
     T = {g: thirds[g] for g in adv_groups}
     W, R = winners, runners
-    r32 = {
-        73: (R['A'], R['B']), 74: (W['E'], T[tmap[74]]), 75: (W['F'], R['C']),
-        76: (W['C'], R['F']), 77: (W['I'], T[tmap[77]]), 78: (R['E'], R['I']),
-        79: (W['A'], T[tmap[79]]), 80: (W['L'], T[tmap[80]]), 81: (W['D'], T[tmap[81]]),
-        82: (W['G'], T[tmap[82]]), 83: (R['K'], R['L']), 84: (W['H'], R['J']),
-        85: (W['B'], T[tmap[85]]), 86: (W['J'], R['H']), 87: (W['K'], T[tmap[87]]),
-        88: (R['D'], R['G']),
-    }
+    r32 = _r32_map(W, R, T, tmap)
     wq = {m: play_ko(a, b, rng)[0] for m, (a, b) in r32.items()}
-    r16_pairs = {89: (74, 77), 90: (73, 75), 91: (76, 78), 92: (79, 80),
-                 93: (83, 84), 94: (81, 82), 95: (86, 88), 96: (85, 87)}
-    w16 = {m: play_ko(wq[p], wq[q], rng)[0] for m, (p, q) in r16_pairs.items()}
-    qf_pairs = {97: (89, 90), 98: (93, 94), 99: (91, 92), 100: (95, 96)}
-    wqf = {m: play_ko(w16[p], w16[q], rng)[0] for m, (p, q) in qf_pairs.items()}
-    sf_pairs = {101: (97, 98), 102: (99, 100)}
-    wsf = {m: play_ko(wqf[p], wqf[q], rng)[0] for m, (p, q) in sf_pairs.items()}
+    w16 = {m: play_ko(wq[p], wq[q], rng)[0] for m, (p, q) in R16_PAIRS.items()}
+    wqf = {m: play_ko(w16[p], w16[q], rng)[0] for m, (p, q) in QF_PAIRS.items()}
+    wsf = {m: play_ko(wqf[p], wqf[q], rng)[0] for m, (p, q) in SF_PAIRS.items()}
     champ, _ = play_ko(wsf[101], wsf[102], rng)
     return {'winners': winners, 'runners': runners, 'thirds': T,
             'r32_winners': set(wq.values()), 'r16_winners': set(w16.values()),
@@ -335,6 +343,86 @@ def match_report(a, b):
 def group_match_predictions(model='hybrid'):
     global CURRENT_MODEL; CURRENT_MODEL = model
     return {g: [match_report(h, a) for (h, a) in GROUP_FIXTURES[g]] for g in GROUPS}
+
+
+# ----------------------------------------------------------------------------
+# 8. KNOCKOUT BRACKET (live): the actual matchups and a prediction for each tie
+# ----------------------------------------------------------------------------
+ROUND_OF = {**{s: 'r32' for s in range(73, 89)}, **{s: 'r16' for s in range(89, 97)},
+            97: 'qf', 98: 'qf', 99: 'qf', 100: 'qf', 101: 'sf', 102: 'sf', 103: 'final'}
+
+def load_ko_actuals(path=None):
+    """Played knockout games: a JSON list of {round, home, away, hs, as, winner} in engine
+    team names, where winner is the advancing side (after extra time and any shootout)."""
+    path = path or os.path.join(_HERE, 'wc2026_ko_actuals.json')
+    return json.load(open(path)) if os.path.exists(path) else []
+
+def _r32_from_standings(group_results):
+    """The round-of-32 ties from FINAL group standings (needs all six games per group)."""
+    winners, runners, thirds, tstats = {}, {}, {}, {}
+    for g in GROUPS:
+        order, stats = rank_group(g, group_results[g])
+        winners[g], runners[g], thirds[g] = order[0], order[1], order[2]
+        tstats[g] = stats[order[2]]
+    ranked = sorted(GROUPS, key=lambda g: (-tstats[g][0], -tstats[g][1], -tstats[g][2], -ELO[thirds[g]]))
+    adv = ranked[:8]
+    return _r32_map(winners, runners, {g: thirds[g] for g in adv}, assign_thirds(adv))
+
+def ko_report(a, b):
+    """Neutral-venue knockout prediction: modal regulation scoreline, win/draw/loss over 90,
+    and the probability each side ADVANCES (90 minutes, then extra time, then a shootout)."""
+    M = dc_matrix(a, b, False, False)
+    p_a = float(np.tril(M, -1).sum()); p_d = float(np.trace(M)); p_b = float(np.triu(M, 1).sum())
+    mh, ma = divmod(int(np.argmax(M)), NCOL)
+    order = np.argsort(M, axis=None)[::-1][:4]
+    tops = [(int(s // NCOL), int(s % NCOL), round(float(M.ravel()[s]) * 100, 1)) for s in order]
+    la, lb = lambdas(a, b, False, False)
+    et = np.outer(_pois(la / 3.0), _pois(lb / 3.0))      # extra time at a third of the rates
+    et_a = float(np.tril(et, -1).sum()); et_d = float(np.trace(et))
+    sh_a = min(0.60, max(0.40, 0.5 + SHOOTOUT_COEF * (ELO[a] - ELO[b])))
+    adv_a = p_a + p_d * (et_a + et_d * sh_a)
+    return dict(a=a, b=b, p_a=round(p_a * 100, 1), p_draw=round(p_d * 100, 1), p_b=round(p_b * 100, 1),
+                modal=[int(mh), int(ma)], top_scores=tops,
+                adv_a=round(adv_a * 100, 1), adv_b=round((1 - adv_a) * 100, 1),
+                elo_a=ELO[a], elo_b=ELO[b])
+
+def actual_bracket(group_actuals, ko_played):
+    """Resolve the known bracket from played games. Returns {slot: {round, a, b, played|None}}
+    for every matchup whose two teams are known. Empty until every group has finished."""
+    if not all(len(group_actuals.get(g, [])) >= 6 for g in GROUPS):
+        return {}
+    bracket = {}
+    for slot, (a, b) in _r32_from_standings({g: group_actuals[g] for g in GROUPS}).items():
+        bracket[slot] = dict(round='r32', a=a, b=b, played=None)
+    played = {frozenset((p['home'], p['away'])): p for p in (ko_played or [])}
+    def fill(slot):
+        e = bracket.get(slot)
+        if e and frozenset((e['a'], e['b'])) in played:
+            pl = played[frozenset((e['a'], e['b']))]
+            e['played'] = dict(hs=pl['hs'], as_=pl['as'], winner=pl['winner'])
+    for slot in list(bracket):
+        fill(slot)
+    def won(slot):
+        e = bracket.get(slot)
+        return e['played']['winner'] if e and e['played'] else None
+    for slot, (p, q) in {**R16_PAIRS, **QF_PAIRS, **SF_PAIRS, 103: FINAL_FEEDERS}.items():
+        wp, wq = won(p), won(q)
+        if wp and wq:
+            bracket[slot] = dict(round=ROUND_OF[slot], a=wp, b=wq, played=None)
+            fill(slot)
+    return bracket
+
+def ko_predictions(model='hybrid', group_actuals=None, ko_played=None):
+    """Per-model prediction for every known knockout tie, keyed by slot. Empty until the R32 is set."""
+    global CURRENT_MODEL; CURRENT_MODEL = model
+    A = group_actuals if group_actuals is not None else load_actuals()
+    ko = ko_played if ko_played is not None else load_ko_actuals()
+    out = {}
+    for slot, e in actual_bracket(A, ko).items():
+        rep = ko_report(e['a'], e['b'])
+        rep.update(slot=slot, round=e['round'], played=e['played'])
+        out[slot] = rep
+    return out
 
 def market_implied_elo(probs_elo):
     """Invert the pure-Elo model's log(title%)-vs-Elo line to map market title odds -> implied Elo."""
