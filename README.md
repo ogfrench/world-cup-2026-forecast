@@ -19,7 +19,7 @@ All five share the same tournament engine (FIFA Annex C round-of-32, extra time,
 differ only in how each match's expected goals are estimated.
 
 - **Pure Elo** - ranks teams on results alone, like a chess rating. Simple, and the most favorite-heavy of the five.
-- **Pure Goals (Dixon-Coles)** - learns each team's attack and defense from 15,431 internationals and predicts actual scorelines, not just a winner.
+- **Pure Goals (Dixon-Coles)** - learns each team's attack and defense from 15,751 internationals and predicts actual scorelines, not just a winner.
 - **Hybrid** - the average of Pure Elo and Dixon-Coles. The best performer on out-of-sample tests.
 - **Hybrid + Market** - the Hybrid blended halfway with the ratings implied by the betting market.
 - **Pure Market** - the betting market alone, calibrated so the simulated title odds match the published ones. The default view.
@@ -44,7 +44,7 @@ The simulation is plain Python, no ML framework, all in [`source/`](source/):
 - **`wc2026_engine.py`** runs the tournament: the group stage, the eight best third-placed teams, the official FIFA Annex C round-of-32 (all 495 possible line-ups), then the knockout bracket with extra time and penalties. Each match's expected goals come from the chosen model, and the score is drawn from a Dixon-Coles-adjusted Poisson. Conditioned on the played games, it locks those results and samples only the rest.
 - **`make_data.py`** runs the engine twice per model from one shared market calibration, unconditioned (the frozen Day 0 baseline) and conditioned on the played games (the live forecast), and writes both `wc2026_results.json` and `wc2026_baseline.json`. **`fetch_actuals.py`** refreshes the played-results file (`wc2026_actuals.json`) from the openfootball feed.
 - **`merge_schedule.py`** folds the official fixture schedule (`wc2026_schedule.json`, from the public openfootball dataset) into the results: the date, kickoff, venue, and the correct home/away side for every group match.
-- **`fit_dc.py`** fits the Dixon-Coles model by weighted maximum-likelihood on 15,431 internationals since 2010 (recent matches count for more). **`build_params.py`** combines those fitted parameters with official Elo ratings into `model_params.json`.
+- **`fit_dc.py`** fits the Dixon-Coles model by weighted maximum-likelihood on 15,751 internationals since 2010 (recent matches count for more). **`build_params.py`** combines those fitted parameters with official Elo ratings into `model_params.json`.
 - **`val_assess.py`** and **`val_market.py`** are the validation: out-of-sample scoring on 1,230 held-out internationals, and a market-versus-model backtest on 5,327 club matches with real closing odds.
 
 The page itself runs no Python. It only reads the pre-computed JSON, which is why it can be a single static file.
@@ -149,13 +149,15 @@ Deployed on Netlify, served from the repository root and redeployed on each push
 
 ## Roadmap
 
-Intentionally narrow: a forecast viewer, not a prediction game. Tracked in
-[issue #4](https://github.com/ogfrench/world-cup-2026-prediction/issues/4). Shipped: matches sorted by
-date, home/away corrected from the official fixture list, live results overlaid with color-coded
-accuracy, a live group table against the predicted finish, the conditional live title odds with a Day 0
-before/after, the autonomous refresh, and the Top Scorers tab. The predicted-vs-actual knockout bracket
-waits for the round-of-32 to be set (around June 28). User picks, scoring, and a leaderboard stay out of
-scope.
+Intentionally narrow: a forecast viewer, not a prediction game. The live phase
+([issue #4](https://github.com/ogfrench/world-cup-2026-prediction/issues/4), now shipped): matches
+sorted by date, home/away corrected from the official fixture list, live results overlaid with
+color-coded accuracy, a live group table against the predicted finish, the conditional live title odds
+with a Day 0 before/after, the autonomous refresh, and the Top Scorers tab. The predicted-vs-actual
+knockout bracket and its in-play badges are built; they light up once the round-of-32 is set (around
+June 28), with the remaining bracket-data wiring tracked in
+[issue #17](https://github.com/ogfrench/world-cup-2026-prediction/issues/17). User picks, scoring, and a
+leaderboard stay out of scope.
 
 ## Disclaimer
 

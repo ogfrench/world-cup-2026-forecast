@@ -4,7 +4,7 @@ World Cup 2026 prediction engine -- HYBRID model + per-tournament form noise.
 Match model (validated out-of-sample, see val_hybrid.py):
     lambda = 0.5 * DixonColes + 0.5 * Elo     (blend weight chosen by held-out log-loss)
   - Dixon-Coles: attack/defense per team + home effect + low-score dependence rho,
-    fit by weighted Poisson MLE on 15,431 real internationals (2010-2026). rho and the
+    fit by weighted Poisson MLE on 15,751 real internationals (2010-2026). rho and the
     1.31x home advantage are ESTIMATED, not assumed.
   - Elo: official eloratings.net ratings -> goal supremacy via a slope fit to results.
   Pure DC OOS log-loss 0.856, pure Elo 0.846, hybrid 0.841 (beats both).
