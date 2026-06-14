@@ -13,14 +13,20 @@ import json, os, re, sys, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = 'https://raw.githubusercontent.com/openfootball/worldcup/master/2026--usa/cup.txt'
-# feed name -> engine name (everything else is identical); mirrors ACT_NAME in the app
+# feed name -> engine name (everything else is identical); mirrors ACT_NAME in the app.
+# Includes the official FIFA names the feed's own notes warn it may switch to (Côte d'Ivoire,
+# Korea Republic, ...), so a normalised feed still lands as a group game, not a phantom knockout tie.
 NAME = {'Czech Republic': 'Czechia', 'Bosnia & Herzegovina': 'Bosnia-Herzegovina',
-        'Turkey': 'Turkiye', 'Curaçao': 'Curacao'}
+        'Bosnia and Herzegovina': 'Bosnia-Herzegovina', 'Turkey': 'Turkiye', 'Türkiye': 'Turkiye',
+        'Curaçao': 'Curacao', "Côte d'Ivoire": 'Ivory Coast', 'Korea Republic': 'South Korea',
+        'IR Iran': 'Iran', 'Cabo Verde': 'Cape Verde', 'Congo DR': 'DR Congo'}
 MON = {'May': 5, 'June': 6, 'July': 7}
 nm = lambda s: NAME.get(s.strip(), s.strip())
 
 DRE = re.compile(r'^[A-Z][a-z]{2}\s+([A-Z][a-z]+)\s+(\d{1,2})\s*$')
-MRE = re.compile(r'^\s*\d{1,2}:\d{2}\s+UTC[+-]\d+\s+(.+?)\s+(\d+)-(\d+)\s+\([0-9-]+\)\s+(.+?)\s+@\s+')
+# the half-time score in parentheses is optional: a played game that is missing it must still parse,
+# not be silently dropped (which would also leave it out of the conditioned odds).
+MRE = re.compile(r'^\s*\d{1,2}:\d{2}\s+UTC[+-]\d+\s+(.+?)\s+(\d+)-(\d+)(?:\s+\([0-9-]+\))?\s+(.+?)\s+@\s+')
 
 def parse(txt):
     out, date = [], None
@@ -45,19 +51,24 @@ def split_games(games, idx):
     """Split parsed (home, hs, as, away) games into oriented group rows and knockout rows.
 
     A pair found in the schedule index is a group fixture: its score is reoriented to the
-    official home/away. Anything else is a knockout tie. Pure (no IO), so it is unit-tested."""
+    official home/away. A pair of two known teams that is not a group fixture is a knockout tie.
+    A pair with a team that is not in the schedule at all is an unrecognised feed name: it is
+    flagged and skipped, never guessed into a phantom knockout tie. Pure (no IO), so it is unit-tested."""
     rows, ko = [], []
+    canon = set().union(*idx.keys()) if idx else set()    # every team that appears in the schedule
     for h, hs, ag, a in games:
         rec = idx.get(frozenset((h, a)))
         if rec:                                       # a group fixture
             g, oh, oa = rec
             ohs, oas = (hs, ag) if h == oh else (ag, hs)  # orient to the official home/away
             rows.append({'group': g, 'home': oh, 'away': oa, 'hs': ohs, 'as': oas})
-        else:                                         # not in the group schedule, so a knockout tie
+        elif h in canon and a in canon:               # two known teams, not a group fixture: a knockout tie
             # 120-minute result; the advancing side is the higher score, or unknown on a draw
             # (a shootout decides it; the feed's penalty line is parsed best-effort if present)
             winner = h if hs > ag else a if ag > hs else None
             ko.append({'home': h, 'away': a, 'hs': hs, 'as': ag, 'winner': winner})
+        else:                                         # a name we could not map: flag it, do not guess
+            sys.stderr.write('warning: unrecognised team in feed, skipped: %r vs %r\n' % (h, a))
     rows.sort(key=lambda r: (r['group'], r['home']))
     return rows, ko
 

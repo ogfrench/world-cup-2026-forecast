@@ -733,7 +733,7 @@
   // sundown: a week after the 19 Jul final (26 Jul), stop polling the feed for good. The last
   // cached results still render; the page just stops querying a tournament that is over.
   const SUNDOWN = Date.parse('2026-07-26T00:00:00Z');
-  const ACT_NAME = {'Czech Republic':'Czechia','Bosnia & Herzegovina':'Bosnia-Herzegovina','Turkey':'Turkiye','Curaçao':'Curacao'};
+  const ACT_NAME = {'Czech Republic':'Czechia','Bosnia & Herzegovina':'Bosnia-Herzegovina','Bosnia and Herzegovina':'Bosnia-Herzegovina','Turkey':'Turkiye','Türkiye':'Turkiye','Curaçao':'Curacao',"Côte d'Ivoire":'Ivory Coast','Korea Republic':'South Korea','IR Iran':'Iran','Cabo Verde':'Cape Verde','Congo DR':'DR Congo'};
   const ACT_MON = {May:5,June:6,July:7};
   let ACTUALS = {}, ACT_SYNC = 0, ACT_STATE = 'init', ACT_TIMER = null, ACT_SIG = '', LAST_FETCH = 0, LIVE_SIG = '';
   const actNm = s => { s = s.trim(); return ACT_NAME[s] || s; };
@@ -741,7 +741,7 @@
   function parseActuals(txt){
     const out = {}; let date = null;
     const dre = /^[A-Z][a-z]{2}\s+([A-Z][a-z]+)\s+(\d{1,2})\s*$/;
-    const mre = /^\s*\d{1,2}:\d{2}\s+UTC[+-]\d+\s+(.+?)\s+(\d+)-(\d+)\s+\([0-9-]+\)\s+(.+?)\s+@\s+/;
+    const mre = /^\s*\d{1,2}:\d{2}\s+UTC[+-]\d+\s+(.+?)\s+(\d+)-(\d+)(?:\s+\([0-9-]+\))?\s+(.+?)\s+@\s+/;
     txt.split('\n').forEach(ln => {
       const d = ln.match(dre);
       if (d) { const mo = ACT_MON[d[1]]; if (mo) date = '2026-'+String(mo).padStart(2,'0')+'-'+String(+d[2]).padStart(2,'0'); return; }
@@ -755,7 +755,7 @@
                   ['Messi','Argentina','6%'],['Oyarzabal','Spain','5%'],['Yamal','Spain','5%'],
                   ['J. Álvarez','Argentina','3%']];
   let SC_LIVE = [];   // [{player, team, goals}] from the feed, own goals excluded
-  const SC_MLINE = /UTC[+-]\d+\s+(.+?)\s+(\d+)-(\d+)\s+\([0-9-]+\)\s+(.+?)\s+@\s+/;
+  const SC_MLINE = /UTC[+-]\d+\s+(.+?)\s+(\d+)-(\d+)(?:\s+\([0-9-]+\))?\s+(.+?)\s+@\s+/;
   function parseScorers(txt){
     const tally = {}, lines = txt.split('\n');
     for (let i=0;i<lines.length;i++){
@@ -784,13 +784,15 @@
   }
   function addGoals(tally, side, team){
     // a scorer entry is a name then one or more minute tokens; (pen.) counts, (OG) does not
-    const re = /([^0-9;]+?)\s*((?:\d+(?:\+\d+)?'\s*(?:\((?:pen|og)[^)]*\))?\s*,?\s*)+)/gi, mtok=/\d+(?:\+\d+)?'\s*(?:\([^)]*\))?/g;
+    // a minute may carry a parenthetical tag like (p), (pen.), (og); accept any of them, not just a
+    // hardcoded spelling, so a penalty written (p) is not mis-read as a new scorer (see test_app.js).
+    const re = /([^0-9;]+?)\s*((?:\d+(?:\+\d+)?'\s*(?:\([^)]*\))?\s*,?\s*)+)/gi, mtok=/\d+(?:\+\d+)?'\s*(?:\([^)]*\))?/g;
     let m;
     while((m = re.exec(side))){
       const name = m[1].replace(/[(),;]/g,'').trim();
       if(!name) continue;
       let goals=0; const toks=m[2].match(mtok)||[];
-      toks.forEach(t=>{ if(!/\(og/i.test(t)) goals++; });    // own goals do not credit the scorer
+      toks.forEach(t=>{ if(!/\(o\.?g/i.test(t)) goals++; });    // own goals (og) or (o.g.) do not credit the scorer
       if(goals<=0) continue;
       if(!tally[name]) tally[name]={team, goals:0};
       tally[name].goals += goals;

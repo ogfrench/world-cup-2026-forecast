@@ -14,9 +14,11 @@ is covered by source/test_app.js.
 """
 import os
 import sys
+import io
 import json
 import tempfile
 import unittest
+from contextlib import redirect_stderr
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -53,6 +55,22 @@ class TestParseFeed(unittest.TestCase):
             ('Bosnia-Herzegovina', 0, 2, 'Curacao'),
         ])
 
+    def test_official_fifa_names_map_to_engine_names(self):
+        # the feed's own notes warn it may switch to normalised FIFA names; those must still map,
+        # or the game silently misses the schedule and is misfiled as a knockout tie.
+        self.assertEqual(fa.nm("Côte d'Ivoire"), 'Ivory Coast')
+        self.assertEqual(fa.nm('Korea Republic'), 'South Korea')
+        self.assertEqual(fa.nm('IR Iran'), 'Iran')
+        self.assertEqual(fa.nm('Cabo Verde'), 'Cape Verde')
+        self.assertEqual(fa.nm('Congo DR'), 'DR Congo')
+        self.assertEqual(fa.nm('Türkiye'), 'Turkiye')
+
+    def test_played_game_without_half_time_score_still_parses(self):
+        # the feed sometimes posts a result before the "(x-x)" half-time token; it must not be
+        # dropped, which would silently leave the game out of the conditioned odds.
+        txt = "Sat June 13\n  21:00 UTC-7    Mexico   2-0   South Africa   @ X\n"
+        self.assertEqual(fa.parse(txt), [('Mexico', 2, 0, 'South Africa')])
+
     def test_score_lines_without_a_date_header_are_dropped(self):
         # a result line that appears before any date header has no date to key on
         txt = "  21:00 UTC-7    Mexico   2-0 (1-0)   South Africa   @ X\n"
@@ -68,9 +86,13 @@ class TestSplitGames(unittest.TestCase):
     """fetch_actuals.split_games: orient to official home/away, split group from knockout."""
 
     def setUp(self):
+        # Spain and France sit in different groups, so they are known teams (in the schedule),
+        # but Spain v France is not a group fixture, which is exactly a knockout tie.
         sched = [
             {'group': 'A', 'home': 'Mexico', 'away': 'South Africa'},
             {'group': 'D', 'home': 'Australia', 'away': 'Turkiye'},
+            {'group': 'H', 'home': 'Spain', 'away': 'Uruguay'},
+            {'group': 'I', 'home': 'France', 'away': 'Senegal'},
         ]
         self.idx = fa.build_index(sched)
 
@@ -95,10 +117,56 @@ class TestSplitGames(unittest.TestCase):
         _, ko = fa.split_games([('Spain', 1, 1, 'France')], self.idx)
         self.assertIsNone(ko[0]['winner'])
 
+    def test_unrecognised_team_name_is_skipped_not_misfiled_as_knockout(self):
+        # a name that maps to nothing in the schedule (e.g. a feed rename we have not aliased)
+        # must be flagged and dropped, never guessed into a phantom knockout tie.
+        err = io.StringIO()
+        with redirect_stderr(err):
+            rows, ko = fa.split_games([('Mexico', 3, 2, 'Atlantis')], self.idx)
+        self.assertEqual(rows, [])
+        self.assertEqual(ko, [])
+        self.assertIn('unrecognised', err.getvalue())
+
     def test_group_rows_are_sorted_by_group_then_home(self):
         games = [('Australia', 1, 0, 'Turkiye'), ('Mexico', 2, 0, 'South Africa')]
         rows, _ = fa.split_games(games, self.idx)
         self.assertEqual([(r['group'], r['home']) for r in rows], [('A', 'Mexico'), ('D', 'Australia')])
+
+
+class TestFeedSampleEndToEnd(unittest.TestCase):
+    """End to end: the representative sample feed (source/test_feed_sample.txt) through the whole
+    parse + orient + split path. Shares the fixture with test_app.js so both sides stay honest."""
+
+    def setUp(self):
+        with open(os.path.join(HERE, 'test_feed_sample.txt'), encoding='utf-8') as f:
+            self.txt = f.read()
+        sched = [
+            {'group': 'A', 'home': 'Mexico', 'away': 'South Africa'},
+            {'group': 'D', 'home': 'USA', 'away': 'Paraguay'},
+            {'group': 'E', 'home': 'Germany', 'away': 'Curacao'},
+            {'group': 'E', 'home': 'Ivory Coast', 'away': 'Ecuador'},
+            {'group': 'H', 'home': 'Spain', 'away': 'Uruguay'},
+            {'group': 'I', 'home': 'France', 'away': 'Senegal'},
+        ]
+        self.idx = fa.build_index(sched)
+
+    def test_parse_skips_the_unplayed_fixture_and_maps_official_names(self):
+        games = fa.parse(self.txt)
+        self.assertEqual(games, [
+            ('Germany', 7, 1, 'Curacao'),
+            ('USA', 4, 1, 'Paraguay'),            # this line has no half-time score in the feed
+            ('Mexico', 2, 0, 'South Africa'),     # nor this one
+            ('Ivory Coast', 1, 0, 'Ecuador'),     # parsed from the official name "Côte d'Ivoire"
+            ('Spain', 1, 1, 'France'),
+        ])
+
+    def test_split_routes_group_games_and_the_knockout_tie(self):
+        rows, ko = fa.split_games(fa.parse(self.txt), self.idx)
+        self.assertEqual([(r['group'], r['home']) for r in rows],
+                         [('A', 'Mexico'), ('D', 'USA'), ('E', 'Germany'), ('E', 'Ivory Coast')])
+        self.assertIn({'group': 'E', 'home': 'Ivory Coast', 'away': 'Ecuador', 'hs': 1, 'as': 0}, rows)
+        self.assertIn({'group': 'A', 'home': 'Mexico', 'away': 'South Africa', 'hs': 2, 'as': 0}, rows)
+        self.assertEqual(ko, [{'home': 'Spain', 'away': 'France', 'hs': 1, 'as': 1, 'winner': None}])
 
 
 class TestReorient(unittest.TestCase):
