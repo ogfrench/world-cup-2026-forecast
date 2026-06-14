@@ -242,18 +242,48 @@ def simulate_tournament(group_results, rng):
             'finalists': {wsf[101], wsf[102]}, 'champion': champ}
 
 # ----------------------------------------------------------------------------
-# 6. MONTE CARLO
+# 6. MONTE CARLO  (optionally conditioned on actual results)
 # ----------------------------------------------------------------------------
-def run(n=50000, seed=20260611, model='hybrid'):
+def load_actuals(path=None):
+    """Played group results to condition on: a JSON list of
+    {group, home, away, hs, as} in engine team names, official home/away."""
+    path = path or os.path.join(_HERE, 'wc2026_actuals.json')
+    if not os.path.exists(path):
+        return {}
+    out = {g: [] for g in GROUPS}
+    for r in json.load(open(path)):
+        out[r['group']].append((r['home'], r['away'], int(r['hs']), int(r['as'])))
+    return out
+
+def _fixed_overrides(actuals):
+    """Map actual results onto GROUP_FIXTURES order, oriented to each fixture's (h, a)."""
+    fixed = {}
+    for g, fx in GROUP_FIXTURES.items():
+        played = {frozenset((h, a)): (h, hs, ag) for (h, a, hs, ag) in actuals.get(g, [])}
+        idx = {}
+        for k, (h, a) in enumerate(fx):
+            rec = played.get(frozenset((h, a)))
+            if rec is None:
+                continue
+            rh, hs, ag = rec
+            idx[k] = (hs, ag) if rh == h else (ag, hs)   # orient to the fixture's home/away
+        if idx:
+            fixed[g] = idx
+    return fixed
+
+def run(n=50000, seed=20260611, model='hybrid', actuals=None):
     global CURRENT_MODEL; CURRENT_MODEL = model
     rng = np.random.default_rng(seed)
     fx_all = build_fx()
+    fixed = _fixed_overrides(actuals or {})
     counters = {t: dict(win_group=0, advance=0, r16=0, qf=0, sf=0, final=0, champ=0) for t in TEAMS}
     for _ in range(n):
         group_results = {}
         for g in GROUPS:
             fx = fx_all[g]
             hg = rng.poisson(fx['blh']); ag = rng.poisson(fx['bla'])
+            for k, (fh, fa) in fixed.get(g, {}).items():   # lock played games
+                hg[k] = fh; ag[k] = fa
             group_results[g] = [(fx['h'][k], fx['a'][k], int(hg[k]), int(ag[k])) for k in range(len(hg))]
         res = simulate_tournament(group_results, rng)
         for g in GROUPS: counters[res['winners'][g]]['win_group'] += 1
@@ -269,6 +299,23 @@ def run(n=50000, seed=20260611, model='hybrid'):
         probs[t] = {k: 100.0 * v / n for k, v in counters[t].items()}
         probs[t]['elo'] = ELO[t]; probs[t]['group'] = TEAM_GROUP[t]
     return probs, n
+
+def validate(probs):
+    """Sanity invariants for a (conditional) run; returns a list of problems."""
+    errs = []
+    s = sum(probs[t]['champ'] for t in TEAMS)
+    if abs(s - 100) > 1.0:
+        errs.append(f"champ probs sum to {s:.2f}, not ~100")
+    for t in TEAMS:
+        p = probs[t]
+        for k in ('win_group', 'advance', 'r16', 'qf', 'sf', 'final', 'champ'):
+            if not (-0.01 <= p[k] <= 100.01):
+                errs.append(f"{t} {k}={p[k]} out of range")
+        seq = [p['advance'], p['r16'], p['qf'], p['sf'], p['final'], p['champ']]
+        if any(seq[i] + 0.01 < seq[i + 1] for i in range(len(seq) - 1)):
+            errs.append(f"{t} reach-round odds not monotonic: {[round(x,1) for x in seq]}")
+    return errs
+
 
 # ----------------------------------------------------------------------------
 # 7. DETERMINISTIC PER-MATCH PREDICTIONS (group stage, full Dixon-Coles, no noise)

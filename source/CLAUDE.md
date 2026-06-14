@@ -28,7 +28,14 @@ Build artifacts and source:
 - `wc2026_template.html` — the app source. Has a single `/*DATA*/` token where the JSON is injected.
   Edit this for any app change.
 - `wc2026_engine.py` — the simulation engine. All five models, market calibration, Annex C, KO logic.
+  `run(..., actuals=...)` conditions the Monte Carlo on played games (locks them, samples the rest);
+  `load_actuals()` reads `wc2026_actuals.json`; `validate()` checks the invariants. Seeds are fixed, so
+  identical inputs give identical output. The market calibration must stay unconditioned (it pins the
+  market-implied Elo to the published pre-tournament odds); only the final output runs take `actuals`.
 - `wc2026_results.json` — the 50k simulation output the app renders, with the fixture schedule merged in.
+- `wc2026_baseline.json` — the frozen Day 0 (pre-tournament) snapshot. Never regenerated; `cp` once. The
+  before/after deltas compare the live conditional run against this.
+- `wc2026_actuals.json` — played group results in engine team names, the conditioning input (refreshed from openfootball).
 - `wc2026_schedule.json` — the official 72-match group schedule (date, kickoff, home/away, venue), from openfootball.
 - `merge_schedule.py` — folds the schedule into the results JSON (step 1b in How to rebuild).
 
