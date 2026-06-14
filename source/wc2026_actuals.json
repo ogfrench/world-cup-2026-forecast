@@ -43,6 +43,13 @@
  },
  {
   "group": "D",
+  "home": "Australia",
+  "away": "Turkiye",
+  "hs": 2,
+  "as": 0
+ },
+ {
+  "group": "D",
   "home": "USA",
   "away": "Paraguay",
   "hs": 4,
