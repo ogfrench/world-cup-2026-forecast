@@ -132,6 +132,10 @@ To add knockout fixtures once the bracket is set:
 2. IMPORTANT: knockout games go to extra time and penalties, but the group cards use a straight
    90-minute Poisson. For KO fixtures switch the scoreline math to regulation-only (the engine has
    separate ET and shootout logic), or the full-time score and over/under will be off.
+   The score we show and grade is the 120-minute result (regulation + extra time); penalties never
+   count toward it (a 1-1 that goes to a shootout stays 1-1, the shootout only decides who advances).
+   This mirrors how Scorito scores knockout games. Read the advancer off the shootout, the score off
+   the end of extra time, and keep them as separate facts.
 
 ## The conceptual trap that bit us repeatedly (do not repeat)
 
