@@ -58,7 +58,10 @@ Two layers keep the page current, both backend-free and low-maintenance:
   The page fetches results from the public, CORS-enabled [openfootball](https://github.com/openfootball/worldcup)
   World Cup 2026 feed (no key), caches them in local storage, and refreshes adaptively (faster while a
   match is in play, paused when the tab is hidden). This overlay is deterministic: it never alters the
-  underlying odds, and if the feed is unreachable the page falls back to predictions only.
+  underlying odds, and if the feed is unreachable the page falls back to predictions only. A kicked-off
+  match shows an "In play" badge, then an "Awaiting result" badge that stays until the feed posts the
+  score (the community feed can lag by hours), each linking to a search so you can check the score
+  meanwhile. The badge never expires early, so a played game never reverts to looking unplayed.
 - **The odds themselves (on redeploy).** A scheduled GitHub Action (`.github/workflows/refresh.yml`)
   re-runs the 50,000-tournament simulation conditioned on the played games and commits the result, so
   Netlify redeploys. It polls the feed on a windowed cron but only re-simulates when a new result
@@ -84,6 +87,20 @@ Changes go in `source/wc2026_template.html`; `index.html` is generated from it.
 python source/build_app.py          # rebuild index.html
 python source/build_app.py --check  # verify index.html is in sync (CI)
 ```
+
+## Tests
+
+A small, dependency-free suite covers the code that keeps the app current, so the
+self-updating path stays trustworthy with no babysitting. CI runs all of it on every push.
+
+```
+python -m unittest discover -s source -p 'test_*.py'   # feed parse, home/away orientation, engine conditioning + validation
+node source/test_app.js                                # the live badge clock and the in-browser feed parser, run against the built index.html
+```
+
+`source/test_pipeline.py` tests the update pipeline (the engine tests skip when numpy is absent, as in
+light CI, and run in the refresh Action where it is installed). `source/test_app.js` guards the live
+layer, including the regression where an "Awaiting result" badge must persist while the feed is late.
 
 To regenerate the simulation, run `python source/make_data.py 50000` (the live + Day 0 generator,
 which conditions on `wc2026_actuals.json`), then `python source/merge_schedule.py` to fold the

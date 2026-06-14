@@ -232,6 +232,17 @@
   .cal td:first-child,.cal th:first-child{text-align:left;font-family:'Archivo';font-weight:700}
   .cal tr:last-child td{border-bottom:none}
   .note{background:var(--surface);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:13px 16px;margin:18px 0;font-size:13.5px;color:var(--muted)}
+  /* ---------- method: the selected-model panel ---------- */
+  .methodhero{background:var(--surface);border:1px solid var(--line2);border-radius:14px;padding:17px 18px 16px;margin:0 0 26px}
+  .methodhero .mh-tag{font-family:'DM Mono';font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .methodhero .mh-name{font-size:22px;font-weight:700;color:var(--txt);margin:2px 0 3px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .methodhero .mh-rec{font-family:'DM Mono';font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#08140d;background:var(--lime);border-radius:999px;padding:2px 8px}
+  .methodhero .mh-def{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:15px}
+  .methodhero .mh-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .methodhero h4{font-family:'DM Mono';font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 5px}
+  .methodhero .mh-trust h4{color:var(--win)} .methodhero .mh-watch h4{color:var(--gold)}
+  .methodhero .mh-cols p{margin:0;font-size:13.5px;color:var(--txt);line-height:1.5}
+  @media(max-width:520px){.methodhero{padding:15px 15px 14px} .methodhero .mh-cols{grid-template-columns:1fr;gap:12px}}
   /* ---------- top scorers ---------- */
   .scgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
   @media(max-width:600px){ .scgrid{grid-template-columns:1fr;gap:12px} .scgrid .sccol.exp{order:2} }
@@ -487,7 +498,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="kicker">104 matches &middot; five models &middot; 50,000 simulations</div>
+    <div class="kicker">The whole World Cup, played out before kickoff</div>
     <h1>World Cup <span class="yr">2026</span> Forecast</h1>
     <p class="sub">The whole World Cup, all 104 matches and the knockouts, simulated 50,000 times, five different ways, from cold form to the bookmakers.</p>
     <div class="meta-row" id="meta"></div>
@@ -511,7 +522,7 @@
   <!-- TITLE RACE -->
   <section class="on" id="race">
     <div class="koseg" id="titleToggle" style="display:none">
-      <button data-v="live" class="on" data-tip="The current forecast, conditioned on the games played.">Live</button>
+      <button data-v="live" class="on" data-tip="The current forecast, updated for the games played so far.">Live</button>
       <button data-v="day0" data-tip="The frozen pre-tournament forecast, before any games were played.">Day 0</button>
     </div>
     <div class="podium" id="podium"></div>
@@ -612,7 +623,8 @@
 
   <section id="method">
     <div class="prose">
-      <div class="sec-h">Five models, one engine</div>
+      <div class="methodhero" id="methodHero"></div>
+      <div class="sec-h">The five models, compared</div>
       <p>One tournament, played out <b id="nsim2"></b> times: 104 games, the eight best third-placed teams, the official FIFA round-of-32, and the bracket through the final with extra time and penalties. Only how a single match is rated changes between the five. Simplest first.</p>
       <p><b>Pure Elo.</b> Rates teams on results alone, like a chess rating, and turns the gap into expected goals. Hard to fool with one freak scoreline, blind to how a team plays, and it backs the favorites hardest. (Ratings from eloratings.net.)</p>
       <p><b>Pure Goals.</b> Learns each team's attack and defense from <b>15,431 internationals</b> since 2010, so it predicts scorelines, not just winners. It found a home bump of about <b>1.31x</b> on goals. The catch: it rewards running up the score on weak teams, so it overrates the likes of Japan and Algeria. (A standard Dixon-Coles model.)</p>
@@ -625,7 +637,7 @@
       <h3>Against Opta and the bookmakers</h3>
       <p>None of these models was trained on Opta's numbers, so it is a fair outside check. The selected model's title odds, next to Opta's supercomputer and the bookmakers:</p>
       <table class="cal" id="calTable"></table>
-      <div class="note">The results-only models love <b>Argentina</b> on recent form (the Hybrid puts them almost level with Spain; the bookmakers have them around fifth) and rate <b>France</b> below the bookmakers, who are paying for squad depth results cannot see. The spread across the five is how much of the title race is method, not fact: Spain swings from about 10 to 29 percent, far wider than the match odds ever differ.</div>
+      <div class="note" id="methodNote"></div>
       <p><b>Bookmakers and Pure Market are not the same line.</b> The <b>Bookmakers</b> reference (the gold dots and the column above) is the raw published title odds, champion only. <b>Pure Market</b> is a model: it takes the team ratings those odds imply and plays the whole tournament 50,000 times, so it reproduces the bookmakers on the title by calibration, but also gives a number for every round and every match. On the title bar the two land on top of each other by design; everywhere else, only Pure Market has an answer.</p>
 
       <h3>Where it's weak</h3>
@@ -719,7 +731,7 @@
   // as the embedded schedule so team names line up. Swap ACT_SRC + parseActuals
   // for any JSON feed (e.g. TheSportsDB) without touching the render code.
   const ACT_SRC = 'https://raw.githubusercontent.com/openfootball/worldcup/master/2026--usa/cup.txt';
-  // sundown: a week after the final (19 Jul), stop polling the feed for good. The last
+  // sundown: a week after the 19 Jul final (26 Jul), stop polling the feed for good. The last
   // cached results still render; the page just stops querying a tournament that is over.
   const SUNDOWN = Date.parse('2026-07-26T00:00:00Z');
   const ACT_NAME = {'Czech Republic':'Czechia','Bosnia & Herzegovina':'Bosnia-Herzegovina','Turkey':'Turkiye','Curaçao':'Curacao'};
@@ -868,25 +880,34 @@
     if (!r) return null;
     return r.home===mm.home ? {hs:r.hs, as:r.as} : {hs:r.as, as:r.hs};
   }
-  // a match is "in play" from kickoff to +2h while no final result has landed yet
-  // a kicked-off match with no result yet: "in play" for the first ~2h, then "awaiting the feed" out to 6h
-  function matchPending(mm){
-    if (actualFor(mm)) return false;
-    const ko = Date.parse(mm.kickoff_utc); if (isNaN(ko)) return false;
-    const now = Date.now();
-    return now >= ko && now < ko + 6*3600e3;
+  // ---- match clock: one source of truth for the live/awaiting badges and the poll cadence ----
+  // matchState is pure (clock + whether we already hold a result), so it is unit-testable in isolation.
+  // A kicked-off match is "live" for the first 2h, then "awaiting" the feed with no upper bound:
+  // openfootball can post a score many hours late, and the placeholder must not vanish before then,
+  // or a played game silently reverts to looking like an unplayed fixture (the Australia v Turkiye case).
+  const IN_PLAY_MS = 120*60e3;       // kickoff to +2h: shown as "In play"
+  const AWAIT_FAST_MS = 8*3600e3;    // keep polling fast up to +8h while a result is still missing
+  function matchState(now, ko, hasResult){
+    if (hasResult) return 'done';
+    if (now < ko) return 'future';
+    if (now < ko + IN_PLAY_MS) return 'live';
+    return 'awaiting';               // kicked off, past +2h, still no result in the feed
   }
-  function matchLive(mm){
-    return matchPending(mm) && Date.now() < Date.parse(mm.kickoff_utc) + 120*60e3;
+  function matchClock(mm){
+    const ko = Date.parse(mm.kickoff_utc); if (isNaN(ko)) return 'future';
+    if (Date.now() > SUNDOWN) return actualFor(mm) ? 'done' : 'future';  // tournament over: a static page, no live badges
+    return matchState(Date.now(), ko, !!actualFor(mm));
   }
+  function matchPending(mm){ const s = matchClock(mm); return s === 'live' || s === 'awaiting'; }
+  function matchLive(mm){ return matchClock(mm) === 'live'; }
   // no live feed, so the badge links to a Google search: its live match card while in play,
   // its finished card during the gap before openfootball posts the result
   const liveSearch = mm => 'https://www.google.com/search?q=' + encodeURIComponent(mm.home + ' vs ' + mm.away);
   const liveBadge = mm => {
     const live = matchLive(mm);
     const label = live ? 'In play' : 'Awaiting result';
-    const tip = live ? "Kicked off, no final score in our feed yet. Tap to check the live score on Google (we host no live feed)."
-                     : "Looks finished, but openfootball has not posted the result yet. Tap to check the score on Google.";
+    const tip = live ? "Kicked off, but no final score in our feed yet. Tap to check the live score on Google."
+                     : "Looks finished, but the result is not in our feed yet. Tap to check the score on Google.";
     return `<a class="livelink ${live?'live':'await'}" href="${liveSearch(mm)}" target="_blank" rel="noopener" data-tip="${tip}"><span class="livedot"></span>${label}<span class="livearrow">&#8599;</span></a>`;
   };
   // one shared match card, used by both the Groups tab and the Schedule so they look identical.
@@ -927,8 +948,8 @@
       const ko = Date.parse(m.kickoff_utc); if (isNaN(ko)) return;
       if (ko > now) { next = Math.min(next, ko - now); return; }
       if (actualFor(m)) return;                        // already have the result
-      if (now < ko + 120*60e3) inplay = true;          // in play
-      else if (now < ko + 6*3600e3) pending = true;    // finished, result not in the feed yet
+      if (now < ko + IN_PLAY_MS) inplay = true;        // in play
+      else if (now < ko + AWAIT_FAST_MS) pending = true;  // finished, result not in the feed yet (fast-poll tail)
     });
     return {inplay, pending, next};
   }
@@ -1069,6 +1090,26 @@
   document.addEventListener('click', closeDrop);
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDrop(); });
 
+  // the selected-model panel at the top of Method & Caveats: what it is, and what to trust or watch
+  // for THIS model. The full five-model comparison and the shared caveats stay below as reference.
+  const MODEL_METHOD = {
+    elo: {def:'Teams rated on results alone, like a chess rating, with the gap turned into expected goals.',
+          trust:'The pecking order and head-to-heads. Hard to fool with one freak scoreline.',
+          watch:'Backs the favorites hardest of the five, and is blind to form and squad depth.'},
+    score: {def:"Each team's attack and defense learned from 15,431 internationals, so it predicts scorelines, not just winners.",
+          trust:'Goal counts and the home edge (about 1.31x), not only who wins.',
+          watch:'Rewards running up the score on weak teams, so it overrates big scorers like Japan and Algeria.'},
+    hybrid: {def:"Pure Elo and Pure Goals averaged, each covering the other's blind spot.",
+          trust:'The best results-only read, and the only model validated on internationals. Steadiest calibration.',
+          watch:'Leans on recent form: it loves Argentina and rates France below the bookmakers.'},
+    market: {def:"The Hybrid nudged halfway to the ratings the bookmakers' title odds imply.",
+          trust:'A middle path, the market’s wisdom without leaning on it fully.',
+          watch:'Dominated in testing: a blend never beat the market alone, and it is no longer the pure results read. Do not center it.'},
+    market_pure: {def:'The bookmakers’ own implied ratings, played through the whole bracket.',
+          trust:'The title call. It beat a solid Elo model on a 5,327-match odds backtest, so it is the one to trust.',
+          watch:'Pinned to pre-tournament odds, not a live feed of match prices. Only as good as the bookmakers.'}
+  };
+
   function render(){
     const T = MODELS[CUR].teams, GM = MODELS[CUR].group_matches;
     // live when conditioned on played games and the Day 0 baseline is attached
@@ -1106,7 +1147,7 @@
       if(live){ tl.style.display='flex';
         tl.innerHTML = day0
           ? `<span class="ld" style="animation:none;background:var(--faint)"></span><span>The Day 0 forecast: the pre-tournament odds, before any games were played.</span>`
-          : `<span class="ld"></span><span>Live title odds, conditioned on <b>${META.played} played group ${META.played===1?'game':'games'}</b>. The <span class="gh">grey tick</span> on each bar marks the team's Day 0 (pre-tournament) odds.</span>`;
+          : `<span class="ld"></span><span>Live title odds, updated for the <b>${META.played} group ${META.played===1?'game':'games'}</b> played so far. The <span class="gh">grey tick</span> on each bar marks the team's Day 0 (pre-tournament) odds.</span>`;
       } else tl.style.display='none';
     }
 
@@ -1210,6 +1251,44 @@
       calTeams.map(t=>`<tr><td>${t}</td><td style="color:var(--lime)">${fmt(T[t].champ)}%</td>`+
         `<td style="color:var(--blue)">${OPTA[t]!=null?OPTA[t]+'%':'n/a'}</td>`+
         `<td style="color:var(--gold)">${MKT[t]!=null?MKT[t]+'%':'n/a'}</td></tr>`).join('');
+
+    // selected-model panel: definition + what to trust / watch for the model you are on
+    const hero = document.getElementById('methodHero'), mm = MODEL_METHOD[CUR];
+    if (hero && mm) {
+      const rec = CUR === 'market_pure' ? '<span class="mh-rec">recommended</span>' : '';
+      hero.innerHTML = `<div class="mh-tag">Selected model</div>
+        <div class="mh-name">${LABELS[CUR] || CUR}${rec}</div>
+        <div class="mh-def">${mm.def}</div>
+        <div class="mh-cols">
+          <div class="mh-trust"><h4>Trust</h4><p>${mm.trust}</p></div>
+          <div class="mh-watch"><h4>Watch</h4><p>${mm.watch}</p></div>
+        </div>`;
+    }
+
+    // adaptive note: how the SELECTED model reads the title race against the bookmakers, from live data
+    // (computed, never hardcoded, so it stays true as the odds re-simulate and as you switch models)
+    const noteEl = document.getElementById('methodNote');
+    const priced = Object.keys(MKT).filter(t => T[t]);
+    if (noteEl && priced.length) {
+      const sgn = x => (x >= 0 ? '+' : '') + fmt(x);
+      const fav = priced.slice().sort((a, b) => MKT[b] - MKT[a])[0];   // the bookmakers' favorite
+      let over = priced[0], under = priced[0], od = -Infinity, ud = Infinity;
+      priced.forEach(t => { const d = T[t].champ - MKT[t];
+        if (d > od) { od = d; over = t; } if (d < ud) { ud = d; under = t; } });
+      const spread = Object.keys(MODELS).map(m => (MODELS[m].teams[fav] || {}).champ).filter(v => v != null);
+      const lo = Math.min(...spread), hi = Math.max(...spread);
+      const CHAR = {
+        elo: `<b>Pure Elo</b> backs the favorites hardest of the five. It rates teams on results alone, so it is blind to squad depth and to who is fit and in form for kickoff.`,
+        score: `<b>Pure Goals</b> predicts scorelines, not just winners, but it rewards running up the score on weak opponents, so it flatters the big scorers.`,
+        hybrid: `<b>Hybrid</b> is the steady results-based read, Pure Elo and Pure Goals split down the middle. It trusts recent form more than the bookmakers do.`,
+        market: `<b>Hybrid + Market</b> pulls the results-based read halfway to the bookmakers, so it lands between the two.`,
+        market_pure: `<b>Pure Market</b> is the bookmakers played through the whole bracket, so on the title it hews close to them and credits the squad depth that results alone miss. The recommended view.`
+      };
+      const vs = (od < 1 && -ud < 1)
+        ? `On the title it barely leaves the bookmakers, by design.`
+        : `Against the bookmakers it is most bullish on <b>${over}</b> (${sgn(od)}) and most cautious on <b>${under}</b> (${sgn(ud)}).`;
+      noteEl.innerHTML = `${CHAR[CUR] || ''} ${vs} Across all five models <b>${fav}</b> ranges from ${fmt(lo)}% to ${fmt(hi)}% to win it, far wider than the match odds ever move: most of that gap is method, not fact.`;
+    }
   }
 
   // ---- schedule (all fixtures, by date, with live results) ----

@@ -44,6 +44,8 @@ repo root as-is, so the homepage is the app.
   - `merge_schedule.py` - merges the schedule into `wc2026_results.json`: annotates each group match with its date/venue and reorients home/away to the official side. Idempotent, no re-simulation.
   - `build_app.py` - injects the JSON into the template and writes `index.html`.
   - `check_app.js` - CI sanity check: script blocks parse, five models present, file is built.
+  - `test_pipeline.py` - tests for the update pipeline (feed parse, home/away orientation, engine conditioning + validation). Stdlib unittest; engine tests skip without numpy. Run: `python -m unittest discover -s source -p 'test_*.py'`.
+  - `test_app.js` - tests the built app's live layer (the in-play/awaiting badge clock, the in-browser feed parser), run against `index.html`. Run: `node source/test_app.js`.
   - `wc2026_engine.py` - the simulation engine (all five models, FIFA Annex C, knockout logic, conditional mode).
   - `model_params.json`, `annexc_data.py` - fitted parameters and the official round-of-32 table.
   - `fit_dc.py`, `build_params.py` - the fitting pipeline (needs `results.csv`, which is not shipped).
@@ -92,8 +94,11 @@ never changes the static odds; only the Action re-conditions them.
 ## CI and deploy
 
 `.github/workflows/ci.yml` runs on push and PR. It checks that `index.html` is in sync with the
-template and data (`build_app.py --check`), that the results JSON is valid, and that the page's
-script blocks parse. CI does not deploy. Netlify deploys automatically on every push to `main`.
+template and data (`build_app.py --check`), that the results JSON is valid, that the page's
+script blocks parse, and that the test suites pass (`test_pipeline.py`, `test_app.js`). CI does not
+install numpy, so the engine tests skip there; the refresh Action (which installs numpy) runs the full
+suite before it commits a refreshed forecast. CI does not deploy. Netlify deploys automatically on
+every push to `main`.
 
 ## Local preview
 

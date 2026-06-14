@@ -36,15 +36,18 @@ def parse(txt):
             out.append((nm(m.group(1)), int(m.group(2)), int(m.group(3)), nm(m.group(4))))
     return out
 
-def main():
-    sched = json.load(open(os.path.join(HERE, 'wc2026_schedule.json')))
-    idx = {frozenset((f['home'], f['away'])): (f['group'], f['home'], f['away']) for f in sched}
-    try:
-        txt = urllib.request.urlopen(SRC, timeout=30).read().decode('utf-8')
-    except Exception as ex:
-        sys.exit('fetch failed: %s' % ex)
+def build_index(sched):
+    """Map each scheduled fixture's team pair to its (group, official home, official away)."""
+    return {frozenset((f['home'], f['away'])): (f['group'], f['home'], f['away']) for f in sched}
+
+
+def split_games(games, idx):
+    """Split parsed (home, hs, as, away) games into oriented group rows and knockout rows.
+
+    A pair found in the schedule index is a group fixture: its score is reoriented to the
+    official home/away. Anything else is a knockout tie. Pure (no IO), so it is unit-tested."""
     rows, ko = [], []
-    for h, hs, ag, a in parse(txt):
+    for h, hs, ag, a in games:
         rec = idx.get(frozenset((h, a)))
         if rec:                                       # a group fixture
             g, oh, oa = rec
@@ -56,6 +59,17 @@ def main():
             winner = h if hs > ag else a if ag > hs else None
             ko.append({'home': h, 'away': a, 'hs': hs, 'as': ag, 'winner': winner})
     rows.sort(key=lambda r: (r['group'], r['home']))
+    return rows, ko
+
+
+def main():
+    sched = json.load(open(os.path.join(HERE, 'wc2026_schedule.json')))
+    idx = build_index(sched)
+    try:
+        txt = urllib.request.urlopen(SRC, timeout=30).read().decode('utf-8')
+    except Exception as ex:
+        sys.exit('fetch failed: %s' % ex)
+    rows, ko = split_games(parse(txt), idx)
     json.dump(rows, open(os.path.join(HERE, 'wc2026_actuals.json'), 'w'), indent=1)
     json.dump(ko, open(os.path.join(HERE, 'wc2026_ko_actuals.json'), 'w'), indent=1)
     print('wrote %d group games and %d knockout games' % (len(rows), len(ko)))

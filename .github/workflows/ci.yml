@@ -23,3 +23,9 @@ jobs:
 
       - name: App script blocks parse and all five models are present
         run: node source/check_app.js
+
+      - name: Update pipeline tests (feed parse, orientation, validation)
+        run: python -m unittest discover -s source -p 'test_*.py'
+
+      - name: Live layer tests (badge clock, in-browser feed parser)
+        run: node source/test_app.js
