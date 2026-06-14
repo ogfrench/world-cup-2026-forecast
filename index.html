@@ -625,29 +625,27 @@
     <div class="prose">
       <div class="methodhero" id="methodHero"></div>
       <div class="sec-h">The five models, compared</div>
-      <p>One tournament, played out <b id="nsim2"></b> times: 104 games, the eight best third-placed teams, the official FIFA round-of-32, and the bracket through the final with extra time and penalties. Only how a single match is rated changes between the five. Simplest first.</p>
-      <p><b>Pure Elo.</b> Rates teams on results alone, like a chess rating, and turns the gap into expected goals. Hard to fool with one freak scoreline, blind to how a team plays, and it backs the favorites hardest. (Ratings from eloratings.net.)</p>
-      <p><b>Pure Goals.</b> Learns each team's attack and defense from <b>15,431 internationals</b> since 2010, so it predicts scorelines, not just winners. It found a home bump of about <b>1.31x</b> on goals. The catch: it rewards running up the score on weak teams, so it overrates the likes of Japan and Algeria. (A standard Dixon-Coles model.)</p>
-      <p><b>Hybrid.</b> The two above, averaged, each patching the other's blind spot. On 1,230 unseen internationals it grades at least as well as either alone, with the steadiest confidence:</p>
+      <p>One tournament, played out <b id="nsim2"></b> times. Each run goes through all 104 games, the eight best third-placed teams, the official FIFA round of 32, and the bracket the rest of the way, with extra time and penalties when a tie needs them. The engine underneath never changes. The only thing that differs between the five is how a single match is rated, and they run from the ones that look purely at results to the ones that lean on the betting market. Seeing the same tournament through each of them is really the point: where they agree you can be reasonably confident, and where they pull apart is usually where the interesting questions are.</p>
+      <p>The first three work from results alone. <b>Pure Elo</b> treats a team like a chess rating and asks only who has been beating whom. It is hard to fool with a single freak scoreline, but it has no feel for how a team actually plays, and of the five it leans on the favorites the hardest. <b>Pure Goals</b> goes finer, learning each team's attack and defense from <b>15,431 internationals</b> since 2010, where it picks up a home advantage worth about a <b>1.31x</b> bump on goals, so it can talk in scorelines rather than just winners. The price is that it rewards a team for running up the score against weak opposition, which flatters the likes of Japan and Algeria. <b>Hybrid</b> simply averages the two, and each one quietly covers for the other's blind spot. On 1,230 internationals it had never seen, it holds up at least as well as either model alone, and with the steadiest confidence of the three:</p>
       <table class="cal" id="ooTable"></table>
-      <p>Three things make a forecast good: how often it calls the result, how surprised it was (log-loss), and whether its confidence holds up (calibration). The Hybrid wins or ties on all three. It clearly beats the goals model but edges plain Elo by a whisker, inside the noise, so the honest claim is modest: blending is at least as good as the best single model, and steadier. More complex is not more accurate.</p>
-      <p><b>Hybrid + Market.</b> The Hybrid nudged halfway to the bookmakers: back out the ratings their title odds imply, blend 50/50, re-run. The effect: Argentina down, France up.</p>
-      <p><b>Pure Market.</b> Just the bookmakers, no model, their ratings calibrated to reproduce the published title odds, then run through the same bracket so you see their read on every tie, not only the winner. On a 5,327-match club-odds backtest the bookmakers beat a solid Elo model and a blend never beat them alone, so this is the one to trust. The catch: it is the bookmakers through this bracket, pinned to pre-tournament odds, not a live feed of match prices. It tracks the Bookmakers reference closely by design, but extends it to every round and match.</p>
+      <p>Three things make a forecast good: how often it calls the result, how surprised it tends to be once the games are over (its log-loss), and whether the confidence it claims actually holds up (its calibration). Hybrid wins or ties on all three. It beats the goals model clearly, but only edges plain Elo by a whisker, comfortably inside the noise, so the honest version of the claim stays modest: blending is at least as good as the best single method, and a little steadier. The extra machinery did not buy more accuracy.</p>
+      <p>The last two bring the bookmakers in. <b>Hybrid + Market</b> reads the ratings the betting odds quietly imply and meets the results-based Hybrid halfway, which in practice pulls Argentina down a little and nudges France up. <b>Pure Market</b> sets the model aside altogether and runs the bookmakers' own implied ratings through the same bracket, so you get their read on every tie and every round rather than just the title. On a backtest of 5,327 club matches with real closing odds, the market beat a perfectly good Elo model, and no blend ever beat it on its own, which is why it is the one to trust if you only look at a single forecast. Its limit is fair to say plainly: it is the bookmakers as they stood before kickoff, played forward, not a live feed of moving match prices.</p>
 
       <h3>Against Opta and the bookmakers</h3>
-      <p>None of these models was trained on Opta's numbers, so it is a fair outside check. The selected model's title odds, next to Opta's supercomputer and the bookmakers:</p>
+      <p>None of these models was trained on Opta's numbers, which makes them a fair outside check. Here are the selected model's title odds alongside Opta's supercomputer and the bookmakers:</p>
       <table class="cal" id="calTable"></table>
       <div class="note" id="methodNote"></div>
-      <p><b>Bookmakers and Pure Market are not the same line.</b> The <b>Bookmakers</b> reference (the gold dots and the column above) is the raw published title odds, champion only. <b>Pure Market</b> is a model: it takes the team ratings those odds imply and plays the whole tournament 50,000 times, so it reproduces the bookmakers on the title by calibration, but also gives a number for every round and every match. On the title bar the two land on top of each other by design; everywhere else, only Pure Market has an answer.</p>
+      <p>It is worth being clear that the <b>Bookmakers</b> reference and <b>Pure Market</b> are not the same line, even though they sit on top of each other on the title bar. The Bookmakers figure is just the published title odds, champion only. Pure Market takes the ratings those odds imply and actually plays the tournament out 50,000 times, so it matches the bookmakers on the title by construction while also giving a number for every round and every match, which the raw odds never could.</p>
 
       <h3>Where it's weak</h3>
-      <p><b>It backs the favorites too hard.</b> A fixed-strength sim cannot see a tournament turn (an injury, a player catching fire, a red card), so it piles probability onto the big teams, Pure Elo most, Pure Market least. Head-to-heads stay sensible: Spain against Argentina is a coin flip.</p>
-      <p><b>Live odds follow results, not form.</b> Once games are played the odds re-simulate with the scores locked in, but the ratings stay frozen at their pre-tournament values (as of 6 June). Winning ugly and winning well move them the same way; injuries, current form, and a re-pricing market are invisible.</p>
-      <p><b>Encouraging, not gospel.</b> The 1,230 validation games are mostly one-sided qualifiers and friendlies, where any decent model looks clever; the tight ties a World Cup turns on barely feature. And the test grades match calls, not title odds, which nobody can check until the trophy is lifted.</p>
-      <p><b>The single "most likely score" is fragile.</b> In an even game 1-1, 1-0 and 0-0 sit within a few percent, so the headline score flips easily. Trust the win/draw/loss split, not the exact number. The model also draws a touch less than real life (about 23 to 24 percent in groups, against a 26 to 28 norm).</p>
-      <p><b>No top-scorer model.</b> It rates teams, not players. The <a class="xlink" href="#" data-go="topscorers">Top Scorers</a> tab shows the bookmakers' pick against who is actually scoring.</p>
-      <p><b>A toy, not an oracle.</b> A transparent baseline from public data and standard methods. Great for the shape of the tournament, not for staking your mortgage.</p>
-      <p class="colophon">Five match models over a shared <b id="nsim3"></b>-tournament Monte Carlo with the official FIFA Annex C round-of-32 (495 line-ups). Dixon-Coles fit by MLE on 15,431 internationals (2010 to 2026); the hybrid weight chosen by out-of-sample log-loss; bookmaker odds de-vigged and the Pure Market ratings calibrated to them. Opta and the bookmakers (Polymarket, Kalshi, FanDuel) shown for comparison only. Not betting advice.</p>
+      <p>Better to know the soft spots up front than to trip over them later.</p>
+      <p><b>It backs the favorites too hard.</b> A fixed-strength simulation cannot see a tournament turn the way a real one does, an injury, a player suddenly catching fire, a red card at the wrong moment, so it tends to pile probability onto the big teams (Pure Elo the most, Pure Market the least). The head-to-heads still come out sensible: Spain against Argentina is close to a coin flip.</p>
+      <p><b>The live odds follow results, not form.</b> Once a game is played the odds re-simulate with that score locked in, but the underlying ratings stay frozen where they were before kickoff (6 June). Winning ugly and winning well move them by exactly the same amount, and injuries, current form, and a re-pricing market are all invisible to it.</p>
+      <p><b>The validation is encouraging, not gospel.</b> Those 1,230 test games are mostly one-sided qualifiers and friendlies, the kind almost any model gets right, while the tight knockout ties a World Cup actually turns on are thin on the ground. The test also grades match calls rather than title odds, and nobody can mark those until the trophy is lifted.</p>
+      <p><b>The single most likely score is fragile.</b> In an even game 1-1, 1-0 and 0-0 sit within a few percent of one another, so the headline scoreline can flip on very little. Trust the win, draw and loss split rather than the exact number. The model also draws a touch less often than real life, around 23 to 24 percent in the groups against a 26 to 28 percent norm.</p>
+      <p><b>There is no top-scorer model.</b> The engine rates teams, not players. The <a class="xlink" href="#" data-go="topscorers">Top Scorers</a> tab sets the bookmakers' pre-tournament pick against whoever is actually putting the ball in the net.</p>
+      <p><b>Treat it as a toy, not an oracle.</b> It is a transparent baseline built from public data and standard methods, good for the shape of a tournament and a feel for the odds, and not for staking anything you would be sorry to lose.</p>
+      <p class="colophon">Five match models over a shared <b id="nsim3"></b>-tournament Monte Carlo with the official FIFA Annex C round of 32 (495 line-ups). Dixon-Coles fit by maximum likelihood on 15,431 internationals (2010 to 2026), the hybrid weight chosen by out-of-sample log-loss, bookmaker odds de-vigged and the Pure Market ratings calibrated to them. Opta and the bookmakers (Polymarket, Kalshi, FanDuel) are shown for comparison only. Not betting advice.</p>
     </div>
   </section>
 
@@ -1095,21 +1093,21 @@
   // the selected-model panel at the top of Method & Caveats: what it is, and what to trust or watch
   // for THIS model. The full five-model comparison and the shared caveats stay below as reference.
   const MODEL_METHOD = {
-    elo: {def:'Teams rated on results alone, like a chess rating, with the gap turned into expected goals.',
-          trust:'The pecking order and head-to-heads. Hard to fool with one freak scoreline.',
-          watch:'Backs the favorites hardest of the five, and is blind to form and squad depth.'},
-    score: {def:"Each team's attack and defense learned from 15,431 internationals, so it predicts scorelines, not just winners.",
-          trust:'Goal counts and the home edge (about 1.31x), not only who wins.',
-          watch:'Rewards running up the score on weak teams, so it overrates big scorers like Japan and Algeria.'},
-    hybrid: {def:"Pure Elo and Pure Goals averaged, each covering the other's blind spot.",
-          trust:'The best results-only read, and the only model validated on internationals. Steadiest calibration.',
-          watch:'Leans on recent form: it loves Argentina and rates France below the bookmakers.'},
-    market: {def:"The Hybrid nudged halfway to the ratings the bookmakers' title odds imply.",
-          trust:'A middle path, the market’s wisdom without leaning on it fully.',
-          watch:'Dominated in testing: a blend never beat the market alone, and it is no longer the pure results read. Do not center it.'},
-    market_pure: {def:'The bookmakers’ own implied ratings, played through the whole bracket.',
-          trust:'The title call. It beat a solid Elo model on a 5,327-match odds backtest, so it is the one to trust.',
-          watch:'Pinned to pre-tournament odds, not a live feed of match prices. Only as good as the bookmakers.'}
+    elo: {def:'It rates teams on results alone, like a chess rating, then turns the gap into expected goals.',
+          trust:'The overall pecking order and the individual match-ups. It is hard to fool with one freak result.',
+          watch:'It backs the favorites the hardest of the five, and it cannot see form or squad depth at all.'},
+    score: {def:"It learns each team's attack and defense from 15,431 internationals, so it talks in scorelines, not just winners.",
+          trust:'Goal counts and the home edge (about 1.31x), not only who comes out on top.',
+          watch:'It rewards running up the score on weak teams, so it overrates the likes of Japan and Algeria.'},
+    hybrid: {def:"Pure Elo and Pure Goals averaged together, each one covering the other's blind spot.",
+          trust:'The best results-only read, and the only model checked against real internationals. The steadiest of the lot.',
+          watch:'It leans on recent form, so it loves Argentina and rates France below the bookmakers.'},
+    market: {def:"The Hybrid nudged halfway toward the ratings the bookmakers' title odds imply.",
+          trust:"A middle path: some of the market's wisdom without handing it the whole forecast.",
+          watch:'It came out dominated in testing, never quite the market and no longer the pure results read. Not the one to center.'},
+    market_pure: {def:"The bookmakers' own implied ratings, played all the way through the bracket.",
+          trust:'The title call. It beat a solid Elo model across 5,327 matches of real odds, so it is the one to trust.',
+          watch:'It is pinned to pre-tournament odds, not live match prices, so it is only ever as sharp as the bookmakers.'}
   };
 
   function render(){
@@ -1258,7 +1256,7 @@
     const hero = document.getElementById('methodHero'), mm = MODEL_METHOD[CUR];
     if (hero && mm) {
       const rec = CUR === 'market_pure' ? '<span class="mh-rec">recommended</span>' : '';
-      hero.innerHTML = `<div class="mh-tag">Selected model</div>
+      hero.innerHTML = `<div class="mh-tag">You're viewing</div>
         <div class="mh-name">${LABELS[CUR] || CUR}${rec}</div>
         <div class="mh-def">${mm.def}</div>
         <div class="mh-cols">
