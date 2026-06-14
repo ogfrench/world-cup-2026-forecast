@@ -625,7 +625,7 @@
       <h3>Against Opta and the bookmakers</h3>
       <p>None of these models was trained on Opta's numbers, so it is a fair outside check. The selected model's title odds, next to Opta's supercomputer and the bookmakers:</p>
       <table class="cal" id="calTable"></table>
-      <div class="note">The results-only models love <b>Argentina</b> on recent form (the Hybrid puts them almost level with Spain; the bookmakers have them around fifth) and rate <b>France</b> below the bookmakers, who are paying for squad depth results cannot see. The spread across the five is how much of the title race is method, not fact: Spain swings from about 10 to 29 percent, far wider than the match odds ever differ.</div>
+      <div class="note" id="methodNote"></div>
       <p><b>Bookmakers and Pure Market are not the same line.</b> The <b>Bookmakers</b> reference (the gold dots and the column above) is the raw published title odds, champion only. <b>Pure Market</b> is a model: it takes the team ratings those odds imply and plays the whole tournament 50,000 times, so it reproduces the bookmakers on the title by calibration, but also gives a number for every round and every match. On the title bar the two land on top of each other by design; everywhere else, only Pure Market has an answer.</p>
 
       <h3>Where it's weak</h3>
@@ -1219,6 +1219,31 @@
       calTeams.map(t=>`<tr><td>${t}</td><td style="color:var(--lime)">${fmt(T[t].champ)}%</td>`+
         `<td style="color:var(--blue)">${OPTA[t]!=null?OPTA[t]+'%':'n/a'}</td>`+
         `<td style="color:var(--gold)">${MKT[t]!=null?MKT[t]+'%':'n/a'}</td></tr>`).join('');
+
+    // adaptive note: how the SELECTED model reads the title race against the bookmakers, from live data
+    // (computed, never hardcoded, so it stays true as the odds re-simulate and as you switch models)
+    const noteEl = document.getElementById('methodNote');
+    const priced = Object.keys(MKT).filter(t => T[t]);
+    if (noteEl && priced.length) {
+      const sgn = x => (x >= 0 ? '+' : '') + fmt(x);
+      const fav = priced.slice().sort((a, b) => MKT[b] - MKT[a])[0];   // the bookmakers' favorite
+      let over = priced[0], under = priced[0], od = -Infinity, ud = Infinity;
+      priced.forEach(t => { const d = T[t].champ - MKT[t];
+        if (d > od) { od = d; over = t; } if (d < ud) { ud = d; under = t; } });
+      const spread = Object.keys(MODELS).map(m => (MODELS[m].teams[fav] || {}).champ).filter(v => v != null);
+      const lo = Math.min(...spread), hi = Math.max(...spread);
+      const CHAR = {
+        elo: `<b>Pure Elo</b> backs the favorites hardest of the five. It rates teams on results alone, so it is blind to squad depth and to who is fit and in form for kickoff.`,
+        score: `<b>Pure Goals</b> predicts scorelines, not just winners, but it rewards running up the score on weak opponents, so it flatters the big scorers.`,
+        hybrid: `<b>Hybrid</b> is the steady results-based read, Pure Elo and Pure Goals split down the middle. It trusts recent form more than the bookmakers do.`,
+        market: `<b>Hybrid + Market</b> pulls the results-based read halfway to the bookmakers, so it lands between the two.`,
+        market_pure: `<b>Pure Market</b> is the bookmakers played through the whole bracket, so on the title it hews close to them and credits the squad depth that results alone miss. The recommended view.`
+      };
+      const vs = (od < 1 && -ud < 1)
+        ? `On the title it barely leaves the bookmakers, by design.`
+        : `Against the bookmakers it is most bullish on <b>${over}</b> (${sgn(od)}) and most cautious on <b>${under}</b> (${sgn(ud)}).`;
+      noteEl.innerHTML = `${CHAR[CUR] || ''} ${vs} Across all five models <b>${fav}</b> ranges from ${fmt(lo)}% to ${fmt(hi)}% to win it, far wider than the match odds ever move: most of that gap is method, not fact.`;
+    }
   }
 
   // ---- schedule (all fixtures, by date, with live results) ----
