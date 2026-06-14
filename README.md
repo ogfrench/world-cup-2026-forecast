@@ -147,17 +147,15 @@ Open `index.html` in a browser, or run `python -m http.server` from the reposito
 Deployed on Netlify, served from the repository root and redeployed on each push to `main`. Live at
 <https://wc2026forecast.xyz/>, with a backup at <https://wc2026forecast.netlify.app/>.
 
-## Roadmap
+## Status
 
-Intentionally narrow: a forecast viewer, not a prediction game. The live phase
-([issue #4](https://github.com/ogfrench/world-cup-2026-prediction/issues/4), now shipped): matches
-sorted by date, home/away corrected from the official fixture list, live results overlaid with
-color-coded accuracy, a live group table against the predicted finish, the conditional live title odds
-with a Day 0 before/after, the autonomous refresh, and the Top Scorers tab. The predicted-vs-actual
-knockout bracket and its in-play badges are built; they light up once the round-of-32 is set (around
-June 28), with the remaining bracket-data wiring tracked in
-[issue #17](https://github.com/ogfrench/world-cup-2026-prediction/issues/17). User picks, scoring, and a
-leaderboard stay out of scope.
+Shipped: fixtures sorted by date with official home/away; live results overlaid with color-coded
+accuracy; a live group table against the predicted finish; conditional live title odds with a Day 0
+before/after; the autonomous refresh; and the Top Scorers tab.
+
+In progress: the predicted-vs-actual knockout bracket and its in-play badges are built and light up
+once the round of 32 is set (around June 28). The remaining bracket-data wiring is tracked in
+[issue #17](https://github.com/ogfrench/world-cup-2026-prediction/issues/17).
 
 ## Disclaimer
 
