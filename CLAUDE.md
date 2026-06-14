@@ -82,7 +82,7 @@ never changes the static odds; only the Action re-conditions them.
 - Plain vanilla JS in three `<script>` blocks, no libraries. The first is the injected
   `DATA`, the second is the app (one IIFE that renders everything), the third is the tooltip engine.
 - Tooltips: add a `data-tip="..."` attribute to any element. Event delegation means elements
-  that `render()`/`renderSchedule()`/`renderNL()` add later get tooltips for free. `data-tip` may contain simple `<b>` markup.
+  that `render()`/`renderSchedule()` add later get tooltips for free. `data-tip` may contain simple `<b>` markup.
 - Live results: fetched in the browser from a CORS-enabled feed, cached in localStorage, refreshed
   adaptively (faster while a match is in play, paused when the tab is hidden). The render code is
   feed-agnostic: swap `ACT_SRC` and `parseActuals` to change source. Never block render on the fetch.
