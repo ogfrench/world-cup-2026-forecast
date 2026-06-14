@@ -162,6 +162,14 @@ eq(koActual(koTie({ a: 'Brazil', b: 'England', date: '2026-06-28' })),
    { hs: 1, as: 1, winner: null }, 'a drawn feed result leaves the advancer to a shootout the score cannot read');
 eq(koActual(koTie({ a: 'Spain', b: 'France' })), null, 'no server result and no date: nothing to overlay');
 
+// later rounds behave exactly like the round of 32 (koActual is round-agnostic), and crucially a tie
+// whose predicted matchup did not actually happen (the bracket diverged past R32) shows no result.
+sandbox.setActuals(parseActuals('Sat July 4\n  16:00 UTC-4    Spain 2-0 (1-0) Portugal   @ X\n'));
+eq(koActual(koTie({ a: 'Spain', b: 'Portugal', date: '2026-07-04', round: 'qf' })),
+   { hs: 2, as: 0, winner: 'Spain' }, 'a later-round tie overlays the real result just like the round of 32');
+eq(koActual(koTie({ a: 'Spain', b: 'Uruguay', date: '2026-07-04', round: 'qf' })), null,
+   'a tie whose predicted opponent never advanced shows no result, never a wrong one');
+
 console.log(failed
   ? `\n${failed} failed, ${passed} passed.`
   : `OK: ${passed} assertions passed (matchState clock, parseActuals + parseScorers feed parsers, predTier scoring, koActual knockout overlay, end-to-end sample feed).`);
