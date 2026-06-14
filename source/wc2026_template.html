@@ -112,8 +112,26 @@
   .mk{position:absolute;top:-3px;height:32px;width:0;border-left:2px dashed;transform:translateX(-1px)}
   .mk.opta{border-color:var(--blue)}
   .mk.mkt{border-color:var(--gold)}
+  .mk.day0{border-color:var(--faint);opacity:.6}
   .bar-row .val{font-family:'DM Mono';font-weight:500;font-size:14px;color:var(--lime);text-align:right}
   .bar-row .val small{color:var(--faint);font-size:10px}
+  .bar-row .val .tmove{display:inline-flex;align-items:center;justify-content:flex-end;gap:2px;font-size:9.5px;font-weight:700}
+  .bar-row .val .tmove::before{content:"";width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent}
+  .tmove.up{color:var(--win)} .tmove.up::before{border-bottom:5px solid var(--win)}
+  .tmove.down{color:var(--loss)} .tmove.down::before{border-top:5px solid var(--loss)}
+  .tmove.out{color:var(--loss);font-family:'DM Mono'}
+  .tmove.out::before{display:none}
+  /* live title-odds banner + podium movement */
+  .livebar{display:flex;align-items:center;gap:9px;font-family:'DM Mono';font-size:11.5px;color:var(--muted);
+           background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:0 0 14px}
+  .livebar b{color:var(--txt);font-weight:500} .livebar .gh{color:var(--faint)}
+  .livebar .ld{width:7px;height:7px;border-radius:50%;background:var(--lime);flex:none;animation:lpulse 2s infinite}
+  @keyframes lpulse{0%{box-shadow:0 0 0 0 rgba(200,255,77,.5)}70%{box-shadow:0 0 0 6px rgba(200,255,77,0)}100%{box-shadow:0 0 0 0 rgba(200,255,77,0)}}
+  .pod .mv{display:inline-flex;align-items:center;gap:4px;font-family:'DM Mono';font-size:11px;margin-top:7px;font-weight:500}
+  .pod .mv::before{content:"";width:0;height:0;border-left:3.5px solid transparent;border-right:3.5px solid transparent}
+  .pod .mv.up{color:var(--win)} .pod .mv.up::before{border-bottom:6px solid var(--win)}
+  .pod .mv.down{color:var(--loss)} .pod .mv.down::before{border-top:6px solid var(--loss)}
+  .pod .mv.even{color:var(--faint)} .pod .mv.even::before{display:none}
 
   /* ---------- podium ---------- */
   .podium{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:26px}
@@ -479,6 +497,7 @@
       <span data-tip="De-vigged title odds from the betting market (Polymarket / Kalshi / FanDuel), bookmaker margin stripped out."><i class="dot mkt"></i> <span class="has-tip">Betting market</span></span>
       <span style="color:var(--faint)" data-tip="Monte Carlo standard error: how much this number would wobble if you re-ran the 50,000 tournaments. Small means the estimate is stable."><span class="has-tip">± = Monte Carlo standard error</span></span>
     </div>
+    <div class="livebar" id="titleLive" style="display:none"></div>
     <div id="raceBars"></div>
 
     <div class="sec-h">Road to the final</div>
@@ -892,9 +911,16 @@
   function render(){
     const T = MODELS[CUR].teams, GM = MODELS[CUR].group_matches;
     const byChamp = Object.keys(T).sort((a,b)=>T[b].champ-T[a].champ);
+    // live when conditioned on played games and the Day 0 baseline is attached
+    const live = !!(META.live && T[byChamp[0]] && T[byChamp[0]].champ0!=null);
 
     // podium
     const podCols=['p1','p2','p3'], rkTxt=['1st favorite','2nd favorite','3rd favorite'];
+    const podMove=(now,then)=>{
+      const d=now-then;
+      if(Math.abs(d)<0.05) return `<div class="mv even" data-tip="Unchanged from the Day 0 (pre-tournament) odds.">level with Day 0</div>`;
+      return `<div class="mv ${d>0?'up':'down'}" data-tip="Change from the Day 0 (pre-tournament) odds of <b>${fmt(then)}%</b>.">${fmt(Math.abs(d))} since Day 0</div>`;
+    };
     document.getElementById('podium').innerHTML = byChamp.slice(0,3).map((t,i)=>`
       <div class="pod ${podCols[i]}">
         <div class="rk">${rkTxt[i]}</div>
@@ -902,17 +928,34 @@
         <div class="pct">${fmt(T[t].champ)}<span style="font-size:15px">%</span></div>
         <div class="lbl">to win the World Cup</div>
         <div class="elo">Elo ${T[t].elo} · reaches final ${fmt(T[t].final)}%</div>
+        ${live?podMove(T[t].champ,T[t].champ0):''}
       </div>`).join('');
+
+    // live banner above the bars
+    const tl=document.getElementById('titleLive');
+    if(tl){
+      if(live){ tl.style.display='flex';
+        tl.innerHTML=`<span class="ld"></span><span>Live title odds, conditioned on <b>${META.played} played group ${META.played===1?'game':'games'}</b>. The <span class="gh">grey tick</span> on each bar marks the team's Day 0 (pre-tournament) odds.</span>`;
+      } else tl.style.display='none';
+    }
 
     // title race bars (top 16)
     const top = byChamp.slice(0,16);
-    const maxv = Math.max(...top.map(t=>Math.max(T[t].champ, OPTA[t]||0, MKT[t]||0)))*1.08;
+    const maxv = Math.max(...top.map(t=>Math.max(T[t].champ, OPTA[t]||0, MKT[t]||0, live?(T[t].champ0||0):0)))*1.08;
+    const barDelta=(o)=>{
+      if(o.champ<0.05 && o.advance<0.05) return `<span class="tmove out" data-tip="Eliminated. Was <b>${fmt(o.champ0)}%</b> to win on Day 0.">out</span>`;
+      const d=o.champ-o.champ0;
+      if(Math.abs(d)<0.05) return '';
+      return `<span class="tmove ${d>0?'up':'down'}" data-tip="Day 0 (pre-tournament): <b>${fmt(o.champ0)}%</b>.">${fmt(Math.abs(d))}</span>`;
+    };
     document.getElementById('raceBars').innerHTML = top.map(t=>{
       const v=T[t].champ, o=OPTA[t], m=MKT[t];
       const mk=(val,cls)=> val==null?'':`<span class="mk ${cls}" style="left:${(val/maxv)*100}%" title="${cls}"></span>`;
+      const ghost = live ? mk(T[t].champ0,'day0') : '';
+      const delta = live ? barDelta(T[t]) : '';
       return `<div class="bar-row"><div class="nm">${t}<small>Elo ${T[t].elo}</small></div>
-        <div class="track"><div class="fill" style="width:${(v/maxv)*100}%"></div>${mk(o,'opta')}${mk(m,'mkt')}</div>
-        <div class="val">${fmt(v)}<small>±${se(v).toFixed(1)}</small></div></div>`;
+        <div class="track"><div class="fill" style="width:${(v/maxv)*100}%"></div>${ghost}${mk(o,'opta')}${mk(m,'mkt')}</div>
+        <div class="val">${fmt(v)}<small>±${se(v).toFixed(1)}</small>${delta}</div></div>`;
     }).join('');
 
     // knockout matrix (top 24)
