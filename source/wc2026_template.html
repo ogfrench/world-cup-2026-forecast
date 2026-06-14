@@ -391,9 +391,11 @@
   .livelink:hover{border-color:var(--lime);background:rgba(200,255,77,.08)}
   .livelink .livedot{width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulse 1.8s infinite}
   .livelink .livearrow{color:var(--lime-dim);font-weight:400}
-  /* finished, result not posted yet: muted, no pulse */
-  .livelink.done{color:var(--muted);border-color:var(--line2)}
-  .livelink.done:hover{color:var(--txt);border-color:var(--faint);background:none}
+  /* looks finished, result not in the feed yet: an amber "awaiting" flag, no pulse */
+  .livelink.await{color:var(--gold);border-color:rgba(255,209,102,.4)}
+  .livelink.await .livedot{background:var(--gold);animation:none}
+  .livelink.await .livearrow{color:var(--gold)}
+  .livelink.await:hover{border-color:var(--gold);background:rgba(255,209,102,.08)}
   .livelink.done .livearrow{color:var(--faint)}
   .sched{margin-top:4px}
   .sday{font-family:'DM Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);
@@ -819,9 +821,10 @@
   const liveSearch = mm => 'https://www.google.com/search?q=' + encodeURIComponent(mm.home + ' vs ' + mm.away);
   const liveBadge = mm => {
     const live = matchLive(mm);
-    const tip = live ? "In play now. Opens a Google search for the live score (we do not host a live feed)."
-                     : "Full time, the result is not in our feed yet. Tap to check the score on Google.";
-    return `<a class="livelink${live?'':' done'}" href="${liveSearch(mm)}" target="_blank" rel="noopener" data-tip="${tip}">${live?'<span class="livedot"></span>Live':'Score'}<span class="livearrow">&#8599;</span></a>`;
+    const label = live ? 'In play' : 'Awaiting result';
+    const tip = live ? "Kicked off, no final score in our feed yet. Tap to check the live score on Google (we host no live feed)."
+                     : "Looks finished, but openfootball has not posted the result yet. Tap to check the score on Google.";
+    return `<a class="livelink ${live?'live':'await'}" href="${liveSearch(mm)}" target="_blank" rel="noopener" data-tip="${tip}"><span class="livedot"></span>${label}<span class="livearrow">&#8599;</span></a>`;
   };
   // one shared match card, used by both the Groups tab and the Schedule so they look identical.
   // schedule mode swaps the date caption for kickoff time, group, and venue.
