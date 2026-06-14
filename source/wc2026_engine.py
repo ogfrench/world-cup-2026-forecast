@@ -226,7 +226,13 @@ def _r32_map(W, R, T, tmap):
         88: (R['D'], R['G']),
     }
 
-def simulate_tournament(group_results, rng):
+def simulate_tournament(group_results, rng, ko_fixed=None):
+    ko_fixed = ko_fixed or {}
+    def _ko(a, b):                                   # force a known result, else play it out
+        w = ko_fixed.get(frozenset((a, b)))
+        if w is not None:
+            return (w, b if w == a else a)
+        return play_ko(a, b, rng)
     winners, runners, thirds, third_stats = {}, {}, {}, {}
     for g in GROUPS:
         order, stats = rank_group(g, group_results[g])
@@ -239,11 +245,11 @@ def simulate_tournament(group_results, rng):
     T = {g: thirds[g] for g in adv_groups}
     W, R = winners, runners
     r32 = _r32_map(W, R, T, tmap)
-    wq = {m: play_ko(a, b, rng)[0] for m, (a, b) in r32.items()}
-    w16 = {m: play_ko(wq[p], wq[q], rng)[0] for m, (p, q) in R16_PAIRS.items()}
-    wqf = {m: play_ko(w16[p], w16[q], rng)[0] for m, (p, q) in QF_PAIRS.items()}
-    wsf = {m: play_ko(wqf[p], wqf[q], rng)[0] for m, (p, q) in SF_PAIRS.items()}
-    champ, _ = play_ko(wsf[101], wsf[102], rng)
+    wq = {m: _ko(a, b)[0] for m, (a, b) in r32.items()}
+    w16 = {m: _ko(wq[p], wq[q])[0] for m, (p, q) in R16_PAIRS.items()}
+    wqf = {m: _ko(w16[p], w16[q])[0] for m, (p, q) in QF_PAIRS.items()}
+    wsf = {m: _ko(wqf[p], wqf[q])[0] for m, (p, q) in SF_PAIRS.items()}
+    champ, _ = _ko(wsf[101], wsf[102])
     return {'winners': winners, 'runners': runners, 'thirds': T,
             'r32_winners': set(wq.values()), 'r16_winners': set(w16.values()),
             'qf_winners': set(wqf.values()), 'sf_winners': set(wsf.values()),
@@ -279,11 +285,13 @@ def _fixed_overrides(actuals):
             fixed[g] = idx
     return fixed
 
-def run(n=50000, seed=20260611, model='hybrid', actuals=None):
+def run(n=50000, seed=20260611, model='hybrid', actuals=None, ko_played=None):
     global CURRENT_MODEL; CURRENT_MODEL = model
     rng = np.random.default_rng(seed)
     fx_all = build_fx()
     fixed = _fixed_overrides(actuals or {})
+    ko_fixed = {frozenset((p['home'], p['away'])): p['winner']
+                for p in (ko_played or []) if p.get('winner')}
     counters = {t: dict(win_group=0, advance=0, r16=0, qf=0, sf=0, final=0, champ=0) for t in TEAMS}
     for _ in range(n):
         group_results = {}
@@ -293,7 +301,7 @@ def run(n=50000, seed=20260611, model='hybrid', actuals=None):
             for k, (fh, fa) in fixed.get(g, {}).items():   # lock played games
                 hg[k] = fh; ag[k] = fa
             group_results[g] = [(fx['h'][k], fx['a'][k], int(hg[k]), int(ag[k])) for k in range(len(hg))]
-        res = simulate_tournament(group_results, rng)
+        res = simulate_tournament(group_results, rng, ko_fixed)
         for g in GROUPS: counters[res['winners'][g]]['win_group'] += 1
         advancing = set(res['winners'].values()) | set(res['runners'].values()) | set(res['thirds'].values())
         for t in advancing: counters[t]['advance'] += 1

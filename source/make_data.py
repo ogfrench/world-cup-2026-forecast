@@ -23,8 +23,9 @@ BK = ('win_group', 'advance', 'r16', 'qf', 'sf', 'final', 'champ')
 def main():
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 50000
     A = e.load_actuals()
+    ko_played = e.load_ko_actuals()
     played = sum(len(v) for v in A.values())
-    print(f"actuals: {played} played group games | n={n:,}")
+    print(f"actuals: {played} played group games, {len(ko_played)} knockout | n={n:,}")
 
     # market calibration pins the market-implied Elo to the published PRE-TOURNAMENT odds,
     # so it must use the unconditioned model (never conditioned on results)
@@ -38,7 +39,7 @@ def main():
         print(f"  {e.LABELS[key]}: Day 0 ...", flush=True)
         base[key] = elo0 if key == 'elo' else e.run(n, model=key)[0]
         print(f"  {e.LABELS[key]}: live{' (conditioned)' if played else ''} ...", flush=True)
-        live[key] = e.run(n, model=key, actuals=A)[0]
+        live[key] = e.run(n, model=key, actuals=A, ko_played=ko_played)[0]
 
     for key in ORDER:
         errs = e.validate(live[key])
@@ -52,6 +53,10 @@ def main():
                 live[key][t][k + '0'] = base[key][t][k]
 
     gm = {key: e.group_match_predictions(key) for key in ORDER}
+    # knockout bracket predictions (empty until every group has finished and the R32 is set)
+    ko = {key: e.ko_predictions(key, group_actuals=A, ko_played=ko_played) for key in ORDER}
+    nko = len(ko[ORDER[0]])
+    print(f"  knockout: {nko} known ties" + (" (bracket set)" if nko else " (group stage)"))
     meta = dict(n_sims=n, default_model='market_pure', labels=e.LABELS,
                 rho=e.RHO, home_mult=round(math.exp(e.HOME), 3), c=e.C, total=e.TOTAL,
                 oos_logloss=dict(pure_dc=0.8558, pure_elo=0.8464, hybrid=0.8409),
@@ -62,7 +67,8 @@ def main():
                   market_implied_elo={t: round(e.MARKET_ELO[t]) for t in e.MARKET_FULL})
 
     live_data = dict(meta=meta, **shared,
-                     models={key: dict(teams=live[key], group_matches=gm[key]) for key in ORDER})
+                     models={key: dict(teams=live[key], group_matches=gm[key],
+                                       knockout=ko[key]) for key in ORDER})
     base_meta = dict(meta); base_meta['live'] = False; base_meta['played'] = 0
     base_data = dict(meta=base_meta, **shared,
                      models={key: dict(teams=base[key], group_matches=gm[key]) for key in ORDER})
