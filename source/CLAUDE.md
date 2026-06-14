@@ -126,16 +126,13 @@ In `wc2026_template.html`, the model-aware Netherlands timeline lives in the `re
 - The first-goal minute comes from `NL_BANDS`, the empirical 15-minute goal-share curve (rising, peak
   in the final fifteen). The half-time and the minute are read from the same scenario so they agree.
 
-To add knockout fixtures once the bracket is set:
-1. Compute the opponent's per-model expected goals from the engine (set `CURRENT_MODEL`, call
-   `lambdas('Netherlands', opp)`), and add them to `NL_LAM` and a fixture entry to `NL_FIX`.
-2. IMPORTANT: knockout games go to extra time and penalties, but the group cards use a straight
-   90-minute Poisson. For KO fixtures switch the scoreline math to regulation-only (the engine has
-   separate ET and shootout logic), or the full-time score and over/under will be off.
-   The score we show and grade is the 120-minute result (regulation + extra time); penalties never
-   count toward it (a 1-1 that goes to a shootout stays 1-1, the shootout only decides who advances).
-   This mirrors how Scorito scores knockout games. Read the advancer off the shootout, the score off
-   the end of extra time, and keep them as separate facts.
+Knockout fixtures are now automatic: once the round of 32 is set, `make_data` emits a per-model
+`knockout` section (via `ko_predictions`), and the Netherlands/France tabs auto-fill their KO ties
+from it through `koTimelineExtra` (reusing `koCard`). No manual `NL_FIX` edit. `koCard` is already
+120-minute correct: the score shown and graded is the regulation-plus-extra-time result, and penalties
+never count toward it (a 1-1 that goes to a shootout stays 1-1; the shootout only decides who advances,
+carried separately as `played.winner`). This mirrors how Scorito scores knockout games. The 90-minute
+Poisson is only for the group cards; `ko_report` handles extra time and the shootout for KO ties.
 
 ## The conceptual trap that bit us repeatedly (do not repeat)
 
