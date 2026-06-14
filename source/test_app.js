@@ -38,11 +38,15 @@ const snippet = [
   pull(/const actNm = [^\n]*/, 'actNm'),
   pull(/const actKey = [^\n]*/, 'actKey'),
   pull(/function parseActuals\(txt\)\{[\s\S]*?\n  \}/, 'parseActuals'),
+  pull(/const scoreOutcome = [^\n]*/, 'scoreOutcome'),
+  pull(/const actOutcome = [^\n]*/, 'actOutcome'),
+  pull(/const predTier = \(mm,a\) =>[\s\S]*?'miss'\);/, 'predTier'),
+  'this.predTier = predTier;',   // predTier is a const arrow, so surface it on the sandbox
 ].join('\n');
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals } = sandbox;
+const { matchState, parseActuals, predTier } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -75,7 +79,19 @@ eq(acts['2026-06-13|Czechia|Turkiye'], { home: 'Turkiye', away: 'Czechia', hs: 1
 eq(acts.hasOwnProperty('2026-06-13|Australia|Turkiye'), false,
    'an unplayed fixture produces no actual result');
 
+// ---- predTier: the score colour must agree with the score the card shows ----
+// graded on the modal scoreline, not the W/D/L favorite, so a drawn headline score can never
+// read green against a decisive result.
+const tier = (modal, hs, as) => predTier({ modal }, { hs, as });
+eq(tier([1, 1], 1, 1), 'exact', 'modal equals the result: exact (dark green)');
+// the reported bug: 1-1 predicted (a draw) against Australia 2-0 (a home win) must be a miss, not green
+eq(tier([1, 1], 2, 0), 'miss', 'drawn prediction vs a 2-0 home win is a miss, not "right result"');
+eq(tier([1, 1], 0, 1), 'miss', 'drawn prediction vs a 0-1 away win is a miss');
+eq(tier([1, 1], 0, 0), 'result', 'drawn prediction vs a 0-0 draw: right result, wrong score');
+eq(tier([2, 1], 3, 0), 'result', 'home prediction vs a home win, different score: right result');
+eq(tier([2, 1], 0, 2), 'miss', 'home prediction vs an away win is a miss');
+
 console.log(failed
   ? `\n${failed} failed, ${passed} passed.`
-  : `OK: ${passed} assertions passed (matchState clock + parseActuals feed parser).`);
+  : `OK: ${passed} assertions passed (matchState clock, parseActuals feed parser, predTier scoring).`);
 process.exit(failed ? 1 : 0);
