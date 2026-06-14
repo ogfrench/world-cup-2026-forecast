@@ -117,7 +117,9 @@ odds (converges to within ~0.4 to 0.6 points).
 ## Key parameters (fitted)
 
 Home effect +0.270 (a 1.31x goal multiplier), rho -0.039, total goals 2.728, c 0.00519, alpha 0.5.
-Dixon-Coles fit on 15,431 internationals (window 2010+, half-life 2.5 years, min 15 matches/team).
+Dixon-Coles fit on 15,751 internationals (window 2010+, half-life 2.5 years, min 15 matches/team).
+The app reads this count from `meta.dc_matches` (do not hardcode it); the 1,230 held-out and 5,327
+club-match validation figures are still hardcoded in the copy and must be refreshed when the fit is re-run.
 
 ## Validation, the honest bottom line
 

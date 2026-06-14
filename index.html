@@ -548,7 +548,7 @@
       <div class="methodhero" id="methodHero"></div>
       <div class="sec-h">The five models, compared</div>
       <p>One tournament, played out <b id="nsim2"></b> times. Each run goes through all 104 games, the eight best third-placed teams, the official FIFA round of 32, and the bracket the rest of the way, with extra time and penalties when a tie needs them. The engine underneath stays the same. What changes between the five is how a single match is rated, from the ones that use only past results to the ones that use the betting market.</p>
-      <p>The first three use results only. <b>Pure Elo</b> treats a team like a chess rating, going on who has been beating whom. It is steady and hard to fool with one odd scoreline, it has no feel for how a team plays, and of the five it leans on the favorites most. <b>Pure Goals</b> learns each team's attack and defense from <b>15,431 internationals</b> since 2010, where the home side scores about <b>1.31x</b> as often, so it works in scorelines rather than just winners. It also rewards a team for scoring heavily against weaker opponents, which lifts teams like Japan and Algeria. <b>Hybrid</b> averages the two, and each covers for the other's blind spot. On 1,230 internationals it had not seen, it does at least as well as either one alone, with the steadiest confidence of the three:</p>
+      <p>The first three use results only. <b>Pure Elo</b> treats a team like a chess rating, going on who has been beating whom. It is steady and hard to fool with one odd scoreline, it has no feel for how a team plays, and of the five it leans on the favorites most. <b>Pure Goals</b> learns each team's attack and defense from <b><span id="dcm1"></span> internationals</b> since 2010, where the home side scores about <b>1.31x</b> as often, so it works in scorelines rather than just winners. It also rewards a team for scoring heavily against weaker opponents, which lifts teams like Japan and Algeria. <b>Hybrid</b> averages the two, and each covers for the other's blind spot. On 1,230 internationals it had not seen, it does at least as well as either one alone, with the steadiest confidence of the three:</p>
       <table class="cal" id="ooTable"></table>
       <p>A forecast is measured three ways: how often it calls the result, how surprised it is once the games are in (log-loss), and whether its stated confidence holds up (calibration). Hybrid wins or ties on all three. It clearly beats the goals model and is just barely ahead of plain Elo, close enough that either could be best, so blending lands at least as good as the best single method and a little steadier. A more complicated model did not mean a more accurate one.</p>
       <p>The last two bring in the bookmakers. <b>Hybrid + Market</b> reads the ratings the betting odds imply and meets Hybrid halfway, which pulls Argentina down a little and lifts France. <b>Pure Market</b> drops the model and runs the bookmakers' implied ratings through the same bracket, so their read covers every tie and round, not just the title. Across 5,327 club matches with real closing odds, the market came out ahead of a solid Elo model, and no blend beat it on its own, so the page opens on it. It is the bookmakers as they stood before kickoff, played forward, not a live feed of moving prices.</p>
@@ -566,7 +566,7 @@
       <p><b>The single most likely score is shaky.</b> In an even game 1-1, 1-0 and 0-0 sit within a few percent of each other, so the headline score can flip on very little. The win, draw and loss split is firmer than the exact number. The model also draws a little less than real life, around 23 to 24 percent in the groups against a 26 to 28 percent norm.</p>
       <p><b>There is no top-scorer model.</b> The engine rates teams, not players. The <a class="xlink" href="#" data-go="topscorers">Top Scorers</a> tab puts the bookmakers' pre-tournament pick next to whoever is actually scoring.</p>
       <p><b>It is a baseline, not a sure thing.</b> Built from public data and standard methods, it is good for the shape of a tournament and a feel for the odds, and not for staking anything you would miss.</p>
-      <p class="colophon">Five match models over a shared <b id="nsim3"></b>-tournament Monte Carlo with the official FIFA Annex C round of 32 (495 line-ups). Dixon-Coles fit by maximum likelihood on 15,431 internationals (2010 to 2026), the hybrid weight chosen by out-of-sample log-loss, bookmaker margins stripped out and the Pure Market ratings calibrated to them. Opta and the bookmakers (Polymarket, Kalshi, FanDuel) are shown for comparison only. Not betting advice.</p>
+      <p class="colophon">Five match models over a shared <b id="nsim3"></b>-tournament Monte Carlo with the official FIFA Annex C round of 32 (495 line-ups). Dixon-Coles fit by maximum likelihood on <span id="dcm2"></span> internationals (2010 to 2026), the hybrid weight chosen by out-of-sample log-loss, bookmaker margins stripped out and the Pure Market ratings calibrated to them. Opta and the bookmakers (Polymarket, Kalshi, FanDuel) are shown for comparison only. Not betting advice.</p>
     </div>
   </section>
 
@@ -578,6 +578,7 @@
 (function(){
   const MODELS = DATA.models, META = DATA.meta, OPTA = DATA.opta, MKT = DATA.market, G = DATA.groups;
   const LABELS = META.labels, n = META.n_sims;
+  const dcm = (META.dc_matches!=null?META.dc_matches:15751).toLocaleString();   // Dixon-Coles fit size, read from the data so it never goes stale
   const fmt = x => (Math.round(x*10)/10).toFixed(1);
   const se = p => 100*Math.sqrt((p/100)*(1-p/100)/n);
   let CUR = 'market_pure';   // app opens on Pure Market, the recommended forecast
@@ -935,6 +936,7 @@
   ].map(([k,v])=>`<span class="chip" data-tip="${CHIP_TIP[k]||''}">${k} <b>${v}</b></span>`).join('');
   const n2=document.getElementById('nsim2'); if(n2) n2.textContent=n.toLocaleString();
   const n3=document.getElementById('nsim3'); if(n3) n3.textContent=n.toLocaleString();
+  ['dcm1','dcm2'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=dcm; });
   document.getElementById('foot').innerHTML =
     `<div class="madeby">made with <span class="hb">&#9829;</span> by François<span class="sep">&middot;</span><a href="https://github.com/ogfrench/world-cup-2026-prediction" target="_blank" rel="noopener" aria-label="View the source on GitHub"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 012-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></div>`;
 
@@ -956,7 +958,7 @@
   const REC=new Set(['hybrid','market_pure']);
   const MODEL_TIP={
     elo:'<b>Pure Elo.</b> Ranks teams on results alone, like a chess rating. Simple and hard to fool, but knows nothing about how a team plays. Backs the favorites hardest.',
-    score:'<b>Pure Goals.</b> Learns each team’s attack and defense from 15,431 internationals, so it predicts actual scorelines. Tends to overrate teams that score a lot against weak opponents.',
+    score:`<b>Pure Goals.</b> Learns each team’s attack and defense from ${dcm} internationals, so it predicts actual scorelines. Tends to overrate teams that score a lot against weak opponents.`,
     hybrid:'<b>Hybrid.</b> Pure Elo and Dixon-Coles simply averaged. Each patches the other’s blind spot. The best guess built from results alone, and the only one validated on internationals.',
     market:'<b>Hybrid + Market.</b> The Hybrid nudged halfway toward the bookmakers. Roughly how a lot of professional models work.',
     market_pure:'<b>Pure Market.</b> The bookmakers alone, calibrated so the simulated title odds match the published ones. The smartest single guess of the five.'
@@ -1019,7 +1021,7 @@
     elo: {def:'It rates teams on results alone, like a chess rating, then turns the gap into expected goals.',
           trust:'The overall ranking and the individual match-ups. It is hard to fool with one freak result.',
           watch:'It backs the favorites the hardest of the five, and it cannot see form or squad depth at all.'},
-    score: {def:"It learns each team's attack and defense from 15,431 internationals, so it talks in scorelines, not just winners.",
+    score: {def:`It learns each team's attack and defense from ${dcm} internationals, so it talks in scorelines, not just winners.`,
           trust:'Goal counts and the home edge (about 1.31x), not only who wins.',
           watch:'It rewards scoring heavily against weak teams, so it overrates teams like Japan and Algeria.'},
     hybrid: {def:"Pure Elo and Pure Goals averaged together, each one covering the other's blind spot.",

@@ -17,7 +17,7 @@ re-renders for the selected model. It opens on Pure Market, the recommended fore
 ## 2. The five models
 
 - **Pure Elo.** Official eloratings.net ratings turned into a goal supremacy. Results only.
-- **Pure Goals.** A goals model fit by maximum likelihood to 15,431 internationals
+- **Pure Goals.** A goals model fit by maximum likelihood to 15,751 internationals
   (2010 to 2026, recency-weighted): per-team attack and defense, a home effect, and the low-score
   dependence rho. Home edge came out at 1.31x, rho at -0.039, both earned from data.
 - **Hybrid.** Equal blend of the two. Each covers the other's blind spot. The app's recommended standalone model.
