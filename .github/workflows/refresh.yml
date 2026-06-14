@@ -47,12 +47,12 @@ jobs:
         id: changed
         if: steps.sundown.outputs.go == 'true'
         run: |
-          if git diff --quiet -- source/wc2026_actuals.json; then
+          if git diff --quiet -- source/wc2026_actuals.json source/wc2026_ko_actuals.json; then
             echo "go=false" >> "$GITHUB_OUTPUT"
             echo "No new played results since the last run; skipping the re-simulation."
           else
             echo "go=true" >> "$GITHUB_OUTPUT"
-            echo "New results detected:"; git --no-pager diff --stat -- source/wc2026_actuals.json
+            echo "New results detected:"; git --no-pager diff --stat -- source/wc2026_actuals.json source/wc2026_ko_actuals.json
           fi
 
       - name: Re-simulate (50k), conditioned on the played games
@@ -74,7 +74,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add source/wc2026_actuals.json source/wc2026_results.json index.html
+          git add source/wc2026_actuals.json source/wc2026_ko_actuals.json source/wc2026_results.json index.html
           if git diff --cached --quiet; then
             echo "Nothing to commit."
           else
