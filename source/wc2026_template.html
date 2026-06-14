@@ -511,7 +511,7 @@
   <!-- TITLE RACE -->
   <section class="on" id="race">
     <div class="koseg" id="titleToggle" style="display:none">
-      <button data-v="live" class="on" data-tip="The current forecast, conditioned on the games played.">Live</button>
+      <button data-v="live" class="on" data-tip="The current forecast, updated for the games played so far.">Live</button>
       <button data-v="day0" data-tip="The frozen pre-tournament forecast, before any games were played.">Day 0</button>
     </div>
     <div class="podium" id="podium"></div>
@@ -894,8 +894,8 @@
   const liveBadge = mm => {
     const live = matchLive(mm);
     const label = live ? 'In play' : 'Awaiting result';
-    const tip = live ? "Kicked off, no final score in our feed yet. Tap to check the live score on Google (we host no live feed)."
-                     : "Looks finished, but openfootball has not posted the result yet. Tap to check the score on Google.";
+    const tip = live ? "Kicked off, but no final score in our feed yet. Tap to check the live score on Google."
+                     : "Looks finished, but the result is not in our feed yet. Tap to check the score on Google.";
     return `<a class="livelink ${live?'live':'await'}" href="${liveSearch(mm)}" target="_blank" rel="noopener" data-tip="${tip}"><span class="livedot"></span>${label}<span class="livearrow">&#8599;</span></a>`;
   };
   // one shared match card, used by both the Groups tab and the Schedule so they look identical.
@@ -1115,7 +1115,7 @@
       if(live){ tl.style.display='flex';
         tl.innerHTML = day0
           ? `<span class="ld" style="animation:none;background:var(--faint)"></span><span>The Day 0 forecast: the pre-tournament odds, before any games were played.</span>`
-          : `<span class="ld"></span><span>Live title odds, conditioned on <b>${META.played} played group ${META.played===1?'game':'games'}</b>. The <span class="gh">grey tick</span> on each bar marks the team's Day 0 (pre-tournament) odds.</span>`;
+          : `<span class="ld"></span><span>Live title odds, updated for the <b>${META.played} group ${META.played===1?'game':'games'}</b> played so far. The <span class="gh">grey tick</span> on each bar marks the team's Day 0 (pre-tournament) odds.</span>`;
       } else tl.style.display='none';
     }
 
