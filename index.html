@@ -227,10 +227,24 @@
   .cal td:first-child,.cal th:first-child{text-align:left;font-family:'Archivo';font-weight:700}
   .cal tr:last-child td{border-bottom:none}
   .note{background:var(--surface);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:13px 16px;margin:18px 0;font-size:13.5px;color:var(--muted)}
-  .scorers{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
-  .scorers .s{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px}
-  .scorers .s b{display:block;font-weight:700}
-  .scorers .s span{font-family:'DM Mono';font-size:11px;color:var(--gold)}
+  /* ---------- top scorers ---------- */
+  .scgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+  .sccol{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 14px 8px}
+  .scol-h{font-family:'DM Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+          display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .scol-h small{font-size:10px;color:var(--faint);text-transform:none;letter-spacing:.02em}
+  .scrow{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid var(--line)}
+  .scrow:first-child{border-top:none}
+  .scrow .rk{font-family:'DM Mono';font-size:12px;color:var(--faint);text-align:center}
+  .scrow .who{font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .scrow .who small{display:block;font-family:'DM Mono';font-weight:400;font-size:10.5px;color:var(--faint)}
+  .scrow .v{font-family:'DM Mono';font-size:15px;font-weight:500;color:var(--lime)}
+  .sccol.exp .scrow .v{color:var(--gold)}
+  .scempty{color:var(--faint);font-size:13px;padding:16px 2px;font-family:'DM Mono';line-height:1.5}
+  .scnote{color:var(--faint);font-size:12px;margin:14px 2px 0;line-height:1.55}
+  .prose .colophon{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--faint);line-height:1.6}
+  .xlink{color:var(--lime);text-decoration:none;border-bottom:1px solid rgba(200,255,77,.35)}
+  .xlink:hover{border-bottom-color:var(--lime)}
   footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-size:11px;color:var(--faint);font-family:'DM Mono'}
   .madeby{margin-top:16px;display:flex;align-items:center;justify-content:center;gap:9px;color:var(--muted);letter-spacing:.04em}
   .madeby .hb{color:var(--txt)}
@@ -479,6 +493,7 @@
       <button class="tab" data-t="schedule">Schedule</button>
       <button class="tab" data-t="groups">Groups &amp; Scores</button>
       <button class="tab" data-t="knockout">Knockout Phase <span class="soon">soon</span></button>
+      <button class="tab" data-t="topscorers">Top Scorers</button>
       <button class="tab" data-t="method">Method &amp; Caveats</button>
       <span class="tabsep" aria-hidden="true"></span>
       <button class="tab team" data-t="nl"><span class="tdot" style="background:var(--gold)"></span>Netherlands</button>
@@ -539,15 +554,12 @@
 
     <div class="prose" style="margin-top:34px">
       <div class="sec-h">What to trust</div>
-      <p>Each card shows a single scenario, so the minute, the half-time and the full-time line up, all under the selected model. Under <b>Pure Market</b> the bookmakers fancy the Netherlands in all three group games, even against Japan, where the data-only models call it a coin flip.</p>
-      <p class="trust-h">Most to least:</p>
       <ul class="trust">
-        <li class="s1"><b>Who is favored</b>, or that it is a coin flip. Rock solid.</li>
+        <li class="s1"><b>Who is favored</b>, or a coin flip. Rock solid.</li>
         <li class="s1"><b>Two to three goals.</b> Solid.</li>
-        <li class="s2"><b>The exact score.</b> Shaky, the likeliest of several near-equal options.</li>
-        <li class="s3"><b>The first-goal minute.</b> Shakiest of all, a league-wide average, nothing team-specific.</li>
+        <li class="s2"><b>The exact score.</b> The likeliest of several near-equal lines.</li>
+        <li class="s3"><b>The first-goal minute.</b> A league average, nothing team-specific.</li>
       </ul>
-      <p class="trust-foot">None of it has ever been tested on a real World Cup.</p>
     </div>
   </section>
 
@@ -560,19 +572,33 @@
 
     <div class="prose" style="margin-top:34px">
       <div class="sec-h">What to trust</div>
-      <p>Each card shows a single scenario, so the minute, the half-time and the full-time line up, all under the selected model. France are clear favorites in Group I: Norway (with Haaland) and Senegal are the real tests, Iraq the softest.</p>
-      <p class="trust-h">Most to least:</p>
       <ul class="trust">
-        <li class="s1"><b>Who is favored</b>, or that it is a coin flip. Rock solid.</li>
+        <li class="s1"><b>Who is favored</b>, or a coin flip. Rock solid.</li>
         <li class="s1"><b>Two to three goals.</b> Solid.</li>
-        <li class="s2"><b>The exact score.</b> Shaky, the likeliest of several near-equal options.</li>
-        <li class="s3"><b>The first-goal minute.</b> Shakiest of all, a league-wide average, nothing team-specific.</li>
+        <li class="s2"><b>The exact score.</b> The likeliest of several near-equal lines.</li>
+        <li class="s3"><b>The first-goal minute.</b> A league average, nothing team-specific.</li>
       </ul>
-      <p class="trust-foot">None of it has ever been tested on a real World Cup.</p>
     </div>
   </section>
 
   <!-- METHOD -->
+  <!-- TOP SCORERS -->
+  <section id="topscorers">
+    <div class="sec-h">Golden Boot</div>
+    <p class="lead">The market's pick for the Golden Boot, next to who is actually scoring. The model rates teams, not players, so the expected side is the market, not the simulation.</p>
+    <div class="scgrid">
+      <div class="sccol exp">
+        <div class="scol-h"><span>Expected</span><small>betting market</small></div>
+        <div id="scExpected"></div>
+      </div>
+      <div class="sccol">
+        <div class="scol-h"><span>Goals so far</span><small id="scLiveSub">live</small></div>
+        <div id="scLive"></div>
+      </div>
+    </div>
+    <p class="scnote" id="scNote"></p>
+  </section>
+
   <section id="method">
     <div class="prose">
       <div class="sec-h">Five models, one engine</div>
@@ -593,10 +619,6 @@
 
       <p><b>Why models that rate single games almost identically still disagree wildly on the trophy.</b> A tiny edge in one match compounds across seven knockout rounds and a 48-team field, so a small rating gap balloons into a big gap in who lifts the trophy. Spain's number swings from about 10 to 29 percent across the five, far wider than the match odds ever differ. Read the five less as rival predictions, more as a stress test: how much does the answer depend on the method?</p>
 
-      <h3>A note on the Golden Boot</h3>
-      <p>This engine models team scores, not players, so it has no top-scorer odds. For reference, roughly where the betting market has it, with the margin stripped out:</p>
-      <div class="scorers" id="scorers"></div>
-
       <h3>Where it's weak</h3>
       <p><b>It backs the favorites too hard.</b> A fixed-strength sim cannot see a tournament turn (an injury, a player catching fire, a red card), so it piles probability onto the big teams. Pure Elo most, the market least. (The goals model spreads things out more, but that is goal-padding, not wisdom.) The head-to-heads stay sensible: Spain against Argentina is a coin flip.</p>
       <p><b>The live odds condition on results, not on form.</b> Once games are played the title and round odds re-simulate with those scores locked in, but the team ratings stay frozen at their pre-tournament values. Winning ugly and winning brilliantly move the odds the same way. Injuries, form, and a re-pricing market are still invisible to it.</p>
@@ -605,7 +627,9 @@
       <p><b>It draws a bit less than real life.</b> International football, full of lopsided qualifiers, draws less than club leagues, and the model learned that. Its group draw rate is around 23 to 24 percent, just under the World Cup norm of 26 to 28. The honest fitted number, not tuned up.</p>
       <p><b>The single "most likely score" is fragile.</b> In an even game 1-1, 1-0 and 0-0 sit within a few percent of each other, so the headline score flips on a whim. Trust the win/draw/loss split, not the exact number.</p>
       <p><b>Small print.</b> The blend weight and the Elo-to-goals conversion were tuned on an Elo rebuilt from the same match data, which lines up 0.97 with the official ratings used live; any flat gap cancels out in a given matchup.</p>
+      <p><b>No top-scorer model.</b> It rates teams, not players, so it has no Golden Boot odds of its own. The <a class="xlink" href="#" data-go="topscorers">Top Scorers</a> tab shows the market's pick against who is actually scoring.</p>
       <p><b>This is a toy, not an oracle.</b> A transparent baseline from public data and standard methods. Great for the shape of the tournament. Not for staking your mortgage.</p>
+      <p class="colophon">Five match models over a shared <b id="nsim3"></b>-tournament Monte Carlo with the official FIFA Annex C round-of-32 (495 line-ups). Dixon-Coles fit by MLE on 15,431 internationals (2010 to 2026); the hybrid weight chosen by out-of-sample log-loss; market odds de-vigged and the pure-market ratings calibrated to them. Opta and Polymarket, Kalshi, FanDuel shown for comparison only. Not betting advice.</p>
     </div>
   </section>
 
@@ -705,6 +729,69 @@
     });
     return out;
   }
+  // ---- top scorers: market expected (static) + live actual parsed from the feed ----
+  const SC_MKT = [['Mbappé','France','14%'],['Kane','England','12%'],['Haaland','Norway','7%'],
+                  ['Messi','Argentina','6%'],['Oyarzabal','Spain','5%'],['Yamal','Spain','5%'],
+                  ['J. Álvarez','Argentina','3%']];
+  let SC_LIVE = [];   // [{player, team, goals}] from the feed, own goals excluded
+  const SC_MLINE = /UTC[+-]\d+\s+(.+?)\s+(\d+)-(\d+)\s+\([0-9-]+\)\s+(.+?)\s+@\s+/;
+  function parseScorers(txt){
+    const tally = {}, lines = txt.split('\n');
+    for (let i=0;i<lines.length;i++){
+      const mr = lines[i].match(SC_MLINE); if(!mr) continue;
+      const home = actNm(mr[1]), hs = +mr[2], as = +mr[3], away = actNm(mr[4]);
+      // gather the parenthesised scorer block that follows (it can span a few lines)
+      let blk='', depth=0;
+      for (let j=i+1; j<lines.length && j<=i+5; j++){
+        const ln = lines[j];
+        if (!blk && !ln.includes('(')) break;          // no scorers (e.g. 0-0)
+        if (SC_MLINE.test(ln)) break;
+        blk += ' ' + ln.trim();
+        for (const ch of ln){ if(ch==='(')depth++; else if(ch===')')depth--; }
+        if (depth<=0) break;
+      }
+      blk = blk.trim().replace(/^\(/,'').replace(/\)\s*$/,'');
+      if (!blk) continue;
+      // a ';' splits home scorers from away; with only one side scoring there is no ';',
+      // so use the score to attribute the lone block to the side that actually scored
+      const segs = blk.split(';');
+      if (segs.length >= 2) { addGoals(tally, segs[0], home); addGoals(tally, segs[1], away); }
+      else addGoals(tally, segs[0], hs>0 ? home : away);
+    }
+    return Object.keys(tally).map(p=>({player:p, team:tally[p].team, goals:tally[p].goals}))
+      .filter(s=>s.goals>0).sort((a,b)=> b.goals-a.goals || a.player.localeCompare(b.player));
+  }
+  function addGoals(tally, side, team){
+    // a scorer entry is a name then one or more minute tokens; (pen.) counts, (OG) does not
+    const re = /([^0-9;]+?)\s*((?:\d+(?:\+\d+)?'\s*(?:\((?:pen|og)[^)]*\))?\s*,?\s*)+)/gi, mtok=/\d+(?:\+\d+)?'\s*(?:\([^)]*\))?/g;
+    let m;
+    while((m = re.exec(side))){
+      const name = m[1].replace(/[(),;]/g,'').trim();
+      if(!name) continue;
+      let goals=0; const toks=m[2].match(mtok)||[];
+      toks.forEach(t=>{ if(!/\(og/i.test(t)) goals++; });    // own goals do not credit the scorer
+      if(goals<=0) continue;
+      if(!tally[name]) tally[name]={team, goals:0};
+      tally[name].goals += goals;
+    }
+  }
+  function scRow(rk, who, sub, val){
+    return `<div class="scrow"><span class="rk">${rk}</span><span class="who">${who}<small>${sub}</small></span><span class="v">${val}</span></div>`;
+  }
+  function renderScorers(){
+    const exp=document.getElementById('scExpected');
+    if(exp) exp.innerHTML = SC_MKT.map((s,i)=>scRow(i+1, s[0], s[1], s[2])).join('');
+    const live=document.getElementById('scLive'), note=document.getElementById('scNote');
+    if(!live) return;
+    if(SC_LIVE.length){
+      live.innerHTML = SC_LIVE.slice(0,15).map((s,i)=>scRow(i+1, s.player, s.team, s.goals)).join('');
+      const tot=SC_LIVE.reduce((a,b)=>a+b.goals,0);
+      if(note) note.textContent = `${tot} goal${tot>1?'s':''} from ${SC_LIVE.length} player${SC_LIVE.length>1?'s':''} so far. The expected column is the pre-tournament market and does not move.`;
+    } else {
+      live.innerHTML = `<div class="scempty">No goals in the feed yet. Scorers appear here as results land.</div>`;
+      if(note) note.textContent = '';
+    }
+  }
   function actualFor(mm){
     const r = ACTUALS[actKey(mm.date, mm.home, mm.away)];
     if (!r) return null;
@@ -758,7 +845,7 @@
       <div class="det"><span>W ${fmt(mm.p_home)}% · D ${fmt(mm.p_draw)}% · L ${fmt(mm.p_away)}%</span><span class="alts">also: <span>${alts}</span></span></div>
     </div>`;
   }
-  function applyActuals(){ render(); renderSchedule(); }
+  function applyActuals(){ render(); renderSchedule(); renderScorers(); }
   function liveWindow(){
     const now = Date.now(); let inplay = false, pending = false, next = Infinity;
     const GM = MODELS[CUR].group_matches;
@@ -786,16 +873,17 @@
       ACT_HYDRATED = true;
       try { const c = JSON.parse(localStorage.getItem('wc2026_actuals')||'null');
             if (c && c.data) { ACTUALS = c.data; ACT_SYNC = c.t||0; ACT_STATE = 'cache';
+                               if (c.scorers) SC_LIVE = c.scorers;
                                ACT_SIG = JSON.stringify(c.data); applyActuals(); } } catch(e){}
     }
     fetch(ACT_SRC, {cache:'no-store'})
       .then(r => { if (!r.ok) throw 0; return r.text(); })
       .then(txt => {
         const parsed = parseActuals(txt), sig = JSON.stringify(parsed);
-        ACTUALS = parsed; ACT_SYNC = Date.now(); ACT_STATE = 'live';
-        try { localStorage.setItem('wc2026_actuals', JSON.stringify({t:ACT_SYNC, data:parsed})); } catch(e){}
+        ACTUALS = parsed; ACT_SYNC = Date.now(); ACT_STATE = 'live'; SC_LIVE = parseScorers(txt);
+        try { localStorage.setItem('wc2026_actuals', JSON.stringify({t:ACT_SYNC, data:parsed, scorers:SC_LIVE})); } catch(e){}
         if (sig !== ACT_SIG) { ACT_SIG = sig; applyActuals(); }   // re-render only when a result actually changed
-        else renderSchedule();                                   // otherwise just refresh the synced-time line
+        else { renderSchedule(); renderScorers(); }              // otherwise just refresh the synced-time line + scorers
         scheduleNextRefresh();
       })
       .catch(() => { ACT_STATE = ACT_SYNC ? 'cache' : 'off'; renderSchedule(); scheduleNextRefresh(); });
@@ -826,8 +914,10 @@
     ...(META.live && META.played ? [['Live', `${META.played} played`]] : [])
   ].map(([k,v])=>`<span class="chip" data-tip="${CHIP_TIP[k]||''}">${k} <b>${v}</b></span>`).join('');
   const n2=document.getElementById('nsim2'); if(n2) n2.textContent=n.toLocaleString();
+  const n3=document.getElementById('nsim3'); if(n3) n3.textContent=n.toLocaleString();
+  renderScorers();   // expected column shows immediately; the live column fills once the feed loads
   document.getElementById('foot').innerHTML =
-    `Five match models (Pure Elo · Pure Goals · Hybrid · Hybrid + Market · Pure Market) over a shared Monte Carlo of ${n.toLocaleString()} tournaments with the official FIFA Annex C round-of-32 (495 combinations). Dixon-Coles fit by MLE on 15,431 internationals (2010-2026); hybrid weight chosen by out-of-sample log-loss; market odds de-vigged and the pure-market ratings calibrated to them. Opta and Polymarket / Kalshi / FanDuel shown for comparison. Not betting advice.<div class="madeby">made with <span class="hb">&#9829;</span> by François<span class="sep">&middot;</span><a href="https://github.com/ogfrench/world-cup-2026-prediction" target="_blank" rel="noopener" aria-label="View the source on GitHub"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 012-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></div>`;
+    `<div class="madeby">made with <span class="hb">&#9829;</span> by François<span class="sep">&middot;</span><a href="https://github.com/ogfrench/world-cup-2026-prediction" target="_blank" rel="noopener" aria-label="View the source on GitHub"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 012-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></div>`;
 
   if (document.getElementById('ooTable')) {
     const ooRows=[
@@ -841,10 +931,6 @@
       ooRows.map(r=>{const c=r[4]?' style="color:var(--lime)"':'';
         return `<tr${c}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`;}).join('');
   }
-  const sc=[['Mbappé','France','~14%'],['Kane','England','~12%'],['Haaland','Norway','~7%'],
-            ['Messi','Argentina','~6%'],['Oyarzabal','Spain','~5%'],['Yamal','Spain','~5%'],
-            ['J. Álvarez','Argentina','~3%']];
-  document.getElementById('scorers').innerHTML = sc.map(s=>`<div class="s"><b>${s[0]}</b><span>${s[1]} · ${s[2]}</span></div>`).join('');
 
   // ---- model switcher ----
   const order=['elo','score','hybrid','market','market_pure'];
@@ -1234,6 +1320,10 @@
     const tb = document.querySelector('.topbar');
     const tgt = tb ? tb.offsetTop : 0;
     if (window.scrollY > tgt + 2) window.scrollTo({top:tgt, behavior:'smooth'});
+  }));
+  // in-prose links that jump to another tab
+  document.querySelectorAll('[data-go]').forEach(a=>a.addEventListener('click',e=>{
+    e.preventDefault(); const t=document.querySelector('.tab[data-t="'+a.dataset.go+'"]'); if(t) t.click();
   }));
 })();
 </script>
