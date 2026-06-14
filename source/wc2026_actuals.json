@@ -61,5 +61,12 @@
   "away": "Curacao",
   "hs": 7,
   "as": 1
+ },
+ {
+  "group": "F",
+  "home": "Netherlands",
+  "away": "Japan",
+  "hs": 2,
+  "as": 2
  }
 ]
