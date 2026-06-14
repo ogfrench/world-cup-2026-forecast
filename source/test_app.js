@@ -51,12 +51,15 @@ const snippet = [
   pull(/const scoreOutcome = [^\n]*/, 'scoreOutcome'),
   pull(/const actOutcome = [^\n]*/, 'actOutcome'),
   pull(/const predTier = \(mm,a\) =>[\s\S]*?'miss'\);/, 'predTier'),
-  'this.predTier = predTier;',   // predTier is a const arrow, so surface it on the sandbox
+  'let ACTUALS = {};',                                            // the live feed cache koActual reads
+  pull(/function actualFor\(mm\)\{[\s\S]*?\n  \}/, 'actualFor'),
+  pull(/function koActual\(t\)\{[\s\S]*?\n  \}/, 'koActual'),
+  'this.predTier = predTier; this.setActuals = o => { ACTUALS = o; };',
 ].join('\n');
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals, parseScorers, predTier } = sandbox;
+const { matchState, parseActuals, parseScorers, predTier, koActual } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -139,7 +142,27 @@ eq(overlay['2026-06-14|Mexico|South Africa'], { home: 'Mexico', away: 'South Afr
    'a played game with no half-time score overlays end to end');
 eq(overlay.hasOwnProperty('2026-06-14|Australia|Turkiye'), false, 'the unplayed fixture produces no result');
 
+// ---- koActual: the knockout result, server-conditioned or live from the feed ----
+// the bracket tab reuses the Schedule/Groups live pattern; koActual is the one new piece, so it is
+// the one that gets pinned. (Built and verified against a synthetic bracket; the real ties carry
+// kickoff times once the round of 32 is set.)
+sandbox.setActuals(parseActuals(
+  'Sun June 28\n' +
+  '  16:00 UTC-4    Spain 2-1 (1-0) France   @ X\n' +
+  '  19:00 UTC-4    Brazil 1-1 (0-0) England   @ Y\n'));
+const koBase = { adv_a: 60, adv_b: 40, modal: [2, 1], p_a: 0.5, p_draw: 0.25, p_away: 0.25, top_scores: [[2, 1, 9]] };
+const koTie = o => Object.assign({}, koBase, o);
+eq(koActual(koTie({ a: 'Spain', b: 'France', played: { hs: 3, as_: 0, winner: 'Spain' } })),
+   { hs: 3, as: 0, winner: 'Spain' }, 'a server-conditioned result takes priority and keeps its winner');
+eq(koActual(koTie({ a: 'Spain', b: 'France', date: '2026-06-28' })),
+   { hs: 2, as: 1, winner: 'Spain' }, 'a decisive live feed result overlays, the advancer derived from the score');
+eq(koActual(koTie({ a: 'France', b: 'Spain', date: '2026-06-28' })),
+   { hs: 1, as: 2, winner: 'Spain' }, 'the feed result orients to the tie, the advancer stays correct');
+eq(koActual(koTie({ a: 'Brazil', b: 'England', date: '2026-06-28' })),
+   { hs: 1, as: 1, winner: null }, 'a drawn feed result leaves the advancer to a shootout the score cannot read');
+eq(koActual(koTie({ a: 'Spain', b: 'France' })), null, 'no server result and no date: nothing to overlay');
+
 console.log(failed
   ? `\n${failed} failed, ${passed} passed.`
-  : `OK: ${passed} assertions passed (matchState clock, parseActuals + parseScorers feed parsers, predTier scoring, end-to-end sample feed).`);
+  : `OK: ${passed} assertions passed (matchState clock, parseActuals + parseScorers feed parsers, predTier scoring, koActual knockout overlay, end-to-end sample feed).`);
 process.exit(failed ? 1 : 0);
