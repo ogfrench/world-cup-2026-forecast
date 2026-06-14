@@ -147,6 +147,13 @@
   .pod .elo{font-family:'DM Mono';font-size:11px;color:var(--faint);margin-top:8px}
 
   /* ---------- knockout matrix ---------- */
+  .koseg{display:inline-flex;margin:2px 0 4px;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+  .koseg button{font-family:'DM Mono';font-size:11px;letter-spacing:.03em;padding:6px 13px;background:transparent;
+                color:var(--muted);border:none;cursor:pointer;transition:background .15s,color .15s}
+  .koseg button+button{border-left:1px solid var(--line2)}
+  .koseg button.on{background:var(--surface2);color:var(--lime)}
+  td.kod{font-family:'DM Mono';background:var(--surface)}
+  td.kod.up{color:var(--win)} td.kod.down{color:var(--loss)} td.kod.flat{color:var(--faint)}
   .tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin-top:8px}
   table{border-collapse:collapse;width:100%;min-width:560px;font-size:13px}
   th,td{padding:9px 8px;text-align:center}
@@ -516,7 +523,11 @@
     <div id="raceBars"></div>
 
     <div class="sec-h">Road to the final</div>
-    <p class="lead">How far each team gets: how often they reached each round across the 50,000 simulations. The odds pile onto the favorites as the field thins.</p>
+    <p class="lead">How far each team gets: how often they reach each round across the 50,000 simulations. The odds pile onto the favorites as the field thins.</p>
+    <div class="koseg" id="koToggle" style="display:none">
+      <button data-v="live" class="on" data-tip="Current odds, conditioned on the games played.">Live</button>
+      <button data-v="delta" data-tip="Change in each round's odds since the Day 0 (pre-tournament) forecast.">vs Day 0</button>
+    </div>
     <div class="tbl-scroll"><table id="koTable"></table></div>
   </section>
 
@@ -602,33 +613,27 @@
   <section id="method">
     <div class="prose">
       <div class="sec-h">Five models, one engine</div>
-      <p>Five ways to call a result, all on the <b>exact same tournament</b>: 104 games, the eight best third-placed teams, the official FIFA bracket (all 495 round-of-32 line-ups), and the knockout through the final with extra time and penalties, played out <b id="nsim2"></b> times. Only the match estimate changes between them. Simplest first.</p>
-      <p><b>Pure Elo.</b> Ranks teams on results alone, like a chess rating, then turns the gap into expected goals. Hard to fool with one freak scoreline, but blind to how a team plays, and it backs the favorites hardest. (Ratings from eloratings.net.)</p>
-      <p><b>Pure Goals.</b> Learns each team's attack and defense from <b>15,431 internationals</b> since 2010 (recent games weigh more), so it predicts scorelines, not just a winner. It found a home-field bump of about <b>1.31x</b> on goals, straight from the data. The catch: it rewards running up the score on weak teams, so it overrates the likes of Japan and Algeria. (Dixon-Coles is a standard football scoring model.)</p>
-      <p><b>Hybrid.</b> The two above, averaged, so each patches the other's blind spot. Tested on 1,230 unseen internationals from 2025 and 2026, it grades at least as well as either alone, with the steadiest confidence of the three:</p>
+      <p>One tournament, played out <b id="nsim2"></b> times: 104 games, the eight best third-placed teams, the official FIFA round-of-32, and the bracket through the final with extra time and penalties. Only how a single match is rated changes between the five. Simplest first.</p>
+      <p><b>Pure Elo.</b> Rates teams on results alone, like a chess rating, and turns the gap into expected goals. Hard to fool with one freak scoreline, blind to how a team plays, and it backs the favorites hardest. (Ratings from eloratings.net.)</p>
+      <p><b>Pure Goals.</b> Learns each team's attack and defense from <b>15,431 internationals</b> since 2010, so it predicts scorelines, not just winners. It found a home bump of about <b>1.31x</b> on goals. The catch: it rewards running up the score on weak teams, so it overrates the likes of Japan and Algeria. (A standard Dixon-Coles model.)</p>
+      <p><b>Hybrid.</b> The two above, averaged, each patching the other's blind spot. On 1,230 unseen internationals it grades at least as well as either alone, with the steadiest confidence:</p>
       <table class="cal" id="ooTable"></table>
-      <p><b>The honest read.</b> Three things make a forecast good: how often it calls the result, how surprised it was by what happened (log-loss, lower is better), and whether its confidence matches reality (calibration). The Hybrid wins or ties on all three, and is the best calibrated: when it says 60 percent, about 60 percent happens. It clearly beats the goals model but edges plain Elo only by a whisker, well inside the noise. So the honest claim is modest: blending is at least as good as the best single model and steadier, mostly by calming the goals model down. More complicated is not the same as more accurate.</p>
-      <p><b>Hybrid + Market.</b> The Hybrid nudged halfway to the betting market: take the bookmakers' title odds, back out the team ratings they imply, blend 50/50 with the model, re-run the tournament. Roughly how many professional models work. The effect: Argentina down, France up.</p>
-      <p><b>Does following the bookies pay off?</b> The World Cup market could not be tested directly, since nobody kept the historical odds, so the idea was checked on 5,327 club matches where closing odds exist. The market beat a solid Elo model on every measure, and a 50/50 blend improved on the model but never beat the market alone. So leaning on the market makes a model better, not better than the market. The caveat: that was club football. The World Cup market is probably just as sharp, but that is not proven here.</p>
-      <p><b>Pure Market.</b> Just the bookmakers, no model. Their ratings are calibrated so the simulated title odds match the published ones, then the bracket plays out, so you see the market's read on every group and knockout tie, not only the winner. Given the test above, the one to trust. The catch: it is the market through this engine's bracket, pinned to published title odds, not a live feed of every match price.</p>
+      <p>Three things make a forecast good: how often it calls the result, how surprised it was (log-loss), and whether its confidence holds up (calibration). The Hybrid wins or ties on all three. It clearly beats the goals model but edges plain Elo by a whisker, inside the noise, so the honest claim is modest: blending is at least as good as the best single model, and steadier. More complex is not more accurate.</p>
+      <p><b>Hybrid + Market.</b> The Hybrid nudged halfway to the bookmakers: back out the ratings their title odds imply, blend 50/50, re-run. The effect: Argentina down, France up.</p>
+      <p><b>Pure Market.</b> Just the bookmakers, no model, their ratings calibrated to reproduce the published title odds, then run through the same bracket so you see their read on every tie, not only the winner. On a 5,327-match club-odds backtest the market beat a solid Elo model and a blend never beat the market alone, so this is the one to trust. The catch: it is the market through this bracket, pinned to pre-tournament odds, not a live feed of match prices.</p>
 
-      <h3>How it stacks up against Opta and the market</h3>
-      <p>None of these models was trained on Opta's numbers, so this is a fair outside check. The selected model's title odds sit right next to Opta's supercomputer and the betting market:</p>
+      <h3>Against Opta and the market</h3>
+      <p>None of these models was trained on Opta's numbers, so it is a fair outside check. The selected model's title odds, next to Opta's supercomputer and the betting market:</p>
       <table class="cal" id="calTable"></table>
-      <div class="note"><b>Where the results-only models break from the market.</b> They love <b>Argentina</b> on recent form (Copa champions, on a tear): the Hybrid puts them almost level with Spain, while the market has them around fifth. They also rate <b>France</b> below the market, which is paying for squad depth that results alone cannot see. Hybrid + Market splits the difference. The spread across the five is how much of the title race is method rather than fact.</div>
-
-      <p><b>Why models that rate single games almost identically still disagree wildly on the trophy.</b> A tiny edge in one match compounds across seven knockout rounds and a 48-team field, so a small rating gap balloons into a big gap in who lifts the trophy. Spain's number swings from about 10 to 29 percent across the five, far wider than the match odds ever differ. Read the five less as rival predictions, more as a stress test: how much does the answer depend on the method?</p>
+      <div class="note">The results-only models love <b>Argentina</b> on recent form (the Hybrid puts them almost level with Spain; the market has them around fifth) and rate <b>France</b> below the market, which is paying for squad depth results cannot see. The spread across the five is how much of the title race is method, not fact: Spain swings from about 10 to 29 percent, far wider than the match odds ever differ.</div>
 
       <h3>Where it's weak</h3>
-      <p><b>It backs the favorites too hard.</b> A fixed-strength sim cannot see a tournament turn (an injury, a player catching fire, a red card), so it piles probability onto the big teams. Pure Elo most, the market least. (The goals model spreads things out more, but that is goal-padding, not wisdom.) The head-to-heads stay sensible: Spain against Argentina is a coin flip.</p>
-      <p><b>The live odds condition on results, not on form.</b> Once games are played the title and round odds re-simulate with those scores locked in, but the team ratings stay frozen at their pre-tournament values. Winning ugly and winning brilliantly move the odds the same way. Injuries, form, and a re-pricing market are still invisible to it.</p>
-      <p><b>What the test can and cannot prove.</b> Those 1,230 test games are mostly qualifiers and friendlies, often one-sided, where any decent model looks clever. Tight ties between top teams, the games a World Cup turns on, barely feature. And the test grades the match calls, not the title odds, which nobody can check until the trophy is handed out. Encouraging, not gospel.</p>
-      <p><b>Injuries are not in it.</b> The model knows results up to 6 June 2026 and nothing about who is fit for kickoff. Brazil, for one, is rated at full strength.</p>
-      <p><b>It draws a bit less than real life.</b> International football, full of lopsided qualifiers, draws less than club leagues, and the model learned that. Its group draw rate is around 23 to 24 percent, just under the World Cup norm of 26 to 28. The honest fitted number, not tuned up.</p>
-      <p><b>The single "most likely score" is fragile.</b> In an even game 1-1, 1-0 and 0-0 sit within a few percent of each other, so the headline score flips on a whim. Trust the win/draw/loss split, not the exact number.</p>
-      <p><b>Small print.</b> The blend weight and the Elo-to-goals conversion were tuned on an Elo rebuilt from the same match data, which lines up 0.97 with the official ratings used live; any flat gap cancels out in a given matchup.</p>
-      <p><b>No top-scorer model.</b> It rates teams, not players, so it has no Golden Boot odds of its own. The <a class="xlink" href="#" data-go="topscorers">Top Scorers</a> tab shows the market's pick against who is actually scoring.</p>
-      <p><b>This is a toy, not an oracle.</b> A transparent baseline from public data and standard methods. Great for the shape of the tournament. Not for staking your mortgage.</p>
+      <p><b>It backs the favorites too hard.</b> A fixed-strength sim cannot see a tournament turn (an injury, a player catching fire, a red card), so it piles probability onto the big teams, Pure Elo most, the market least. Head-to-heads stay sensible: Spain against Argentina is a coin flip.</p>
+      <p><b>Live odds follow results, not form.</b> Once games are played the odds re-simulate with the scores locked in, but the ratings stay frozen at their pre-tournament values (as of 6 June). Winning ugly and winning well move them the same way; injuries, current form, and a re-pricing market are invisible.</p>
+      <p><b>Encouraging, not gospel.</b> The 1,230 validation games are mostly one-sided qualifiers and friendlies, where any decent model looks clever; the tight ties a World Cup turns on barely feature. And the test grades match calls, not title odds, which nobody can check until the trophy is lifted.</p>
+      <p><b>The single "most likely score" is fragile.</b> In an even game 1-1, 1-0 and 0-0 sit within a few percent, so the headline score flips easily. Trust the win/draw/loss split, not the exact number. The model also draws a touch less than real life (about 23 to 24 percent in groups, against a 26 to 28 norm).</p>
+      <p><b>No top-scorer model.</b> It rates teams, not players. The <a class="xlink" href="#" data-go="topscorers">Top Scorers</a> tab shows the market's pick against who is actually scoring.</p>
+      <p><b>A toy, not an oracle.</b> A transparent baseline from public data and standard methods. Great for the shape of the tournament, not for staking your mortgage.</p>
       <p class="colophon">Five match models over a shared <b id="nsim3"></b>-tournament Monte Carlo with the official FIFA Annex C round-of-32 (495 line-ups). Dixon-Coles fit by MLE on 15,431 internationals (2010 to 2026); the hybrid weight chosen by out-of-sample log-loss; market odds de-vigged and the pure-market ratings calibrated to them. Opta and Polymarket, Kalshi, FanDuel shown for comparison only. Not betting advice.</p>
     </div>
   </section>
@@ -644,6 +649,7 @@
   const fmt = x => (Math.round(x*10)/10).toFixed(1);
   const se = p => 100*Math.sqrt((p/100)*(1-p/100)/n);
   let CUR = 'market_pure';   // app opens on Pure Market, the recommended forecast
+  let KOVIEW = 'live';        // "Road to the final" matrix: 'live' absolutes or 'delta' vs Day 0
 
   // ---- date + fixture helpers ----
   const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -712,6 +718,9 @@
   // as the embedded schedule so team names line up. Swap ACT_SRC + parseActuals
   // for any JSON feed (e.g. TheSportsDB) without touching the render code.
   const ACT_SRC = 'https://raw.githubusercontent.com/openfootball/worldcup/master/2026--usa/cup.txt';
+  // sundown: a week after the final (19 Jul), stop polling the feed for good. The last
+  // cached results still render; the page just stops querying a tournament that is over.
+  const SUNDOWN = Date.parse('2026-07-26T00:00:00Z');
   const ACT_NAME = {'Czech Republic':'Czechia','Bosnia & Herzegovina':'Bosnia-Herzegovina','Turkey':'Turkiye','Curaçao':'Curacao'};
   const ACT_MON = {May:5,June:6,July:7};
   let ACTUALS = {}, ACT_SYNC = 0, ACT_STATE = 'init', ACT_TIMER = null, ACT_SIG = '', ACT_HYDRATED = false;
@@ -876,6 +885,7 @@
                                if (c.scorers) SC_LIVE = c.scorers;
                                ACT_SIG = JSON.stringify(c.data); applyActuals(); } } catch(e){}
     }
+    if (Date.now() > SUNDOWN) return;                   // tournament long over: stop querying, keep the final results
     fetch(ACT_SRC, {cache:'no-store'})
       .then(r => { if (!r.ok) throw 0; return r.text(); })
       .then(txt => {
@@ -1047,17 +1057,27 @@
         <div class="val">${fmt(v)}<small>±${se(v).toFixed(1)}</small>${delta}</div></div>`;
     }).join('');
 
-    // knockout matrix (top 24)
+    // knockout matrix (top 24); the toggle (live only) flips cells to the change since Day 0
     const cols=[['advance','R32','Reached the round of 32, i.e. survived the group stage.'],
                 ['r16','R16','Reached the round of 16.'],
                 ['qf','QF','Reached the quarter-finals (last 8).'],
                 ['sf','SF','Reached the semi-finals (last 4).'],
                 ['final','Final','Reached the final.'],
                 ['champ','Win','Won the tournament. Share of the 50,000 runs ending with this team as champion.']];
+    const koToggle=document.getElementById('koToggle');
+    if(koToggle){ koToggle.style.display = live ? 'inline-flex' : 'none';
+      koToggle.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.v===(live?KOVIEW:'live'))); }
+    const koDelta = live && KOVIEW==='delta';
     const head='<thead><tr><th class="tname" style="text-align:left">Team</th>'+cols.map(c=>`<th data-tip="${c[2]}">${c[1]}</th>`).join('')+'</tr></thead>';
     const body='<tbody>'+byChamp.slice(0,24).map(t=>{
-      const cells=cols.map(c=>{const v=T[t][c[0]];const a=Math.min(.9,v/100*0.95+0.04);
-        const dark=v>=46;  // bright cell -> dark text; either way a halo keeps the number legible
+      const cells=cols.map(c=>{
+        const v=T[t][c[0]];
+        if(koDelta){
+          const v0=T[t][c[0]+'0'], d=v-v0, fl=Math.abs(d)<0.05;
+          const txt = fl ? '·' : (d>0?'+':'−')+fmt(Math.abs(d));
+          return `<td class="kod ${fl?'flat':d>0?'up':'down'}" data-tip="${t} reaches <b>${c[1]}</b>: <b>${fmt(v)}%</b> now, ${fmt(v0)}% on Day 0.">${txt}</td>`;
+        }
+        const a=Math.min(.9,v/100*0.95+0.04), dark=v>=46;  // bright cell -> dark text; a halo keeps it legible
         return `<td data-tip="${t} reaches <b>${c[1]}</b> in ${fmt(v)}% of runs (±${se(v).toFixed(1)})." style="background:rgba(200,255,77,${a.toFixed(3)});color:${dark?'#0a0b0d':'var(--txt)'};text-shadow:${dark?'0 1px 1px rgba(255,255,255,.22)':'0 1px 2px rgba(0,0,0,.8)'}">${fmt(v)}</td>`;}).join('');
       return `<tr><td class="tname">${t}<span class="grp-pill" data-tip="Group ${T[t].group}">${T[t].group}</span></td>${cells}</tr>`;
     }).join('')+'</tbody>';
@@ -1250,20 +1270,16 @@
         const gx=Math.max(4,Math.min(96, s.gmin/90*100));
         const diff=d.W-d.L, ad=Math.abs(diff);
         const lean = ad<6 ? 'Coin flip' : ad<16 ? (diff>0?'Lean '+cfg.team:'Lean '+fx.opp) : (diff>0?cfg.team+' favored':fx.opp+' favored');
-        const tops = d.top.map(x=>`${x[0]}-${x[1]} ${Math.round(x[2]*100)}%`).join(' \u00b7 ');
-        const goalRead = d.over>=50 ? 'Two to three goals likely' : 'Low-scoring, under 2.5 the call';
-        const timeRead = s.g===0 ? 'A goalless game is the single most likely exact line here.'
-          : (s.firstHalf ? 'Enough goals expected that one comes before the break.'
-                         : 'A lone goal in a tight scoreline tends to come late, so the first half projects goalless.');
+        const alts = d.top.filter(x=>!(x[0]===s.a&&x[1]===s.b)).slice(0,3).map(x=>`${x[0]}\u2013${x[1]}`).join(' \u00b7 ');
         const whoFirst = s.nedFirst?cfg.short:fx.opp;
         const goalMark = s.g>0
           ? `<div class="goal ${s.nedFirst?'ned':'opp'}" style="left:${gx}%"></div><div class="gmin" style="left:${gx}%">${s.gmin}'</div>` : '';
-        const fgMeta = s.g>0 ? `<span>First goal <b>${s.gmin}'</b> (${whoFirst})</span>` : '';
+        const fgMeta = s.g>0 ? `<span>First goal <b>${s.gmin}'</b> (${whoFirst})</span>` : `<span>Goalless the likeliest line</span>`;
         return `<div class="nlcard">
           <div class="stage">${fx.stage}</div>
           <div class="mt">
             <div class="vs">${cfg.team} <em>v</em> ${fx.opp}</div>
-            <div class="ftbig">${s.a}\u2013${s.b}<small>PREDICTED</small></div>
+            <div class="ftbig">${s.a}\u2013${s.b}<small>FULL TIME</small></div>
           </div>
           <div class="nltl">
             <div class="cap l">KO 0'</div>
@@ -1278,9 +1294,8 @@
             <span class="lean">${lean}</span>
             <span>W <b>${fmt(d.W)}%</b> &middot; D <b>${fmt(d.D)}%</b> &middot; L <b>${fmt(d.L)}%</b></span>
             ${fgMeta}
-            <span>Goals <b>${d.total.toFixed(1)}</b> &middot; over 2.5 <b>${fmt(d.over)}%</b></span>
           </div>
-          <div class="nlnote">${goalRead}. Most likely scores: ${tops}. ${timeRead}</div>
+          <div class="nlnote">also: <span>${alts}</span></div>
         </div>`;
       }).join('') + cfg.pending;
   }
@@ -1322,6 +1337,12 @@
     if (window.scrollY > tgt + 2) window.scrollTo({top:tgt, behavior:'smooth'});
   }));
   // in-prose links that jump to another tab
+  // Road-to-final matrix toggle: live odds vs the change since Day 0
+  const koToggleEl = document.getElementById('koToggle');
+  if (koToggleEl) koToggleEl.addEventListener('click', e=>{
+    const b = e.target.closest('button'); if(!b) return;
+    KOVIEW = b.dataset.v; render();
+  });
   document.querySelectorAll('[data-go]').forEach(a=>a.addEventListener('click',e=>{
     e.preventDefault(); const t=document.querySelector('.tab[data-t="'+a.dataset.go+'"]'); if(t) t.click();
   }));
