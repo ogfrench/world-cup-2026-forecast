@@ -36,7 +36,6 @@ One model selected at a time (pills on desktop, a dropdown on mobile), across th
 - **Knockout Phase** - a placeholder until the round-of-32 is set, then the predicted bracket against the real results.
 - **Top Scorers** - the betting market's pre-tournament Golden Boot pick next to a live leaderboard of who is actually scoring, parsed from the feed. The engine rates teams, not players, so the expected side is the market, not the simulation.
 - **Method & Caveats** - the write-up, the validation, and the honest weaknesses.
-- **Netherlands** and **France** - a per-model, game-by-game timeline for a single team.
 
 ## How it works
 

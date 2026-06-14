@@ -77,12 +77,9 @@
        color:var(--lime-dim);border:1px solid rgba(200,255,77,.32);border-radius:4px;
        padding:1px 4px;margin-left:5px;vertical-align:middle;font-weight:500}
   /* the two single-team pages get a distinct pill style, set apart by a divider */
-  .tabsep{flex:none;align-self:center;width:1px;height:15px;background:var(--line2);margin:0 7px}
   .tab.team{align-self:center;border:1px solid var(--line2);border-radius:999px;padding:7px 13px}
   .tab.team:hover{color:var(--txt);border-color:var(--faint)}
   .tab.team.on{color:var(--bg);background:var(--lime);border-color:var(--lime)}
-  .tab.team .tdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle}
-  .tab.team.on .tdot{box-shadow:0 0 0 1.5px rgba(10,11,13,.25)}
 
   section{display:none;animation:fade .35s ease}
   section.on{display:block}
@@ -320,42 +317,9 @@
     .topbar{margin-left:-18px;margin-right:-18px}
     nav{padding:0 18px}
   }
-  .prose ul.trust{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:9px}
-  .prose ul.trust li{position:relative;padding-left:20px;color:var(--muted);font-size:14.5px;line-height:1.5}
-  .prose ul.trust li::before{content:"";position:absolute;left:2px;top:7px;width:8px;height:8px;border-radius:50%;background:var(--faint)}
-  .prose ul.trust li.s1::before{background:var(--win)}
-  .prose ul.trust li.s2::before{background:var(--gold)}
-  .prose ul.trust li.s3::before{background:var(--loss)}
-  .prose ul.trust li b{color:var(--txt);font-weight:700}
 
-  /* ---------- netherlands timeline ---------- */
-  .nlgrid{display:flex;flex-direction:column;gap:15px}
-  .nlcard{background:linear-gradient(180deg,var(--surface2),var(--surface));border:1px solid var(--line);border-radius:14px;padding:17px 18px 18px}
-  .nlcard .stage{font-family:'DM Mono';font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--lime)}
-  .nlcard .mt{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin:7px 0 2px}
-  .nlcard .vs{font-family:'Anton';text-transform:uppercase;font-size:clamp(19px,5.2vw,28px);line-height:1.02}
-  .nlcard .vs em{color:var(--faint);font-style:normal;font-size:.55em;padding:0 .4em}
-  .nlcard .ftbig{font-family:'Anton';font-size:clamp(20px,5.6vw,30px);color:var(--lime);line-height:1;white-space:nowrap;text-align:right}
-  .nlcard .ftbig small{display:block;font-family:'DM Mono';font-size:9px;color:var(--faint);letter-spacing:.1em;margin-top:3px}
-  .nltl{position:relative;height:56px;margin:16px 0 4px}
-  .nltl .axis{position:absolute;left:0;right:0;top:34px;height:3px;background:var(--surface);border-radius:2px}
-  .nltl .axfill{position:absolute;left:0;top:34px;height:3px;background:linear-gradient(90deg,var(--lime-dim),var(--line2));border-radius:2px}
-  .nltl .htL{position:absolute;top:22px;height:24px;width:0;border-left:1px dashed var(--line2)}
-  .nltl .cap{position:absolute;top:2px;transform:translateX(-50%);font-family:'DM Mono';font-size:9.5px;color:var(--muted);white-space:nowrap}
-  .nltl .cap.l{left:0;transform:none}
-  .nltl .cap.r{right:0;left:auto;transform:none}
-  .nltl .goal{position:absolute;top:28px;width:13px;height:13px;border-radius:50%;transform:translateX(-50%);border:2px solid var(--bg);box-shadow:0 0 0 3px rgba(0,0,0,.28)}
-  .nltl .goal.ned{background:var(--lime)}
-  .nltl .goal.opp{background:var(--loss)}
-  .nltl .gmin{position:absolute;top:44px;transform:translateX(-50%);font-family:'DM Mono';font-size:9.5px;color:var(--faint);white-space:nowrap}
-  .nlwdl{display:flex;height:7px;border-radius:4px;overflow:hidden;margin:8px 0 7px}
-  .nlwdl i{height:100%;transition:width .6s}
-  .nlwdl .w{background:var(--win)} .nlwdl .d{background:var(--draw)} .nlwdl .l{background:var(--loss)}
-  .nlmeta{display:flex;flex-wrap:wrap;gap:6px 15px;font-family:'DM Mono';font-size:11px;color:var(--muted)}
-  .nlmeta b{color:var(--txt);font-weight:500}
-  .nlmeta .lean{color:var(--lime)}
-  .nlnote{font-size:11.5px;color:var(--faint);margin-top:9px;border-top:1px solid var(--line);padding-top:8px;line-height:1.45}
-  .nlpending{background:var(--surface);border:1px dashed var(--line2);border-radius:12px;padding:15px 16px;color:var(--muted);font-size:12.5px}
+  /* ---------- knockout placeholder + round header ---------- */
+  .pending{background:var(--surface);border:1px dashed var(--line2);border-radius:12px;padding:15px 16px;color:var(--muted);font-size:12.5px}
   .koround{margin-top:30px}
 
   /* ---------- actual result vs prediction (shared) ---------- */
@@ -465,8 +429,6 @@
     .mbtn{font-size:11.5px;padding:6px 11px}
     .tab{padding:13px 11px;font-size:12.5px}
     .tip{font-size:12px;padding:8px 10px}
-    .nlcard{padding:15px 14px 16px}
-    .nlmeta{font-size:10.5px;gap:5px 12px}
     .prose,.prose p,.note,.lead{overflow-wrap:break-word}
   }
 
@@ -484,7 +446,6 @@
     .lead{margin-bottom:22px;font-size:14.5px}
     .podium{margin-bottom:34px;gap:14px}
     .grid{gap:20px}
-    .nlgrid{gap:18px}
     .bar-row{padding:10px 0}
     .prose p{margin:0 0 17px;line-height:1.62}
     .prose h3{margin:36px 0 13px}
@@ -513,9 +474,6 @@
       <button class="tab" data-t="knockout">Knockout Phase <span class="soon">soon</span></button>
       <button class="tab" data-t="topscorers">Top Scorers</button>
       <button class="tab" data-t="method">Method &amp; Caveats</button>
-      <span class="tabsep" aria-hidden="true"></span>
-      <button class="tab team" data-t="nl"><span class="tdot" style="background:var(--gold)"></span>Netherlands</button>
-      <button class="tab team" data-t="fr"><span class="tdot" style="background:var(--blue)"></span>France</button>
     </nav>
   </div>
 
@@ -566,42 +524,6 @@
     <div class="predkey" id="predKey"></div>
     <div class="schedsync" id="schedSync"></div>
     <div class="sched" id="schedList"></div>
-  </section>
-
-  <!-- NETHERLANDS -->
-  <section id="nl">
-    <div class="sec-h">Netherlands · match timeline</div>
-    <p class="lead">How the Netherlands' tournament might play out under the selected model: a likely first-goal minute, half-time and full-time score for each game. Knockout rounds fill in once the bracket is set.</p>
-    <div class="scoreboard" id="nlScore"></div>
-    <div class="nlgrid" id="nlGrid"></div>
-
-    <div class="prose" style="margin-top:34px">
-      <div class="sec-h">What to trust</div>
-      <ul class="trust">
-        <li class="s1"><b>Who is favored</b>, or a coin flip. Rock solid.</li>
-        <li class="s1"><b>Two to three goals.</b> Solid.</li>
-        <li class="s2"><b>The exact score.</b> The likeliest of several near-equal lines.</li>
-        <li class="s3"><b>The first-goal minute.</b> A league average, nothing team-specific.</li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- FRANCE -->
-  <section id="fr">
-    <div class="sec-h">France · match timeline</div>
-    <p class="lead">How France's tournament might play out under the selected model: a likely first-goal minute, half-time and full-time score for each game. Knockout rounds fill in once the bracket is set.</p>
-    <div class="scoreboard" id="frScore"></div>
-    <div class="nlgrid" id="frGrid"></div>
-
-    <div class="prose" style="margin-top:34px">
-      <div class="sec-h">What to trust</div>
-      <ul class="trust">
-        <li class="s1"><b>Who is favored</b>, or a coin flip. Rock solid.</li>
-        <li class="s1"><b>Two to three goals.</b> Solid.</li>
-        <li class="s2"><b>The exact score.</b> The likeliest of several near-equal lines.</li>
-        <li class="s3"><b>The first-goal minute.</b> A league average, nothing team-specific.</li>
-      </ul>
-    </div>
   </section>
 
   <!-- TOP SCORERS -->
@@ -826,23 +748,12 @@
       <div class="det"><span>${t.a} <b>${fmt(t.adv_a)}%</b> &middot; ${t.b} <b>${fmt(t.adv_b)}%</b></span><span class="alts">also: <span>${alts}</span></span></div>
     </div>`;
   }
-  // a knockout tie flipped so the given team reads as side A
-  function flipTie(t){ return {...t, a:t.b, b:t.a, p_a:t.p_b, p_b:t.p_a, adv_a:t.adv_b, adv_b:t.adv_a,
-    modal:[t.modal[1], t.modal[0]], top_scores:t.top_scores.map(s=>[s[1], s[0], s[2]]),
-    played:t.played?{hs:t.played.as_, as_:t.played.hs, winner:t.played.winner}:null}; }
-  // the Netherlands/France knockout cards, drawn from the live bracket once it exists
-  function koTimelineExtra(team, placeholder){
-    const KO = MODELS[CUR].knockout || {};
-    const ties = Object.values(KO).filter(t=>t.a===team||t.b===team).sort((a,b)=>a.slot-b.slot);
-    if(!ties.length) return placeholder;
-    return `<div class="nlgrid">` + ties.map(t=> koCard(t.a===team ? t : flipTie(t))).join('') + `</div>`;
-  }
   function renderKnockout(){
     const host = document.getElementById('koBracket'); if(!host) return;
     const KO = MODELS[CUR].knockout || {}, ties = Object.values(KO);
     const sb = document.getElementById('koScore');
     if(!ties.length){
-      host.innerHTML = `<div class="nlpending">The bracket fills in here automatically once the group stage ends and the round of 32 is set (around June 28). Each tie then shows the ${LABELS[CUR]||CUR} prediction next to the real result, color-coded, round by round.</div>`;
+      host.innerHTML = `<div class="pending">The bracket fills in here automatically once the group stage ends and the round of 32 is set (around June 28). Each tie then shows the ${LABELS[CUR]||CUR} prediction next to the real result, color-coded, round by round.</div>`;
       if(sb) sb.innerHTML=''; return;
     }
     const ROUNDS = [['r32','Round of 32'],['r16','Round of 16'],['qf','Quarter-finals'],['sf','Semi-finals'],['final','Final']];
@@ -1066,8 +977,6 @@
   function closeDrop(){ mdrop.classList.remove('open'); mdtrigger.setAttribute('aria-expanded','false'); }
   function selectModel(k){
     CUR = k; closeDrop(); renderModel(); paintLive();
-    if(typeof renderNL==='function') renderNL();
-    if(typeof renderFR==='function') renderFR();
   }
   renderModel();
   mpills.addEventListener('click', e=>{ const b=e.target.closest('.mbtn'); if(b) selectModel(b.dataset.m); });
@@ -1334,105 +1243,6 @@
   // first paint + start the single live heartbeat (hydrates cached results, then polls)
   startLive();
 
-  // ---- Netherlands match timeline (model-aware) ----
-  // Per-model expected goals for each Dutch fixture, straight from the engine.
-  // To extend: add a fixture to NL_FIX and its [lN,lO] per model to NL_LAM once a knockout opponent is known.
-  const NL_FIX = [
-    {stage:'Group F \u00b7 Match 1', opp:'Japan'},
-    {stage:'Group F \u00b7 Match 2', opp:'Sweden'},
-    {stage:'Group F \u00b7 Match 3', opp:'Tunisia'}
-  ];
-  const NL_LAM = {"elo":{"Japan":[1.463,1.266],"Sweden":[1.966,0.763],"Tunisia":[2.171,0.558]},"score":{"Japan":[1.205,1.476],"Sweden":[1.935,1.082],"Tunisia":[1.31,0.895]},"hybrid":{"Japan":[1.334,1.371],"Sweden":[1.951,0.922],"Tunisia":[1.74,0.726]},"market":{"Japan":[1.426,1.291],"Sweden":[1.996,0.805],"Tunisia":[1.993,0.605]},"market_pure":{"Japan":[1.517,1.211],"Sweden":[2.041,0.687],"Tunisia":[2.246,0.483]}};
-  // France, Group I (per-model expected goals oriented to France, from the engine via the results JSON)
-  const FR_FIX = [
-    {stage:'Group I · Match 1', opp:'Senegal'},
-    {stage:'Group I · Match 2', opp:'Iraq'},
-    {stage:'Group I · Match 3', opp:'Norway'}
-  ];
-  const FR_LAM = {"elo":{"Senegal":[1.87,0.86],"Iraq":[2.52,0.21],"Norway":[1.74,0.99]},"score":{"Senegal":[1.28,1.06],"Iraq":[1.52,0.7],"Norway":[1.58,1.08]},"hybrid":{"Senegal":[1.57,0.96],"Iraq":[2.02,0.46],"Norway":[1.66,1.04]},"market":{"Senegal":[1.71,0.92],"Iraq":[2.3,0.3],"Norway":[1.75,0.96]},"market_pure":{"Senegal":[1.84,0.89],"Iraq":[2.58,0.15],"Norway":[1.84,0.89]}};
-  const NL_RHO = (META.rho!=null?META.rho:-0.039);
-  const NL_BANDS = [[1,15,12],[16,30,14],[31,45,17],[46,60,16],[61,75,18],[76,90,23]]; // empirical 15-min goal shares
-  function nlPois(k,l){let p=Math.exp(-l);for(let i=1;i<=k;i++)p*=l/i;return p;}
-  function nlTau(i,j,l,m){
-    if(i===0&&j===0)return 1-l*m*NL_RHO; if(i===0&&j===1)return 1+l*NL_RHO;
-    if(i===1&&j===0)return 1+m*NL_RHO;   if(i===1&&j===1)return 1-NL_RHO; return 1;}
-  function nlDist(lN,lO){
-    const Nn=11; let W=0,D=0,L=0,Z=0; const cells=[];
-    for(let i=0;i<Nn;i++)for(let j=0;j<Nn;j++){const p=nlTau(i,j,lN,lO)*nlPois(i,lN)*nlPois(j,lO);Z+=p;cells.push([i,j,p]);}
-    for(const c of cells){c[2]/=Z; if(c[0]>c[1])W+=c[2]; else if(c[0]===c[1])D+=c[2]; else L+=c[2];}
-    cells.sort((a,b)=>b[2]-a[2]);
-    return {W:W*100,D:D*100,L:L*100,top:cells.slice(0,4)};
-  }
-  function nlFirstGoalMin(firstHalf){
-    const sel = firstHalf?NL_BANDS.slice(0,3):NL_BANDS.slice(3);
-    const tot = sel.reduce((s,b)=>s+b[2],0), target=tot*0.5; let cum=0;
-    for(const b of sel){ if(cum+b[2]>=target){ const f=(target-cum)/b[2]; return Math.round(b[0]+f*(b[1]-b[0])); } cum+=b[2]; }
-    return sel[sel.length-1][1];
-  }
-  function nlScenario(d){
-    // one coherent scenario derived from the score distribution, so minute / HT / FT agree
-    const ft = d.top.find(s=>!(s[0]===0&&s[1]===0)) || d.top[0];   // modal score, skipping 0-0
-    const a=ft[0], b=ft[1], g=a+b;
-    const firstHalf = g>=2;                                        // lone goal skews 2nd half; 2+ goals -> one before the break
-    const nedFirst = a>b ? true : (a<b ? false : (d.W>=d.L));      // winner scores first; a draw breaks on single-match win prob
-    const htN = (firstHalf && g>0) ? (nedFirst?1:0) : 0;
-    const htO = (firstHalf && g>0) ? (nedFirst?0:1) : 0;
-    const gmin = nlFirstGoalMin(firstHalf);
-    return {a,b,g,firstHalf,nedFirst,htN,htO,gmin};
-  }
-  // model-aware match timeline, shared by the Netherlands and France tabs
-  function renderTimeline(cfg){
-    const host=document.getElementById(cfg.gridId); if(!host) return;
-    const mlabel = LABELS[CUR] || CUR;
-    // scoreboard scoped to this team's group games
-    const list = allMatches().filter(m => m.home===cfg.team || m.away===cfg.team);
-    const sb=document.getElementById(cfg.scoreId);
-    if(sb) sb.innerHTML = scoreboardHTML(scoreOver(list), mlabel, null, cfg.scope);
-    host.innerHTML =
-      cfg.fix.map(fx=>{
-        const lam = (cfg.lam[CUR]||cfg.lam.hybrid)[fx.opp];
-        const d=nlDist(lam[0],lam[1]), s=nlScenario(d);
-        const gx=Math.max(4,Math.min(96, s.gmin/90*100));
-        const diff=d.W-d.L, ad=Math.abs(diff);
-        const lean = ad<6 ? 'Coin flip' : ad<16 ? (diff>0?'Lean '+cfg.team:'Lean '+fx.opp) : (diff>0?cfg.team+' favored':fx.opp+' favored');
-        const alts = d.top.filter(x=>!(x[0]===s.a&&x[1]===s.b)).slice(0,3).map(x=>`${x[0]}\u2013${x[1]}`).join(' \u00b7 ');
-        const whoFirst = s.nedFirst?cfg.short:fx.opp;
-        const goalMark = s.g>0
-          ? `<div class="goal ${s.nedFirst?'ned':'opp'}" style="left:${gx}%"></div><div class="gmin" style="left:${gx}%">${s.gmin}'</div>` : '';
-        const fgMeta = s.g>0 ? `<span>First goal <b>${s.gmin}'</b> (${whoFirst})</span>` : `<span>Goalless the likeliest line</span>`;
-        return `<div class="nlcard">
-          <div class="stage">${fx.stage}</div>
-          <div class="mt">
-            <div class="vs">${cfg.team} <em>v</em> ${fx.opp}</div>
-            <div class="ftbig">${s.a}\u2013${s.b}<small>FULL TIME</small></div>
-          </div>
-          <div class="nltl">
-            <div class="cap l">KO 0'</div>
-            <div class="axis"></div><div class="axfill" style="width:100%"></div>
-            <div class="htL" style="left:50%"></div>
-            <div class="cap" style="left:50%">HT ${s.htN}\u2013${s.htO}</div>
-            ${goalMark}
-            <div class="cap r">90'</div>
-          </div>
-          <div class="nlwdl"><i class="w" style="width:${d.W}%"></i><i class="d" style="width:${d.D}%"></i><i class="l" style="width:${d.L}%"></i></div>
-          <div class="nlmeta">
-            <span class="lean">${lean}</span>
-            <span>W <b>${fmt(d.W)}%</b> &middot; D <b>${fmt(d.D)}%</b> &middot; L <b>${fmt(d.L)}%</b></span>
-            ${fgMeta}
-          </div>
-          <div class="nlnote">also: <span>${alts}</span></div>
-        </div>`;
-      }).join('') + koTimelineExtra(cfg.team, cfg.pending);
-  }
-  const TL_NL = {gridId:'nlGrid', scoreId:'nlScore', team:'Netherlands', short:'NL', scope:'on the Dutch group games',
-                 fix:NL_FIX, lam:NL_LAM, pending:`<div class="nlpending">Knockout fixtures appear here once Group F is decided and the round-of-32 is set.</div>`};
-  const TL_FR = {gridId:'frGrid', scoreId:'frScore', team:'France', short:'FR', scope:"on France's group games",
-                 fix:FR_FIX, lam:FR_LAM, pending:`<div class="nlpending">Knockout fixtures appear here once Group I is decided and the round-of-32 is set.</div>`};
-  function renderNL(){ renderTimeline(TL_NL); }
-  function renderFR(){ renderTimeline(TL_FR); }
-  renderNL();
-  renderFR();
-
   // jump the Schedule to today's matches (or the next upcoming day) below the sticky bar
   function scrollToCurrentDay(){
     const list = document.getElementById('schedList'); if (!list) return;
@@ -1476,7 +1286,7 @@
 <script>
 /* Lightweight, dependency-free tooltips.
    Any element with a data-tip attribute gets one. Event delegation on document,
-   so it also covers content that render()/renderNL() add later. Works with hover,
+   so it also covers content that render() adds later. Works with hover,
    keyboard focus, and tap. */
 (function(){
   const tip=document.createElement('div');

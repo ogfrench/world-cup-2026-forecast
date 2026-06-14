@@ -130,25 +130,19 @@ Dixon-Coles fit on 15,431 internationals (window 2010+, half-life 2.5 years, min
   (only one validated on internationals); do not center Hybrid + Market (dominated both ways); hold
   all of it loosely (none validated on a real World Cup).
 
-## The Netherlands tab (how it works and how to extend)
+## The Knockout tab
 
-In `wc2026_template.html`, the model-aware Netherlands timeline lives in the `renderNL` block.
-- It reads `CUR` (the selected model) and uses `NL_LAM[model][opponent]` expected goals (pulled from
-  the engine and embedded).
-- `nlScenario` derives one coherent scenario per match: take the modal scoreline (skip 0-0); a lone
-  goal (total 1) skews to the second half (half-time 0-0, first goal near minute 71); two or more
-  goals put the first goal in the first half (near minute 26); the winner scores first, a draw breaks
-  on the higher single-match win probability.
-- The first-goal minute comes from `NL_BANDS`, the empirical 15-minute goal-share curve (rising, peak
-  in the final fifteen). The half-time and the minute are read from the same scenario so they agree.
+Once the round of 32 is set, `make_data` emits a per-model `knockout` section (via `ko_predictions`)
+and `renderKnockout` draws the bracket, each tie showing the model's pick next to the real result.
+`koCard` is 120-minute correct: the score shown and graded is the regulation-plus-extra-time result,
+and penalties never count toward it (a 1-1 that goes to a shootout stays 1-1; the shootout only
+decides who advances, carried separately as `played.winner`). This mirrors how Scorito scores knockout
+games. The 90-minute Poisson is only for the group cards; `ko_report` handles extra time and the
+shootout for KO ties.
 
-Knockout fixtures are now automatic: once the round of 32 is set, `make_data` emits a per-model
-`knockout` section (via `ko_predictions`), and the Netherlands/France tabs auto-fill their KO ties
-from it through `koTimelineExtra` (reusing `koCard`). No manual `NL_FIX` edit. `koCard` is already
-120-minute correct: the score shown and graded is the regulation-plus-extra-time result, and penalties
-never count toward it (a 1-1 that goes to a shootout stays 1-1; the shootout only decides who advances,
-carried separately as `played.winner`). This mirrors how Scorito scores knockout games. The 90-minute
-Poisson is only for the group cards; `ko_report` handles extra time and the shootout for KO ties.
+The per-team Netherlands and France timeline tabs were removed: prediction-only surface (a generic
+first-goal-minute curve, a derived half-time) with no live state, not worth the maintenance. The app
+is the shared forecast tabs only.
 
 ## The conceptual trap that bit us repeatedly (do not repeat)
 
@@ -175,5 +169,4 @@ out of that same scenario. The rule of thumb: a goal before minute 45 means half
   test if such odds are obtained.
 - No rating uncertainty in the model is the deepest reason it is top-heavy; adding it would widen the
   title race sensibly.
-- Exact scorelines and goal timing are the soft outputs; the first-goal minute is a generic
-  league-average curve with no team-specific content.
+- Exact scorelines are the soft output of the engine; goal timing is not modeled.
