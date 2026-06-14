@@ -1,16 +1,23 @@
 // Tests for the in-browser live layer, run against the BUILT index.html so they
 // cover exactly what ships. No dependencies. Run: node source/test_app.js
 //
-// Two mission-critical, low-maintenance pieces:
-//   matchState  - the clock that decides the live / awaiting badge. The regression
-//                 it guards: a played game whose result the feed has not posted yet
-//                 must keep its "awaiting" placeholder, not silently look unplayed.
+// Mission-critical, low-maintenance pieces of the live layer:
+//   matchState   - the clock that decides the live / awaiting badge. The regression
+//                  it guards: a played game whose result the feed has not posted yet
+//                  must keep its "awaiting" placeholder, not silently look unplayed.
 //   parseActuals - the in-browser feed parser that overlays real results.
+//   parseScorers - the live Golden Boot leaderboard parser. The feed is hand-edited free text,
+//                  so the tests cover its sharp edges: a penalty written (p), an own goal (og),
+//                  a multi-line scorer block, a missing half-time score, an official FIFA name.
+// The end-to-end block runs source/test_feed_sample.txt (a representative feed) through the
+// parsers and asserts the overlay and the scorer board, so a feed-format change cannot regress
+// silently. Keep that fixture in sync with the openfootball format if it ever shifts.
 const fs = require('fs');
 const vm = require('vm');
 const path = require('path');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const sample = fs.readFileSync(path.join(__dirname, 'test_feed_sample.txt'), 'utf8');
 
 let passed = 0, failed = 0;
 function eq(actual, expected, msg) {
@@ -38,6 +45,9 @@ const snippet = [
   pull(/const actNm = [^\n]*/, 'actNm'),
   pull(/const actKey = [^\n]*/, 'actKey'),
   pull(/function parseActuals\(txt\)\{[\s\S]*?\n  \}/, 'parseActuals'),
+  pull(/const SC_MLINE = [^\n]*/, 'SC_MLINE'),
+  pull(/function addGoals\(tally, side, team\)\{[\s\S]*?\n  \}/, 'addGoals'),
+  pull(/function parseScorers\(txt\)\{[\s\S]*?\n  \}/, 'parseScorers'),
   pull(/const scoreOutcome = [^\n]*/, 'scoreOutcome'),
   pull(/const actOutcome = [^\n]*/, 'actOutcome'),
   pull(/const predTier = \(mm,a\) =>[\s\S]*?'miss'\);/, 'predTier'),
@@ -46,7 +56,7 @@ const snippet = [
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals, predTier } = sandbox;
+const { matchState, parseActuals, parseScorers, predTier } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -91,7 +101,45 @@ eq(tier([1, 1], 0, 0), 'result', 'drawn prediction vs a 0-0 draw: right result, 
 eq(tier([2, 1], 3, 0), 'result', 'home prediction vs a home win, different score: right result');
 eq(tier([2, 1], 0, 2), 'miss', 'home prediction vs an away win is a miss');
 
+// ---- parseActuals: a played game missing its half-time score must still parse ----
+// regression: the feed sometimes posts a result before the "(x-x)" half-time token, and the
+// game must not be dropped (which would also leave it out of the live overlay).
+const noHT = parseActuals('Sun June 14\n  12:00 UTC-5    Germany 7-1 Curacao   @ Houston\n');
+eq(noHT['2026-06-14|Curacao|Germany'], { home: 'Germany', away: 'Curacao', hs: 7, as: 1 },
+   'a played game with no half-time score still parses');
+
+// ---- parseScorers: the live Golden Boot leaderboard from the feed ----
+const sc = parseScorers(sample);
+const find = name => sc.find(s => s.player === name);
+const havertz = find('Kai Havertz');
+eq(havertz && havertz.goals, 2, 'a penalty written (p) is credited: Havertz keeps his brace, not 1');
+eq(havertz && havertz.team, 'Germany', "the scorer's team is read from the match line");
+eq(find('p'), undefined, 'the (p) penalty tag is never read as a player named "p"');
+eq(find('Damian Bobadilla'), undefined, 'an own goal (og) does not credit the scorer');
+eq((find('Folarin Balogun') || {}).goals, 2, 'two minutes on one scorer count as two goals');
+const comen = find('Livano Comenencia');
+eq(comen && comen.goals, 1, "the away side's lone scorer is attributed correctly");
+eq(comen && comen.team, 'Curacao', 'lone away scorer gets the away team');
+eq((find('Sebastien Haller') || {}).team, 'Ivory Coast',
+   "an official FIFA name (Cote d'Ivoire) maps to the engine team on the scorer");
+eq(sc.reduce((a, b) => a + b.goals, 0), 15, 'every credited goal counted once, the own goal excluded');
+eq(sc.length, 13, 'one row per real scorer, no phantom rows');
+
+// the feed ships CRLF; it must parse identically to LF
+const scCRLF = parseScorers(sample.replace(/\n/g, '\r\n'));
+eq(scCRLF.length, sc.length, 'CRLF line endings parse the same as LF');
+eq((scCRLF.find(s => s.player === 'Kai Havertz') || {}).goals, 2, 'CRLF: the penalty is still credited');
+
+// ---- end to end: the whole sample feed through parseActuals ----
+const overlay = parseActuals(sample);
+eq(Object.keys(overlay).length, 5, 'five played games overlay, the unplayed " v " fixture skipped');
+eq(overlay['2026-06-20|Ecuador|Ivory Coast'], { home: 'Ivory Coast', away: 'Ecuador', hs: 1, as: 0 },
+   'official FIFA name maps and the result keys correctly end to end');
+eq(overlay['2026-06-14|Mexico|South Africa'], { home: 'Mexico', away: 'South Africa', hs: 2, as: 0 },
+   'a played game with no half-time score overlays end to end');
+eq(overlay.hasOwnProperty('2026-06-14|Australia|Turkiye'), false, 'the unplayed fixture produces no result');
+
 console.log(failed
   ? `\n${failed} failed, ${passed} passed.`
-  : `OK: ${passed} assertions passed (matchState clock, parseActuals feed parser, predTier scoring).`);
+  : `OK: ${passed} assertions passed (matchState clock, parseActuals + parseScorers feed parsers, predTier scoring, end-to-end sample feed).`);
 process.exit(failed ? 1 : 0);

@@ -90,17 +90,46 @@ python source/build_app.py --check  # verify index.html is in sync (CI)
 
 ## Tests
 
-A small, dependency-free suite covers the code that keeps the app current, so the
-self-updating path stays trustworthy with no babysitting. CI runs all of it on every push.
+A small, dependency-free suite covers the code that keeps the app current, so the self-updating path
+stays trustworthy with no babysitting. CI runs all of it on every push and PR.
 
 ```
-python -m unittest discover -s source -p 'test_*.py'   # feed parse, home/away orientation, engine conditioning + validation
-node source/test_app.js                                # the live badge clock and the in-browser feed parser, run against the built index.html
+python -m unittest discover -s source -p 'test_*.py'   # update pipeline (Python)
+node source/check_app.js                               # build is clean, every script block parses
+node source/test_app.js                                # the in-browser live layer (JavaScript)
 ```
 
-`source/test_pipeline.py` tests the update pipeline (the engine tests skip when numpy is absent, as in
-light CI, and run in the refresh Action where it is installed). `source/test_app.js` guards the live
-layer, including the regression where an "Awaiting result" badge must persist while the feed is late.
+### What the tests guard
+
+The fragile surface is the live layer: it parses a public, hand-edited, free-text feed (openfootball)
+that has no schema and can change format without warning. Most of these tests exist because that feed
+has bitten us, so they pin the exact edge cases:
+
+- **Feed parsing** (`test_pipeline.py`, `test_app.js`). A played game with no half-time score still
+  parses, so it is not silently dropped from the conditioned odds. An unplayed " v " fixture is
+  skipped, not invented. Official FIFA names the feed warns it may switch to (Cote d'Ivoire, Korea
+  Republic, IR Iran, Cabo Verde, Congo DR, Turkiye) map to the engine names, so a renamed game is not
+  lost. A name that maps to nothing is flagged and skipped, never guessed into a phantom knockout tie.
+- **Scorer parsing** (`test_app.js`). A penalty written in the feed's shorthand `(p)` credits the
+  scorer instead of inventing a player called "p". An own goal `(og)` does not credit the scorer. A
+  scorer block that spans several lines is gathered whole. CRLF line endings parse the same as LF.
+- **Live badge clock** (`test_app.js`). A played game whose result the feed has not posted yet keeps
+  its "Awaiting result" badge with no upper time bound, instead of silently looking unplayed.
+- **Score colouring** (`test_app.js`). The predicted-versus-actual colour is graded on the scoreline
+  the card shows, so a drawn prediction can never read green against a decisive result.
+- **Orientation and engine invariants** (`test_pipeline.py`). Reorienting a match to the official
+  home/away is its own inverse. The engine conditions on played games and validates its output
+  (champion shares sum near 100, reach-round odds never rise from one round to the next). The engine
+  tests need numpy and skip when it is absent, as in light CI; the refresh Action installs it and runs
+  them before committing a refreshed forecast.
+
+### End to end
+
+`source/test_feed_sample.txt` is a small, representative feed that packs every edge case above into
+one file. Both `test_pipeline.py` and `test_app.js` run it through their full parsers and assert the
+overlay, the group rows, the knockout split, and the scorer board, so a feed-format change cannot
+regress one side without failing the suite. When you find a new feed quirk, add a line to that fixture
+and an assertion to both suites.
 
 To regenerate the simulation, run `python source/make_data.py 50000` (the live + Day 0 generator,
 which conditions on `wc2026_actuals.json`), then `python source/merge_schedule.py` to fold the

@@ -1,0 +1,27 @@
+# World Cup 2026 feed sample, a hand-built test fixture (NOT the live feed).
+# It mirrors the openfootball cup.txt format and deliberately packs the edge cases that
+# have bitten the parsers, so both test_app.js and test_pipeline.py can run a feed end to end:
+#   - a penalty written as the shorthand (p)   -> must credit the scorer, not invent a player "p"
+#   - an own goal written (og)                 -> must NOT credit the scorer
+#   - a scorer block that spans several lines   -> must be gathered whole
+#   - a played game with NO half-time score     -> must still parse, not be dropped
+#   - an unplayed " v " fixture                 -> must be skipped, not invented
+#   - an official FIFA name (Côte d'Ivoire)     -> must map to the engine name (Ivory Coast)
+#   - a knockout tie (a 1-1 draw)               -> must split off from the group rows, winner unknown
+
+Sun June 14
+  12:00 UTC-5    Germany 7-1 (3-1) Curacao   @ Houston
+                 (Felix Nmecha 6' Nico Schlotterbeck 38' Kai Havertz 45+5'(p), 88' Jamal Musiala 47'
+                  Nathaniel Brown 68' Deniz Undav 78';
+                  Livano Comenencia 21')
+  16:00 UTC-4    USA 4-1 Paraguay   @ Inglewood
+                 (Damian Bobadilla 7'(og) Folarin Balogun 31', 45+5' Giovanni Reyna 90+8';
+                  Mauricio 70')
+  19:00 UTC-7    Mexico 2-0 South Africa   @ Estadio Azteca
+  21:00 UTC-7    Australia       v Turkiye   @ Vancouver
+Sat June 20
+  16:00 UTC-4    Côte d'Ivoire 1-0 (0-0) Ecuador   @ Toronto
+                 (Sebastien Haller 55')
+Sun June 28
+  16:00 UTC-4    Spain 1-1 (1-0) France   @ New York/New Jersey (East Rutherford)
+                 (Lamine Yamal 20'; Kylian Mbappe 75')
