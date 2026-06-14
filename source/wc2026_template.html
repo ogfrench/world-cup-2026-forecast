@@ -592,7 +592,7 @@
   <!-- TOP SCORERS -->
   <section id="topscorers">
     <div class="sec-h">Golden Boot</div>
-    <p class="lead">The market's pre-tournament pick for the Golden Boot, next to who is actually scoring. The model rates teams, not players, so the expected side comes from the bookmakers, not the simulation, and it does not move once the tournament starts.</p>
+    <p class="lead">The bookmakers' pre-tournament pick for the Golden Boot, next to who is actually scoring. The model rates teams, not players, so the expected side comes from the bookmakers, not the simulation, and it does not move once the tournament starts.</p>
     <div class="scgrid">
       <div class="sccol exp">
         <div class="scol-h"><span>Expected</span><small>Day 0 market</small></div>
@@ -622,15 +622,16 @@
       <p>None of these models was trained on Opta's numbers, so it is a fair outside check. The selected model's title odds, next to Opta's supercomputer and the bookmakers:</p>
       <table class="cal" id="calTable"></table>
       <div class="note">The results-only models love <b>Argentina</b> on recent form (the Hybrid puts them almost level with Spain; the bookmakers have them around fifth) and rate <b>France</b> below the bookmakers, who are paying for squad depth results cannot see. The spread across the five is how much of the title race is method, not fact: Spain swings from about 10 to 29 percent, far wider than the match odds ever differ.</div>
+      <p><b>Bookmakers and Pure Market are not the same line.</b> The <b>Bookmakers</b> reference (the gold dots and the column above) is the raw published title odds, champion only. <b>Pure Market</b> is a model: it takes the team ratings those odds imply and plays the whole tournament 50,000 times, so it reproduces the bookmakers on the title by calibration, but also gives a number for every round and every match. On the title bar the two land on top of each other by design; everywhere else, only Pure Market has an answer.</p>
 
       <h3>Where it's weak</h3>
-      <p><b>It backs the favorites too hard.</b> A fixed-strength sim cannot see a tournament turn (an injury, a player catching fire, a red card), so it piles probability onto the big teams, Pure Elo most, the market least. Head-to-heads stay sensible: Spain against Argentina is a coin flip.</p>
+      <p><b>It backs the favorites too hard.</b> A fixed-strength sim cannot see a tournament turn (an injury, a player catching fire, a red card), so it piles probability onto the big teams, Pure Elo most, Pure Market least. Head-to-heads stay sensible: Spain against Argentina is a coin flip.</p>
       <p><b>Live odds follow results, not form.</b> Once games are played the odds re-simulate with the scores locked in, but the ratings stay frozen at their pre-tournament values (as of 6 June). Winning ugly and winning well move them the same way; injuries, current form, and a re-pricing market are invisible.</p>
       <p><b>Encouraging, not gospel.</b> The 1,230 validation games are mostly one-sided qualifiers and friendlies, where any decent model looks clever; the tight ties a World Cup turns on barely feature. And the test grades match calls, not title odds, which nobody can check until the trophy is lifted.</p>
       <p><b>The single "most likely score" is fragile.</b> In an even game 1-1, 1-0 and 0-0 sit within a few percent, so the headline score flips easily. Trust the win/draw/loss split, not the exact number. The model also draws a touch less than real life (about 23 to 24 percent in groups, against a 26 to 28 norm).</p>
-      <p><b>No top-scorer model.</b> It rates teams, not players. The <a class="xlink" href="#" data-go="topscorers">Top Scorers</a> tab shows the market's pick against who is actually scoring.</p>
+      <p><b>No top-scorer model.</b> It rates teams, not players. The <a class="xlink" href="#" data-go="topscorers">Top Scorers</a> tab shows the bookmakers' pick against who is actually scoring.</p>
       <p><b>A toy, not an oracle.</b> A transparent baseline from public data and standard methods. Great for the shape of the tournament, not for staking your mortgage.</p>
-      <p class="colophon">Five match models over a shared <b id="nsim3"></b>-tournament Monte Carlo with the official FIFA Annex C round-of-32 (495 line-ups). Dixon-Coles fit by MLE on 15,431 internationals (2010 to 2026); the hybrid weight chosen by out-of-sample log-loss; market odds de-vigged and the pure-market ratings calibrated to them. Opta and Polymarket, Kalshi, FanDuel shown for comparison only. Not betting advice.</p>
+      <p class="colophon">Five match models over a shared <b id="nsim3"></b>-tournament Monte Carlo with the official FIFA Annex C round-of-32 (495 line-ups). Dixon-Coles fit by MLE on 15,431 internationals (2010 to 2026); the hybrid weight chosen by out-of-sample log-loss; bookmaker odds de-vigged and the Pure Market ratings calibrated to them. Opta and the bookmakers (Polymarket, Kalshi, FanDuel) shown for comparison only. Not betting advice.</p>
     </div>
   </section>
 
