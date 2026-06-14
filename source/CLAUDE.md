@@ -24,74 +24,90 @@ tested against an actual World Cup.
 ## File map
 
 Build artifacts and source:
-- `wc2026_predictions.html` — the built app, self-contained. DO NOT hand-edit; rebuild it.
-- `wc2026_template.html` — the app source. Has a single `/*DATA*/` token where the JSON is injected.
+- `index.html`: the built app, self-contained and deployed. Generated, do not hand-edit; rebuild it.
+- `wc2026_template.html`: the app source. Has a single `/*DATA*/` token where the JSON is injected.
   Edit this for any app change.
-- `wc2026_engine.py` — the simulation engine. All five models, market calibration, Annex C, KO logic.
+- `build_app.py`: injects `wc2026_results.json` into the template's `/*DATA*/` token and writes
+  `index.html`. `build_app.py --check` verifies the two are in sync (CI runs this).
+- `make_data.py`: the regeneration entry point. Runs the engine unconditioned (Day 0) and conditioned
+  (live) from one shared calibration, validates, and writes both JSON files (default 50,000 sims).
+- `fetch_actuals.py`: refreshes `wc2026_actuals.json` from the openfootball feed (engine names, official
+  home/away), splitting any knockout ties into `wc2026_ko_actuals.json`.
+- `merge_schedule.py`: folds the schedule into the results JSON (annotates date/venue, reorients
+  home/away to the official side). Idempotent, no re-simulation.
+- `wc2026_engine.py`: the simulation engine. All five models, market calibration, Annex C, KO logic.
   `run(..., actuals=...)` conditions the Monte Carlo on played games (locks them, samples the rest);
   `load_actuals()` reads `wc2026_actuals.json`; `validate()` checks the invariants. Seeds are fixed, so
   identical inputs give identical output. The market calibration must stay unconditioned (it pins the
   market-implied Elo to the published pre-tournament odds); only the final output runs take `actuals`.
-- `wc2026_results.json` — the 50k simulation output the app renders, with the fixture schedule merged in.
-- `wc2026_baseline.json` — the frozen Day 0 (pre-tournament) snapshot. Never regenerated; `cp` once. The
-  before/after deltas compare the live conditional run against this.
-- `wc2026_actuals.json` — played group results in engine team names, the conditioning input (refreshed from openfootball).
-- `wc2026_schedule.json` — the official 72-match group schedule (date, kickoff, home/away, venue), from openfootball.
-- `merge_schedule.py` — folds the schedule into the results JSON (step 1b in How to rebuild).
+- `wc2026_results.json`: the 50k simulation output the app renders, with the fixture schedule merged in.
+- `wc2026_baseline.json`: the frozen Day 0 (pre-tournament) snapshot. The before/after deltas compare
+  the live conditional run against this.
+- `wc2026_actuals.json`: played group results in engine team names, the conditioning input (refreshed
+  from openfootball). `wc2026_ko_actuals.json` is the same for played knockout ties.
+- `wc2026_schedule.json`: the official 72-match group schedule (date, kickoff, home/away, venue), from openfootball.
+
+Checks and tests:
+- `check_app.js`: CI check that `index.html` is built, every `<script>` block parses, and all five models are present.
+- `test_pipeline.py`: stdlib unittest for the update pipeline (feed parse, home/away orientation, engine
+  conditioning + validation). Engine tests skip without numpy.
+- `test_app.js`: tests the built app's live layer (the in-play/awaiting badge clock, the in-browser feed parser).
 
 Parameters and data tables:
-- `model_params.json` — fitted Dixon-Coles params (intercept, home, rho, c, total, alpha), per-team
+- `model_params.json`: fitted Dixon-Coles params (intercept, home, rho, c, total, alpha), per-team
   attack/defense, and official Elo for all 48 teams.
-- `annexc_data.py` — the official FIFA Annex C R32 table (495 group-finish combinations) and parser.
+- `annexc_data.py`: the official FIFA Annex C R32 table (495 group-finish combinations) and parser.
 
 Fitting and validation:
-- `fit_dc.py` — fits Dixon-Coles by weighted Poisson MLE on the match dataset.
-- `build_params.py` — assembles `model_params.json` from the fit plus official Elo.
-- `val_assess.py` — out-of-sample predictive test of the three testable match models.
-- `val_market.py` — market-versus-model proxy backtest on club odds.
+- `fit_dc.py`: fits Dixon-Coles by weighted Poisson MLE on the match dataset.
+- `build_params.py`: assembles `model_params.json` from the fit plus official Elo.
+- `val_assess.py`: out-of-sample predictive test of the three testable match models.
+- `val_market.py`: market-versus-model proxy backtest on club odds.
 
 Docs:
-- `REPORT.md` — the final report.
-- `CLAUDE.md` — this file.
+- `REPORT.md`: the final report.
+- `CLAUDE.md`: this file.
 
 Data not shipped (live in `/home/claude` during development):
-- `results.csv` — 49,411 internationals 1872 to 2026. Columns: date, home_team, away_team,
+- `results.csv`: 49,411 internationals 1872 to 2026. Columns: date, home_team, away_team,
   home_score, away_score, tournament, city, country, neutral.
-- `matches.csv` — ~43MB club dataset (top-5 leagues, real closing odds) for the market proxy,
+- `matches.csv`: ~43MB club dataset (top-5 leagues, real closing odds) for the market proxy,
   downloaded from `raw.githubusercontent.com/xgabora/Club-Football-Match-Data-2000-2025`.
 
 ## How to rebuild
 
-1. Regenerate the simulation: `python3 wc2026_engine.py 50000` writes `wc2026_results.json`.
-Note: the app opens on Pure Market because `wc2026_template.html` hardcodes `let CUR = 'market_pure'`; the engine also emits `default_model='market_pure'` for consistency.
+1. Refresh the played results: `python3 fetch_actuals.py` (pulls new games from the openfootball feed
+   into `wc2026_actuals.json` and `wc2026_ko_actuals.json`).
 
-1b. Fold the fixture schedule back in: `python3 merge_schedule.py`. The engine builds group
-   fixtures with `itertools.combinations`, so it has no dates and arbitrary home/away. This step
-   annotates each group match with its official date, kickoff, venue, and reorients home/away to
-   the official side (swapping the home/away probabilities and scores with it). It is idempotent
-   and does not touch the 50k team statistics. The schedule lives in `wc2026_schedule.json`,
-   parsed from the public openfootball World Cup 2026 dataset.
+2. Regenerate the simulation: `python3 make_data.py 50000` writes `wc2026_results.json` (live,
+   conditioned on the played games) and `wc2026_baseline.json` (the frozen Day 0 snapshot). The app
+   opens on Pure Market because `wc2026_template.html` hardcodes `let CUR = 'market_pure'`; the engine
+   also emits `default_model='market_pure'` for consistency.
 
-2. Build the app: replace the `/*DATA*/` token in `wc2026_template.html` with the full contents of
-   `wc2026_results.json`, write the result to `wc2026_predictions.html`. One-liner:
-   ```python
-   tpl=open('wc2026_template.html').read(); data=open('wc2026_results.json').read()
-   open('wc2026_predictions.html','w').write(tpl.replace('/*DATA*/', data))
-   ```
-3. QC the build: parse the JSON back out of the HTML, syntax-check both `<script>` blocks (Node `vm`
-   or `node --check`), confirm 5 models and labels are present, confirm stage conservation, and sweep
-   for stale strings.
+3. Fold the fixture schedule back in: `python3 merge_schedule.py`. The engine builds group fixtures with
+   `itertools.combinations`, so it has no dates and arbitrary home/away. This annotates each group match
+   with its official date, kickoff, venue, and reorients home/away to the official side (swapping the
+   home/away probabilities and scores with it). Idempotent, and it does not touch the 50k team statistics.
+
+4. Build the app: `python3 build_app.py` injects `wc2026_results.json` into the `/*DATA*/` token in
+   `wc2026_template.html` and writes `index.html`. Confirm it is in sync with `python3 build_app.py --check`.
+
+5. QC: `node check_app.js` (build is clean, script blocks parse, five models present), then the test
+   suites: `python -m unittest discover -s source -p 'test_*.py'` and `node test_app.js`.
+
+The autonomous refresh (`.github/workflows/refresh.yml`) runs steps 1 to 4 on a windowed cron, but only
+when `wc2026_actuals.json` actually changes, and commits the result so Netlify redeploys.
 
 To re-derive parameters: `python3 fit_dc.py` then `python3 build_params.py` (needs `results.csv`).
 
 ## The five models (how each match's two expected-goal rates are set)
 
 Set by the module global `CURRENT_MODEL`; `lambdas(home, away)` dispatches on it.
-- `elo` — Pure Elo. `_elo_pair` on official Elo: supremacy = c*(Elo_h - Elo_a), split around TOTAL/2.
-- `score` — Pure Goals. `_dc_pair`: exp(intercept + ATT + DFN + home). Goal-pads weak opponents.
-- `hybrid` — `_hybrid_pair`: 50/50 of elo and score pairs. The recommended standalone model.
-- `market` — Hybrid + Market. 0.5*hybrid + 0.5*(`_elo_pair` on MARKET_ELO).
-- `market_pure` — Pure Market. `_elo_pair` on MARKET_ELO alone.
+- `elo`: Pure Elo. `_elo_pair` on official Elo: supremacy = c*(Elo_h - Elo_a), split around TOTAL/2.
+- `score`: Pure Goals. `_dc_pair`: exp(intercept + ATT + DFN + home). Goal-pads weak opponents.
+- `hybrid`: `_hybrid_pair`, 50/50 of elo and score pairs. The recommended standalone model.
+- `market`: Hybrid + Market. 0.5*hybrid + 0.5*(`_elo_pair` on MARKET_ELO).
+- `market_pure`: Pure Market. `_elo_pair` on MARKET_ELO alone.
 
 MARKET_ELO is built by `market_implied_elo` (invert the pure-Elo log-title-odds vs Elo line, map the
 published `MARKET_FULL` odds back to implied ratings; teams outside the published top-20 keep their
