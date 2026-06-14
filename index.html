@@ -232,6 +232,17 @@
   .cal td:first-child,.cal th:first-child{text-align:left;font-family:'Archivo';font-weight:700}
   .cal tr:last-child td{border-bottom:none}
   .note{background:var(--surface);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:13px 16px;margin:18px 0;font-size:13.5px;color:var(--muted)}
+  /* ---------- method: the selected-model panel ---------- */
+  .methodhero{background:var(--surface);border:1px solid var(--line2);border-radius:14px;padding:17px 18px 16px;margin:0 0 26px}
+  .methodhero .mh-tag{font-family:'DM Mono';font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .methodhero .mh-name{font-size:22px;font-weight:700;color:var(--txt);margin:2px 0 3px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .methodhero .mh-rec{font-family:'DM Mono';font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#08140d;background:var(--lime);border-radius:999px;padding:2px 8px}
+  .methodhero .mh-def{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:15px}
+  .methodhero .mh-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .methodhero h4{font-family:'DM Mono';font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 5px}
+  .methodhero .mh-trust h4{color:var(--win)} .methodhero .mh-watch h4{color:var(--gold)}
+  .methodhero .mh-cols p{margin:0;font-size:13.5px;color:var(--txt);line-height:1.5}
+  @media(max-width:520px){.methodhero{padding:15px 15px 14px} .methodhero .mh-cols{grid-template-columns:1fr;gap:12px}}
   /* ---------- top scorers ---------- */
   .scgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
   @media(max-width:600px){ .scgrid{grid-template-columns:1fr;gap:12px} .scgrid .sccol.exp{order:2} }
@@ -612,7 +623,8 @@
 
   <section id="method">
     <div class="prose">
-      <div class="sec-h">Five models, one engine</div>
+      <div class="methodhero" id="methodHero"></div>
+      <div class="sec-h">The five models, compared</div>
       <p>One tournament, played out <b id="nsim2"></b> times: 104 games, the eight best third-placed teams, the official FIFA round-of-32, and the bracket through the final with extra time and penalties. Only how a single match is rated changes between the five. Simplest first.</p>
       <p><b>Pure Elo.</b> Rates teams on results alone, like a chess rating, and turns the gap into expected goals. Hard to fool with one freak scoreline, blind to how a team plays, and it backs the favorites hardest. (Ratings from eloratings.net.)</p>
       <p><b>Pure Goals.</b> Learns each team's attack and defense from <b>15,431 internationals</b> since 2010, so it predicts scorelines, not just winners. It found a home bump of about <b>1.31x</b> on goals. The catch: it rewards running up the score on weak teams, so it overrates the likes of Japan and Algeria. (A standard Dixon-Coles model.)</p>
@@ -1078,6 +1090,26 @@
   document.addEventListener('click', closeDrop);
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDrop(); });
 
+  // the selected-model panel at the top of Method & Caveats: what it is, and what to trust or watch
+  // for THIS model. The full five-model comparison and the shared caveats stay below as reference.
+  const MODEL_METHOD = {
+    elo: {def:'Teams rated on results alone, like a chess rating, with the gap turned into expected goals.',
+          trust:'The pecking order and head-to-heads. Hard to fool with one freak scoreline.',
+          watch:'Backs the favorites hardest of the five, and is blind to form and squad depth.'},
+    score: {def:"Each team's attack and defense learned from 15,431 internationals, so it predicts scorelines, not just winners.",
+          trust:'Goal counts and the home edge (about 1.31x), not only who wins.',
+          watch:'Rewards running up the score on weak teams, so it overrates big scorers like Japan and Algeria.'},
+    hybrid: {def:"Pure Elo and Pure Goals averaged, each covering the other's blind spot.",
+          trust:'The best results-only read, and the only model validated on internationals. Steadiest calibration.',
+          watch:'Leans on recent form: it loves Argentina and rates France below the bookmakers.'},
+    market: {def:"The Hybrid nudged halfway to the ratings the bookmakers' title odds imply.",
+          trust:'A middle path, the market’s wisdom without leaning on it fully.',
+          watch:'Dominated in testing: a blend never beat the market alone, and it is no longer the pure results read. Do not center it.'},
+    market_pure: {def:'The bookmakers’ own implied ratings, played through the whole bracket.',
+          trust:'The title call. It beat a solid Elo model on a 5,327-match odds backtest, so it is the one to trust.',
+          watch:'Pinned to pre-tournament odds, not a live feed of match prices. Only as good as the bookmakers.'}
+  };
+
   function render(){
     const T = MODELS[CUR].teams, GM = MODELS[CUR].group_matches;
     // live when conditioned on played games and the Day 0 baseline is attached
@@ -1219,6 +1251,19 @@
       calTeams.map(t=>`<tr><td>${t}</td><td style="color:var(--lime)">${fmt(T[t].champ)}%</td>`+
         `<td style="color:var(--blue)">${OPTA[t]!=null?OPTA[t]+'%':'n/a'}</td>`+
         `<td style="color:var(--gold)">${MKT[t]!=null?MKT[t]+'%':'n/a'}</td></tr>`).join('');
+
+    // selected-model panel: definition + what to trust / watch for the model you are on
+    const hero = document.getElementById('methodHero'), mm = MODEL_METHOD[CUR];
+    if (hero && mm) {
+      const rec = CUR === 'market_pure' ? '<span class="mh-rec">recommended</span>' : '';
+      hero.innerHTML = `<div class="mh-tag">Selected model</div>
+        <div class="mh-name">${LABELS[CUR] || CUR}${rec}</div>
+        <div class="mh-def">${mm.def}</div>
+        <div class="mh-cols">
+          <div class="mh-trust"><h4>Trust</h4><p>${mm.trust}</p></div>
+          <div class="mh-watch"><h4>Watch</h4><p>${mm.watch}</p></div>
+        </div>`;
+    }
 
     // adaptive note: how the SELECTED model reads the title race against the bookmakers, from live data
     // (computed, never hardcoded, so it stays true as the odds re-simulate and as you switch models)
