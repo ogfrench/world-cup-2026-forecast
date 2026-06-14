@@ -21,6 +21,9 @@ python build_app.py --check  # verify ../index.html is in sync (CI runs this)
 - `merge_schedule.py` - folds the schedule into the results JSON (dates, venues, official home/away). Idempotent, no re-simulation. Run after regenerating the engine output.
 - `build_app.py` - the build step above.
 - `check_app.js` - CI check: script blocks parse, five models present, build is clean.
+- `test_pipeline.py` - tests for the update pipeline: feed parsing, home/away orientation, engine conditioning and output validation (engine tests skip without numpy). Run: `python -m unittest discover -s source -p 'test_*.py'`.
+- `test_app.js` - tests the built app's live layer: the in-play / awaiting-result badge clock and the in-browser feed parser. Run: `node test_app.js`.
+- `fetch_actuals.py` - refreshes `wc2026_actuals.json` from the openfootball feed (group results in engine names, oriented to the official home/away). Splits knockout ties into `wc2026_ko_actuals.json`.
 - `wc2026_engine.py` - the simulation engine: all five models, market calibration, FIFA Annex C, knockout logic. `python wc2026_engine.py 50000` regenerates the results JSON.
 - `model_params.json` - fitted Dixon-Coles parameters plus official Elo for all 48 teams.
 - `annexc_data.py` - the official FIFA Annex C round-of-32 table (495 group-finish combinations).

@@ -719,7 +719,7 @@
   // as the embedded schedule so team names line up. Swap ACT_SRC + parseActuals
   // for any JSON feed (e.g. TheSportsDB) without touching the render code.
   const ACT_SRC = 'https://raw.githubusercontent.com/openfootball/worldcup/master/2026--usa/cup.txt';
-  // sundown: a week after the final (19 Jul), stop polling the feed for good. The last
+  // sundown: a week after the 19 Jul final (26 Jul), stop polling the feed for good. The last
   // cached results still render; the page just stops querying a tournament that is over.
   const SUNDOWN = Date.parse('2026-07-26T00:00:00Z');
   const ACT_NAME = {'Czech Republic':'Czechia','Bosnia & Herzegovina':'Bosnia-Herzegovina','Turkey':'Turkiye','Curaçao':'Curacao'};
@@ -868,17 +868,26 @@
     if (!r) return null;
     return r.home===mm.home ? {hs:r.hs, as:r.as} : {hs:r.as, as:r.hs};
   }
-  // a match is "in play" from kickoff to +2h while no final result has landed yet
-  // a kicked-off match with no result yet: "in play" for the first ~2h, then "awaiting the feed" out to 6h
-  function matchPending(mm){
-    if (actualFor(mm)) return false;
-    const ko = Date.parse(mm.kickoff_utc); if (isNaN(ko)) return false;
-    const now = Date.now();
-    return now >= ko && now < ko + 6*3600e3;
+  // ---- match clock: one source of truth for the live/awaiting badges and the poll cadence ----
+  // matchState is pure (clock + whether we already hold a result), so it is unit-testable in isolation.
+  // A kicked-off match is "live" for the first 2h, then "awaiting" the feed with no upper bound:
+  // openfootball can post a score many hours late, and the placeholder must not vanish before then,
+  // or a played game silently reverts to looking like an unplayed fixture (the Australia v Turkiye case).
+  const IN_PLAY_MS = 120*60e3;       // kickoff to +2h: shown as "In play"
+  const AWAIT_FAST_MS = 8*3600e3;    // keep polling fast up to +8h while a result is still missing
+  function matchState(now, ko, hasResult){
+    if (hasResult) return 'done';
+    if (now < ko) return 'future';
+    if (now < ko + IN_PLAY_MS) return 'live';
+    return 'awaiting';               // kicked off, past +2h, still no result in the feed
   }
-  function matchLive(mm){
-    return matchPending(mm) && Date.now() < Date.parse(mm.kickoff_utc) + 120*60e3;
+  function matchClock(mm){
+    const ko = Date.parse(mm.kickoff_utc); if (isNaN(ko)) return 'future';
+    if (Date.now() > SUNDOWN) return actualFor(mm) ? 'done' : 'future';  // tournament over: a static page, no live badges
+    return matchState(Date.now(), ko, !!actualFor(mm));
   }
+  function matchPending(mm){ const s = matchClock(mm); return s === 'live' || s === 'awaiting'; }
+  function matchLive(mm){ return matchClock(mm) === 'live'; }
   // no live feed, so the badge links to a Google search: its live match card while in play,
   // its finished card during the gap before openfootball posts the result
   const liveSearch = mm => 'https://www.google.com/search?q=' + encodeURIComponent(mm.home + ' vs ' + mm.away);
@@ -927,8 +936,8 @@
       const ko = Date.parse(m.kickoff_utc); if (isNaN(ko)) return;
       if (ko > now) { next = Math.min(next, ko - now); return; }
       if (actualFor(m)) return;                        // already have the result
-      if (now < ko + 120*60e3) inplay = true;          // in play
-      else if (now < ko + 6*3600e3) pending = true;    // finished, result not in the feed yet
+      if (now < ko + IN_PLAY_MS) inplay = true;        // in play
+      else if (now < ko + AWAIT_FAST_MS) pending = true;  // finished, result not in the feed yet (fast-poll tail)
     });
     return {inplay, pending, next};
   }
