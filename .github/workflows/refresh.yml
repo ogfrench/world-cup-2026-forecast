@@ -1,0 +1,83 @@
+name: Refresh forecast
+
+# Re-runs the conditional 50k simulation when a new result lands, and commits the
+# updated forecast so Netlify redeploys. No backend: a windowed cron polls the public
+# openfootball feed. The expensive sim runs only when wc2026_actuals.json actually
+# changes (a new played game), so an unchanged feed is a near-free no-op.
+
+on:
+  schedule:
+    - cron: "*/30 16-23,0-5 * * *"   # every 30 min through the Americas match windows
+    - cron: "0 6-15 * * *"           # hourly through the quiet hours
+  workflow_dispatch: {}              # manual "refresh now"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-forecast
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sundown check (stop a week after the final)
+        id: sundown
+        run: |
+          if [ "$(date -u +%s)" -gt "$(date -u -d '2026-07-26' +%s)" ]; then
+            echo "go=false" >> "$GITHUB_OUTPUT"
+            echo "Past sundown (2026-07-26); the tournament is over. Nothing to do."
+          else
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.sundown.outputs.go == 'true'
+        with:
+          python-version: "3.13"
+
+      - name: Pull the latest played results from the feed
+        if: steps.sundown.outputs.go == 'true'
+        run: python source/fetch_actuals.py
+
+      - name: Stop if no new results
+        id: changed
+        if: steps.sundown.outputs.go == 'true'
+        run: |
+          if git diff --quiet -- source/wc2026_actuals.json; then
+            echo "go=false" >> "$GITHUB_OUTPUT"
+            echo "No new played results since the last run; skipping the re-simulation."
+          else
+            echo "go=true" >> "$GITHUB_OUTPUT"
+            echo "New results detected:"; git --no-pager diff --stat -- source/wc2026_actuals.json
+          fi
+
+      - name: Re-simulate (50k), conditioned on the played games
+        if: steps.changed.outputs.go == 'true'
+        run: |
+          python -m pip install --quiet numpy
+          python source/make_data.py 50000
+          python source/merge_schedule.py
+          python source/build_app.py
+
+      - name: Validate the build (gates the commit)
+        if: steps.changed.outputs.go == 'true'
+        run: |
+          python source/build_app.py --check
+          node source/check_app.js
+
+      - name: Commit and push the refreshed forecast
+        if: steps.changed.outputs.go == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add source/wc2026_actuals.json source/wc2026_results.json index.html
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+          else
+            git commit -m "Refresh live forecast from played results [skip ci]"
+            git push
+          fi

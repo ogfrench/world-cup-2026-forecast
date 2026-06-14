@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""Refresh wc2026_actuals.json from the openfootball feed.
+
+Downloads the public World Cup 2026 results, parses the played GROUP matches,
+maps feed team names to engine names, orients home/away to the official fixture
+(via wc2026_schedule.json), and writes wc2026_actuals.json. The autonomous refresh
+runs this before re-simulating; it is also safe to run by hand. Group stage only:
+the schedule is group stage, so knockout results (and any unmapped name) are skipped.
+
+    python3 source/fetch_actuals.py
+"""
+import json, os, re, sys, urllib.request
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+SRC = 'https://raw.githubusercontent.com/openfootball/worldcup/master/2026--usa/cup.txt'
+# feed name -> engine name (everything else is identical); mirrors ACT_NAME in the app
+NAME = {'Czech Republic': 'Czechia', 'Bosnia & Herzegovina': 'Bosnia-Herzegovina',
+        'Turkey': 'Turkiye', 'Curaçao': 'Curacao'}
+MON = {'May': 5, 'June': 6, 'July': 7}
+nm = lambda s: NAME.get(s.strip(), s.strip())
+
+DRE = re.compile(r'^[A-Z][a-z]{2}\s+([A-Z][a-z]+)\s+(\d{1,2})\s*$')
+MRE = re.compile(r'^\s*\d{1,2}:\d{2}\s+UTC[+-]\d+\s+(.+?)\s+(\d+)-(\d+)\s+\([0-9-]+\)\s+(.+?)\s+@\s+')
+
+def parse(txt):
+    out, date = [], None
+    for ln in txt.splitlines():
+        d = DRE.match(ln)
+        if d:
+            mo = MON.get(d.group(1))
+            if mo:
+                date = '2026-%02d-%02d' % (mo, int(d.group(2)))
+            continue
+        m = MRE.match(ln)
+        if m and date:
+            out.append((nm(m.group(1)), int(m.group(2)), int(m.group(3)), nm(m.group(4))))
+    return out
+
+def main():
+    sched = json.load(open(os.path.join(HERE, 'wc2026_schedule.json')))
+    idx = {frozenset((f['home'], f['away'])): (f['group'], f['home'], f['away']) for f in sched}
+    try:
+        txt = urllib.request.urlopen(SRC, timeout=30).read().decode('utf-8')
+    except Exception as ex:
+        sys.exit('fetch failed: %s' % ex)
+    rows = []
+    for h, hs, ag, a in parse(txt):
+        rec = idx.get(frozenset((h, a)))
+        if not rec:                                  # knockout fixture or an unmapped name
+            continue
+        g, oh, oa = rec
+        ohs, oas = (hs, ag) if h == oh else (ag, hs)  # orient to the official home/away
+        rows.append({'group': g, 'home': oh, 'away': oa, 'hs': ohs, 'as': oas})
+    rows.sort(key=lambda r: (r['group'], r['home']))
+    json.dump(rows, open(os.path.join(HERE, 'wc2026_actuals.json'), 'w'), indent=1)
+    print('wrote %d played group games to wc2026_actuals.json' % len(rows))
+
+if __name__ == '__main__':
+    main()

@@ -28,7 +28,14 @@ Build artifacts and source:
 - `wc2026_template.html` — the app source. Has a single `/*DATA*/` token where the JSON is injected.
   Edit this for any app change.
 - `wc2026_engine.py` — the simulation engine. All five models, market calibration, Annex C, KO logic.
+  `run(..., actuals=...)` conditions the Monte Carlo on played games (locks them, samples the rest);
+  `load_actuals()` reads `wc2026_actuals.json`; `validate()` checks the invariants. Seeds are fixed, so
+  identical inputs give identical output. The market calibration must stay unconditioned (it pins the
+  market-implied Elo to the published pre-tournament odds); only the final output runs take `actuals`.
 - `wc2026_results.json` — the 50k simulation output the app renders, with the fixture schedule merged in.
+- `wc2026_baseline.json` — the frozen Day 0 (pre-tournament) snapshot. Never regenerated; `cp` once. The
+  before/after deltas compare the live conditional run against this.
+- `wc2026_actuals.json` — played group results in engine team names, the conditioning input (refreshed from openfootball).
 - `wc2026_schedule.json` — the official 72-match group schedule (date, kickoff, home/away, venue), from openfootball.
 - `merge_schedule.py` — folds the schedule into the results JSON (step 1b in How to rebuild).
 
@@ -125,6 +132,10 @@ To add knockout fixtures once the bracket is set:
 2. IMPORTANT: knockout games go to extra time and penalties, but the group cards use a straight
    90-minute Poisson. For KO fixtures switch the scoreline math to regulation-only (the engine has
    separate ET and shootout logic), or the full-time score and over/under will be off.
+   The score we show and grade is the 120-minute result (regulation + extra time); penalties never
+   count toward it (a 1-1 that goes to a shootout stays 1-1, the shootout only decides who advances).
+   This mirrors how Scorito scores knockout games. Read the advancer off the shootout, the score off
+   the end of extra time, and keep them as separate facts.
 
 ## The conceptual trap that bit us repeatedly (do not repeat)
 

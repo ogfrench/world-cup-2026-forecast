@@ -6,8 +6,9 @@
 
 A Monte Carlo forecast of the 2026 World Cup. It plays the full tournament, all 104 matches and the
 knockout bracket, 50,000 times under five match-rating models and reports each team's probability of
-reaching every stage. As games are played, real results overlay onto the predictions, so you can see
-where the forecast is holding up.
+reaching every stage. As games are played, real results overlay onto the predictions and the odds
+re-simulate to condition on what has happened, so you see both where the forecast is holding up and
+how the title race is shifting against its Day 0 starting point.
 
 The app is a single self-contained `index.html` with no dependencies; switch between the five models
 in the page.
@@ -29,10 +30,11 @@ Methodology and validation are in [source/REPORT.md](source/REPORT.md).
 
 One model selected at a time (pills on desktop, a dropdown on mobile), across these tabs:
 
-- **Title Odds** - each team's chance of winning the tournament, plus how often it reaches each round, against Opta and the betting market as a sanity check.
+- **Title Odds** - each team's chance of winning the tournament, plus how often it reaches each round, against Opta and the betting market as a sanity check. Once games are played the odds re-condition on the results, with a Day 0 marker on each bar showing the pre-tournament starting point and the move since; the reach-round table can flip to show the change since Day 0.
 - **Schedule** - every fixture by kickoff time, the model's predicted score, and the real result as it comes in, color-coded (dark green exact, green right result, red wrong).
 - **Groups & Scores** - the live group table against where the model predicted each team to finish, marking who is ahead of the forecast and who is behind. Expand a group for its match predictions and results.
 - **Knockout Phase** - a placeholder until the round-of-32 is set, then the predicted bracket against the real results.
+- **Top Scorers** - the betting market's pre-tournament Golden Boot pick next to a live leaderboard of who is actually scoring, parsed from the feed. The engine rates teams, not players, so the expected side is the market, not the simulation.
 - **Method & Caveats** - the write-up, the validation, and the honest weaknesses.
 - **Netherlands** and **France** - a per-model, game-by-game timeline for a single team.
 
@@ -40,22 +42,32 @@ One model selected at a time (pills on desktop, a dropdown on mobile), across th
 
 The simulation is plain Python, no ML framework, all in [`source/`](source/):
 
-- **`wc2026_engine.py`** runs the tournament: the group stage, the eight best third-placed teams, the official FIFA Annex C round-of-32 (all 495 possible line-ups), then the knockout bracket with extra time and penalties. Each match's expected goals come from the chosen model, and the score is drawn from a Dixon-Coles-adjusted Poisson. Run 50,000 times, it produces `wc2026_results.json`, which the app reads.
+- **`wc2026_engine.py`** runs the tournament: the group stage, the eight best third-placed teams, the official FIFA Annex C round-of-32 (all 495 possible line-ups), then the knockout bracket with extra time and penalties. Each match's expected goals come from the chosen model, and the score is drawn from a Dixon-Coles-adjusted Poisson. Conditioned on the played games, it locks those results and samples only the rest.
+- **`make_data.py`** runs the engine twice per model from one shared market calibration, unconditioned (the frozen Day 0 baseline) and conditioned on the played games (the live forecast), and writes both `wc2026_results.json` and `wc2026_baseline.json`. **`fetch_actuals.py`** refreshes the played-results file (`wc2026_actuals.json`) from the openfootball feed.
 - **`merge_schedule.py`** folds the official fixture schedule (`wc2026_schedule.json`, from the public openfootball dataset) into the results: the date, kickoff, venue, and the correct home/away side for every group match.
 - **`fit_dc.py`** fits the Dixon-Coles model by weighted maximum-likelihood on 15,431 internationals since 2010 (recent matches count for more). **`build_params.py`** combines those fitted parameters with official Elo ratings into `model_params.json`.
 - **`val_assess.py`** and **`val_market.py`** are the validation: out-of-sample scoring on 1,230 held-out internationals, and a market-versus-model backtest on 5,327 club matches with real closing odds.
 
 The page itself runs no Python. It only reads the pre-computed JSON, which is why it can be a single static file.
 
-## Live results
+## Live results and the self-updating forecast
 
-As games are played, the real result appears next to each prediction. The page fetches results in
-the browser from the public, CORS-enabled [openfootball](https://github.com/openfootball/worldcup)
-World Cup 2026 feed (no key, no backend), caches them in local storage, and refreshes adaptively
-(faster while a match is in play, paused when the tab is hidden). Results overlay onto the static
-predictions and feed the live group table; the prediction data itself never changes. If the feed is
-unreachable, the page falls back to predictions only. The fetch is feed-agnostic: swap `ACT_SRC` and
-`parseActuals` in the template to use a JSON API instead.
+Two layers keep the page current, both backend-free and low-maintenance:
+
+- **In the browser (instant).** As games are played, the real result appears next to each prediction.
+  The page fetches results from the public, CORS-enabled [openfootball](https://github.com/openfootball/worldcup)
+  World Cup 2026 feed (no key), caches them in local storage, and refreshes adaptively (faster while a
+  match is in play, paused when the tab is hidden). This overlay is deterministic: it never alters the
+  underlying odds, and if the feed is unreachable the page falls back to predictions only.
+- **The odds themselves (on redeploy).** A scheduled GitHub Action (`.github/workflows/refresh.yml`)
+  re-runs the 50,000-tournament simulation conditioned on the played games and commits the result, so
+  Netlify redeploys. It polls the feed on a windowed cron but only re-simulates when a new result
+  actually lands, and validates the output before committing. Title Odds then shows each team's live
+  chance against its frozen Day 0 baseline.
+
+Both layers stop a week after the final (the "sundown" cutoff): the page stops polling and the Action
+stops running. The fetch is feed-agnostic: swap `ACT_SRC` and `parseActuals` in the template to use a
+JSON API instead.
 
 ## Layout
 
@@ -73,8 +85,10 @@ python source/build_app.py          # rebuild index.html
 python source/build_app.py --check  # verify index.html is in sync (CI)
 ```
 
-To regenerate the simulation, run `python source/wc2026_engine.py 50000`, then
-`python source/merge_schedule.py` to fold the fixture schedule back in, then rebuild.
+To regenerate the simulation, run `python source/make_data.py 50000` (the live + Day 0 generator,
+which conditions on `wc2026_actuals.json`), then `python source/merge_schedule.py` to fold the
+fixture schedule back in, then rebuild. `python source/fetch_actuals.py` refreshes the played-results
+file from the feed first.
 
 ## Run locally
 
@@ -88,11 +102,12 @@ Deployed on Netlify, served from the repository root and redeployed on each push
 ## Roadmap
 
 Intentionally narrow: a forecast viewer, not a prediction game. Tracked in
-[issue #1](https://github.com/ogfrench/world-cup-2026-prediction/issues/1). Shipped: matches sorted
-by date, home/away corrected from the official fixture list, live results overlaid on the predictions
-with color-coded accuracy, and a live group table compared against the predicted finish. A full
-knockout bracket diff waits for the round-of-32 to be set. User picks, scoring, and a leaderboard are
-out of scope.
+[issue #4](https://github.com/ogfrench/world-cup-2026-prediction/issues/4). Shipped: matches sorted by
+date, home/away corrected from the official fixture list, live results overlaid with color-coded
+accuracy, a live group table against the predicted finish, the conditional live title odds with a Day 0
+before/after, the autonomous refresh, and the Top Scorers tab. The predicted-vs-actual knockout bracket
+waits for the round-of-32 to be set (around June 28). User picks, scoring, and a leaderboard stay out of
+scope.
 
 ## Disclaimer
 
