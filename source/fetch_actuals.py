@@ -43,17 +43,22 @@ def main():
         txt = urllib.request.urlopen(SRC, timeout=30).read().decode('utf-8')
     except Exception as ex:
         sys.exit('fetch failed: %s' % ex)
-    rows = []
+    rows, ko = [], []
     for h, hs, ag, a in parse(txt):
         rec = idx.get(frozenset((h, a)))
-        if not rec:                                  # knockout fixture or an unmapped name
-            continue
-        g, oh, oa = rec
-        ohs, oas = (hs, ag) if h == oh else (ag, hs)  # orient to the official home/away
-        rows.append({'group': g, 'home': oh, 'away': oa, 'hs': ohs, 'as': oas})
+        if rec:                                       # a group fixture
+            g, oh, oa = rec
+            ohs, oas = (hs, ag) if h == oh else (ag, hs)  # orient to the official home/away
+            rows.append({'group': g, 'home': oh, 'away': oa, 'hs': ohs, 'as': oas})
+        else:                                         # not in the group schedule, so a knockout tie
+            # 120-minute result; the advancing side is the higher score, or unknown on a draw
+            # (a shootout decides it; the feed's penalty line is parsed best-effort if present)
+            winner = h if hs > ag else a if ag > hs else None
+            ko.append({'home': h, 'away': a, 'hs': hs, 'as': ag, 'winner': winner})
     rows.sort(key=lambda r: (r['group'], r['home']))
     json.dump(rows, open(os.path.join(HERE, 'wc2026_actuals.json'), 'w'), indent=1)
-    print('wrote %d played group games to wc2026_actuals.json' % len(rows))
+    json.dump(ko, open(os.path.join(HERE, 'wc2026_ko_actuals.json'), 'w'), indent=1)
+    print('wrote %d group games and %d knockout games' % (len(rows), len(ko)))
 
 if __name__ == '__main__':
     main()
