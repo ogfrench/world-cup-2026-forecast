@@ -29,7 +29,7 @@ Methodology and validation are in [source/REPORT.md](source/REPORT.md).
 
 One model selected at a time (pills on desktop, a dropdown on mobile), across these tabs:
 
-- **Title Odds** - each team's chance of winning the tournament, plus how often it reaches each round, against Opta and the betting market as a sanity check.
+- **Title Odds** - each team's chance of winning the tournament, plus how often it reaches each round, against Opta and the betting market as a sanity check. Once games are played the odds re-condition on the results, with a Day 0 marker on each bar showing the pre-tournament starting point and the move since.
 - **Schedule** - every fixture by kickoff time, the model's predicted score, and the real result as it comes in, color-coded (dark green exact, green right result, red wrong).
 - **Groups & Scores** - the live group table against where the model predicted each team to finish, marking who is ahead of the forecast and who is behind. Expand a group for its match predictions and results.
 - **Knockout Phase** - a placeholder until the round-of-32 is set, then the predicted bracket against the real results.

@@ -599,6 +599,7 @@
 
       <h3>Where it's weak</h3>
       <p><b>It backs the favorites too hard.</b> A fixed-strength sim cannot see a tournament turn (an injury, a player catching fire, a red card), so it piles probability onto the big teams. Pure Elo most, the market least. (The goals model spreads things out more, but that is goal-padding, not wisdom.) The head-to-heads stay sensible: Spain against Argentina is a coin flip.</p>
+      <p><b>The live odds condition on results, not on form.</b> Once games are played the title and round odds re-simulate with those scores locked in, but the team ratings stay frozen at their pre-tournament values. Winning ugly and winning brilliantly move the odds the same way. Injuries, form, and a re-pricing market are still invisible to it.</p>
       <p><b>What the test can and cannot prove.</b> Those 1,230 test games are mostly qualifiers and friendlies, often one-sided, where any decent model looks clever. Tight ties between top teams, the games a World Cup turns on, barely feature. And the test grades the match calls, not the title odds, which nobody can check until the trophy is handed out. Encouraging, not gospel.</p>
       <p><b>Injuries are not in it.</b> The model knows results up to 6 June 2026 and nothing about who is fit for kickoff. Brazil, for one, is rated at full strength.</p>
       <p><b>It draws a bit less than real life.</b> International football, full of lopsided qualifiers, draws less than club leagues, and the model learned that. Its group draw rate is around 23 to 24 percent, just under the World Cup norm of 26 to 28. The honest fitted number, not tuned up.</p>
@@ -812,7 +813,8 @@
     'DC fit on':'Real internationals since 2010 used to fit the Dixon-Coles scoring model (recent games weighted more).',
     'Home effect':'Goal multiplier for the home side, learned entirely from the data (about 1.31x).',
     'ρ (fitted)':'Dixon-Coles low-score correction. Nudges 0-0, 1-0, 0-1 and 1-1 away from treating the two scores as independent.',
-    'As of':'The model knows results up to this date and nothing after it. No knowledge of who is actually fit for kickoff.'
+    'As of':'Team ratings are frozen at their pre-tournament strength as of this date, with no knowledge of who is actually fit for kickoff.',
+    'Live':'Title and round odds re-simulated with the games already played locked in. The Day 0 ticks on the title bars show where each team started.'
   };
   document.getElementById('meta').innerHTML = [
     ['Simulations', n.toLocaleString()],
@@ -820,7 +822,8 @@
     ['DC fit on', '15,431 matches'],
     ['Home effect', (META.home_mult||1.31)+'×'],
     ['ρ (fitted)', (Math.round(META.rho*1000)/1000)],
-    ['As of', 'Jun 6 2026']
+    ['As of', 'Jun 6 2026'],
+    ...(META.live && META.played ? [['Live', `${META.played} played`]] : [])
   ].map(([k,v])=>`<span class="chip" data-tip="${CHIP_TIP[k]||''}">${k} <b>${v}</b></span>`).join('');
   const n2=document.getElementById('nsim2'); if(n2) n2.textContent=n.toLocaleString();
   document.getElementById('foot').innerHTML =
