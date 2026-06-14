@@ -310,7 +310,6 @@
     .topbar{margin-left:-18px;margin-right:-18px}
     nav{padding:0 18px}
   }
-  .prose .trust-h{margin:8px 0 9px}
   .prose ul.trust{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:9px}
   .prose ul.trust li{position:relative;padding-left:20px;color:var(--muted);font-size:14.5px;line-height:1.5}
   .prose ul.trust li::before{content:"";position:absolute;left:2px;top:7px;width:8px;height:8px;border-radius:50%;background:var(--faint)}
@@ -318,7 +317,6 @@
   .prose ul.trust li.s2::before{background:var(--gold)}
   .prose ul.trust li.s3::before{background:var(--loss)}
   .prose ul.trust li b{color:var(--txt);font-weight:700}
-  .prose .trust-foot{color:var(--faint);font-size:13px}
 
   /* ---------- netherlands timeline ---------- */
   .nlgrid{display:flex;flex-direction:column;gap:15px}
@@ -1231,11 +1229,11 @@
     if(i===0&&j===0)return 1-l*m*NL_RHO; if(i===0&&j===1)return 1+l*NL_RHO;
     if(i===1&&j===0)return 1+m*NL_RHO;   if(i===1&&j===1)return 1-NL_RHO; return 1;}
   function nlDist(lN,lO){
-    const Nn=11; let W=0,D=0,L=0,over=0,Z=0; const cells=[];
+    const Nn=11; let W=0,D=0,L=0,Z=0; const cells=[];
     for(let i=0;i<Nn;i++)for(let j=0;j<Nn;j++){const p=nlTau(i,j,lN,lO)*nlPois(i,lN)*nlPois(j,lO);Z+=p;cells.push([i,j,p]);}
-    for(const c of cells){c[2]/=Z; if(c[0]>c[1])W+=c[2]; else if(c[0]===c[1])D+=c[2]; else L+=c[2]; if(c[0]+c[1]>=3)over+=c[2];}
+    for(const c of cells){c[2]/=Z; if(c[0]>c[1])W+=c[2]; else if(c[0]===c[1])D+=c[2]; else L+=c[2];}
     cells.sort((a,b)=>b[2]-a[2]);
-    return {W:W*100,D:D*100,L:L*100,over:over*100,total:lN+lO,top:cells.slice(0,4)};
+    return {W:W*100,D:D*100,L:L*100,top:cells.slice(0,4)};
   }
   function nlFirstGoalMin(firstHalf){
     const sel = firstHalf?NL_BANDS.slice(0,3):NL_BANDS.slice(3);

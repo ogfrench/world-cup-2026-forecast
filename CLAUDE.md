@@ -35,12 +35,16 @@ repo root as-is, so the homepage is the app.
 - `og.png` - the 1200x630 social-share card (og:image / twitter:image). Regenerate with `python source/make_og.py`.
 - `source/` - everything real behind it:
   - `wc2026_template.html` - the app source. Edit this for any app change. Has one `/*DATA*/` token.
-  - `wc2026_results.json` - the 50,000-run output the app renders (with the fixture schedule merged in).
+  - `wc2026_results.json` - the live 50,000-run output the app renders (conditioned on played games, with the fixture schedule merged in and each team's Day 0 values attached).
+  - `wc2026_baseline.json` - the frozen Day 0 (pre-tournament) snapshot the live before/after compares against.
+  - `wc2026_actuals.json` - the played group results that condition the live run. Refreshed from the feed by `fetch_actuals.py`.
   - `wc2026_schedule.json` - the official 72-match group schedule (date, kickoff, home/away, venue), parsed from the public openfootball dataset. Data, so it lives here, not in the template.
+  - `make_data.py` - the data generator: runs the engine unconditioned (Day 0) and conditioned (live) from one shared calibration, writes both JSON files. This is the regeneration entry point.
+  - `fetch_actuals.py` - pulls played group games from the openfootball feed into `wc2026_actuals.json` (engine names, official home/away).
   - `merge_schedule.py` - merges the schedule into `wc2026_results.json`: annotates each group match with its date/venue and reorients home/away to the official side. Idempotent, no re-simulation.
   - `build_app.py` - injects the JSON into the template and writes `index.html`.
   - `check_app.js` - CI sanity check: script blocks parse, five models present, file is built.
-  - `wc2026_engine.py` - the simulation engine (all five models, FIFA Annex C, knockout logic).
+  - `wc2026_engine.py` - the simulation engine (all five models, FIFA Annex C, knockout logic, conditional mode).
   - `model_params.json`, `annexc_data.py` - fitted parameters and the official round-of-32 table.
   - `fit_dc.py`, `build_params.py` - the fitting pipeline (needs `results.csv`, which is not shipped).
   - `val_assess.py`, `val_market.py` - the validation tests.
@@ -56,14 +60,20 @@ and does. `index.html` is generated. So:
 2. Rebuild: `python source/build_app.py`
 3. Confirm it is in sync (CI runs this too): `python source/build_app.py --check`
 
-To regenerate the data itself: `python source/wc2026_engine.py 50000` (writes
-`source/wc2026_results.json`), then `python source/merge_schedule.py` to fold the fixture
-schedule back in (dates and official home/away), then rebuild as above. CI does not run the
-engine or the merge; it only checks `index.html` is in sync with the committed JSON.
+To regenerate the data itself: `python source/fetch_actuals.py` (refresh the played games from
+the feed), then `python source/make_data.py 50000` (writes `source/wc2026_results.json` live and
+`source/wc2026_baseline.json` Day 0), then `python source/merge_schedule.py` to fold the fixture
+schedule back in (dates and official home/away), then rebuild as above. CI does not run the engine
+or the merge; it only checks `index.html` is in sync with the committed JSON.
 
-Live actual results are not part of the build. The app fetches them in the browser at runtime
-from the openfootball feed (public, CORS-enabled, no key); see the live-results block in the
-template. They overlay onto the predictions and never change the static data.
+The live odds update on their own: `.github/workflows/refresh.yml` runs this pipeline on a windowed
+cron, but only when `wc2026_actuals.json` actually changes (a new played game), and commits the
+result so Netlify redeploys. Both the Action and the in-browser polling stop a week after the final
+(the sundown cutoff, 26 Jul).
+
+Live actual results also overlay in the browser at runtime from the openfootball feed (public,
+CORS-enabled, no key); see the live-results block in the template. That overlay is deterministic and
+never changes the static odds; only the Action re-conditions them.
 
 ## Front-end conventions
 
