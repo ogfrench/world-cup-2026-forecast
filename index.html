@@ -677,12 +677,14 @@
   let TZ = '';
   try { TZ = new Intl.DateTimeFormat(undefined,{timeZoneName:'short'}).formatToParts(new Date()).find(p=>p.type==='timeZoneName').value || ''; } catch(e){}
   const byKO = (a,b) => a.kickoff_utc < b.kickoff_utc ? -1 : (a.kickoff_utc > b.kickoff_utc ? 1 : 0);
-  const favOutcome = m => { const x = Math.max(m.p_home,m.p_draw,m.p_away);
-                            return x===m.p_home ? 'H' : (x===m.p_away ? 'A' : 'D'); };
+  const scoreOutcome = s => s[0]>s[1] ? 'H' : (s[0]<s[1] ? 'A' : 'D');
   const actOutcome = a => a.hs>a.as ? 'H' : (a.hs<a.as ? 'A' : 'D');
-  // how the model's predicted scoreline did against the real result
+  // how the model's predicted scoreline did against the real result, graded on the score the card
+  // actually shows (its modal scoreline). Grading on the W/D/L favorite instead let a drawn headline
+  // score (e.g. 1-1) read as "right result" against a 2-0 home win, contradicting the score on screen:
+  // in a low-scoring model the single likeliest score is often a draw even when a home win is favored.
   const predTier = (mm,a) => (mm.modal[0]===a.hs && mm.modal[1]===a.as) ? 'exact'
-                           : (favOutcome(mm)===actOutcome(a) ? 'result' : 'miss');
+                           : (scoreOutcome(mm.modal)===actOutcome(a) ? 'result' : 'miss');
   const PRED_TIP = {
     exact:'The model predicted this exact score. <b>Dark green</b>: exact score.',
     result:'The model got the result right but not the exact score. <b>Green</b>: right result, wrong score.',
