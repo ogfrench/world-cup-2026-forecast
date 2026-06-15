@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-8FoRAJW8h1ZUk2WVyEuNWjufUa3OLUPkvkfweoIYIEM=' 'sha256-XSLHePAuXz0mCiGeOLDcnRykC/os5WfmayeF6v0wb2E=' 'sha256-9invJ5Wy3oFXF4ALQZNuMCza3+qUVuyq0Cd74tmDa0Q='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-8FoRAJW8h1ZUk2WVyEuNWjufUa3OLUPkvkfweoIYIEM=' 'sha256-kIoA28N8MLNcy+Fb4qKq+gy1EZoGcHgORX79i2ZQylE=' 'sha256-9invJ5Wy3oFXF4ALQZNuMCza3+qUVuyq0Cd74tmDa0Q='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'">
 <title>World Cup 2026 Forecast</title>
 <meta name="description" content="World Cup 2026 forecast: every match and the knockout bracket simulated 50,000 times, five ways, from past results to the bookmakers' odds, with real results overlaid on the predictions as games play out.">
 <link rel="canonical" href="https://wc2026forecast.xyz/">
@@ -47,7 +47,9 @@
   body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.025;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
   .wrap{position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;padding:0 18px 80px}
-  a:focus-visible,button:focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:6px}
+  a:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:6px}
+  /* visually hidden but available to screen readers */
+  .vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
   /* ---------- header ---------- */
   header{padding:40px 0 22px;border-bottom:1px solid var(--line)}
@@ -291,9 +293,9 @@
   /* centered under the trigger so it never spills off-screen */
   .mdmenu{position:absolute;top:calc(100% + 9px);left:50%;z-index:40;width:min(300px,calc(100vw - 24px));
        background:var(--surface2);border:1px solid var(--line2);border-radius:13px;padding:6px;
-       box-shadow:0 18px 44px rgba(0,0,0,.55);opacity:0;transform:translateX(-50%) translateY(-7px);pointer-events:none;
-       transition:opacity .15s ease,transform .15s ease}
-  .mdrop.open .mdmenu{opacity:1;transform:translateX(-50%);pointer-events:auto}
+       box-shadow:0 18px 44px rgba(0,0,0,.55);opacity:0;transform:translateX(-50%) translateY(-7px);pointer-events:none;visibility:hidden;
+       transition:opacity .15s ease,transform .15s ease,visibility .15s ease}
+  .mdrop.open .mdmenu{opacity:1;transform:translateX(-50%);pointer-events:auto;visibility:visible}
   .mditem{border-radius:9px;color:var(--txt);transition:background .12s,color .12s}
   .mditem:hover{background:var(--surface)}
   .mditem.on{color:var(--lime);background:var(--surface)}
@@ -456,6 +458,11 @@
     .schedsync{margin:6px 0 24px}
     .sday{margin:32px 0 11px}
   }
+  /* respect a reduced-motion preference: near-instant, no pulse/scroll animation */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
+      transition-duration:.001ms!important;scroll-behavior:auto!important}
+  }
 </style>
 </head>
 <body>
@@ -469,24 +476,24 @@
 
   <div class="topbar">
     <div class="modelbar" id="modelbar"></div>
-    <nav>
-      <button class="tab on" data-t="race">Title Odds</button>
-      <button class="tab" data-t="schedule">Schedule</button>
-      <button class="tab" data-t="groups">Groups &amp; Scores</button>
-      <button class="tab" data-t="knockout">Knockout Phase <span class="soon">soon</span></button>
-      <button class="tab" data-t="topscorers">Top Scorers</button>
-      <button class="tab" data-t="method">Method &amp; Caveats</button>
+    <nav role="tablist" aria-label="Forecast views">
+      <button class="tab on" role="tab" id="tab-race" aria-controls="race" aria-selected="true" tabindex="0" data-t="race">Title Odds</button>
+      <button class="tab" role="tab" id="tab-schedule" aria-controls="schedule" aria-selected="false" tabindex="-1" data-t="schedule">Schedule</button>
+      <button class="tab" role="tab" id="tab-groups" aria-controls="groups" aria-selected="false" tabindex="-1" data-t="groups">Groups &amp; Scores</button>
+      <button class="tab" role="tab" id="tab-knockout" aria-controls="knockout" aria-selected="false" tabindex="-1" data-t="knockout">Knockout Phase <span class="soon">soon</span></button>
+      <button class="tab" role="tab" id="tab-topscorers" aria-controls="topscorers" aria-selected="false" tabindex="-1" data-t="topscorers">Top Scorers</button>
+      <button class="tab" role="tab" id="tab-method" aria-controls="method" aria-selected="false" tabindex="-1" data-t="method">Method &amp; Caveats</button>
     </nav>
   </div>
 
   <!-- TITLE RACE -->
-  <section class="on" id="race">
+  <section class="on" id="race" role="tabpanel" aria-labelledby="tab-race" tabindex="0">
     <div class="koseg" id="titleToggle" style="display:none">
       <button data-v="live" class="on" data-tip="The current forecast, updated for the games played so far.">Live</button>
       <button data-v="day0" data-tip="The frozen pre-tournament forecast, before any games were played.">Day 0</button>
     </div>
     <div class="podium" id="podium"></div>
-    <div class="sec-h">Who lifts the trophy</div>
+    <h2 class="sec-h">Who lifts the trophy</h2>
     <p class="lead">Each bar is a team's chance of winning the tournament under the selected model. The dots mark Opta's supercomputer and the bookmakers, as an outside comparison.</p>
     <div class="legend">
       <span data-tip="The model you've selected. Each bar is its chance that the team wins the whole tournament."><i class="sw model"></i> <span class="has-tip">Selected model</span></span>
@@ -497,30 +504,30 @@
     <div class="livebar" id="titleLive" style="display:none"></div>
     <div id="raceBars"></div>
 
-    <div class="sec-h">Road to the final</div>
+    <h2 class="sec-h">Road to the final</h2>
     <p class="lead">How far each team gets: how often they reach each round across the 50,000 simulations. The odds pile onto the favorites as the field thins.</p>
     <div class="tbl-scroll"><table id="koTable"></table></div>
   </section>
 
   <!-- GROUPS -->
-  <section id="groups">
-    <div class="sec-h">Group winner odds &amp; match-by-match</div>
+  <section id="groups" role="tabpanel" aria-labelledby="tab-groups" tabindex="0">
+    <h2 class="sec-h">Group winner odds &amp; match-by-match</h2>
     <p class="lead">Each group's live standings next to where the model predicted the teams to finish, so you can see who is running ahead of the forecast and who is behind. Expand a group for the match-by-match predictions and results.</p>
     <div class="scoreboard" id="grpScore"></div>
     <div class="grid" id="groupGrid"></div>
   </section>
 
   <!-- KNOCKOUT PHASE (placeholder, built once the round of 32 is set) -->
-  <section id="knockout">
-    <div class="sec-h">Knockout bracket</div>
+  <section id="knockout" role="tabpanel" aria-labelledby="tab-knockout" tabindex="0">
+    <h2 class="sec-h">Knockout bracket</h2>
     <p class="lead">The model's pick and advance odds for every knockout tie, with the real result slotting in color-coded, round by round. It fills in automatically once the group stage ends and the round of 32 is set.</p>
     <div class="scoreboard" id="koScore"></div>
     <div id="koBracket"></div>
   </section>
 
   <!-- SCHEDULE -->
-  <section id="schedule">
-    <div class="sec-h">The tournament, by date</div>
+  <section id="schedule" role="tabpanel" aria-labelledby="tab-schedule" tabindex="0">
+    <h2 class="sec-h">The tournament, by date</h2>
     <p class="lead">Every fixture by kickoff time, with the model's predicted score. Real results slot in as games are played. Knockouts join once the bracket is set.</p>
     <div class="scoreboard" id="schedScore"></div>
     <div class="predkey" id="predKey"></div>
@@ -529,8 +536,8 @@
   </section>
 
   <!-- TOP SCORERS -->
-  <section id="topscorers">
-    <div class="sec-h">Golden Boot</div>
+  <section id="topscorers" role="tabpanel" aria-labelledby="tab-topscorers" tabindex="0">
+    <h2 class="sec-h">Golden Boot</h2>
     <p class="lead">The bookmakers' pre-tournament pick for the Golden Boot, next to who is actually scoring. The model rates teams, not players, so the expected side comes from the bookmakers, not the simulation, and it does not move once the tournament starts.</p>
     <div class="scgrid">
       <div class="sccol exp">
@@ -545,10 +552,10 @@
     <p class="scnote" id="scNote"></p>
   </section>
 
-  <section id="method">
+  <section id="method" role="tabpanel" aria-labelledby="tab-method" tabindex="0">
     <div class="prose">
       <div class="methodhero" id="methodHero"></div>
-      <div class="sec-h">The five models, compared</div>
+      <h2 class="sec-h">The five models, compared</h2>
       <p>One tournament, played out <b id="nsim2"></b> times. Each run goes through all 104 games, the eight best third-placed teams, the official FIFA round of 32, and the bracket the rest of the way, with extra time and penalties when a tie needs them. The engine underneath stays the same. What changes between the five is how a single match is rated, from the ones that use only past results to the ones that use the betting market.</p>
       <p>The first three use results only. <b>Pure Elo</b> treats a team like a chess rating, going on who has been beating whom. It is steady and hard to fool with one odd scoreline, it has no feel for how a team plays, and of the five it leans on the favorites most. <b>Pure Goals</b> learns each team's attack and defense from <b><span id="dcm1"></span> internationals</b> since 2010, where the home side scores about <b>1.31x</b> as often, so it works in scorelines rather than just winners. It also rewards a team for scoring heavily against weaker opponents, which lifts teams like Japan and Algeria. <b>Hybrid</b> averages the two, and each covers for the other's blind spot. On 1,230 internationals it had not seen, it does at least as well as either one alone, with the steadiest confidence of the three:</p>
       <table class="cal" id="ooTable"></table>
@@ -971,8 +978,8 @@
     '<span class="mlbl">Model</span>' +
     '<div class="mpills" id="mpills"></div>' +
     '<div class="mdrop" id="mdrop">' +
-      '<button class="mdtrigger" id="mdtrigger" aria-haspopup="listbox" aria-expanded="false"></button>' +
-      '<div class="mdmenu" id="mdmenu" role="listbox"></div>' +
+      '<button class="mdtrigger" id="mdtrigger" aria-haspopup="true" aria-expanded="false"></button>' +
+      '<div class="mdmenu" id="mdmenu" aria-label="Choose a model"></div>' +
     '</div>';
   const mpills = document.getElementById('mpills'),
         mdrop = document.getElementById('mdrop'),
@@ -985,7 +992,7 @@
     }).join('');
     mdtrigger.innerHTML = `<span class="mdcur">${LABELS[CUR]}</span><span class="mdcaret"></span>`;
     mdmenu.innerHTML = order.map(k=>
-      `<div class="mditem${k===CUR?' on':''}" role="option" aria-selected="${k===CUR}" data-m="${k}">`
+      `<div class="mditem${k===CUR?' on':''}"${k===CUR?' aria-current="true"':''} data-m="${k}">`
       + `<div class="mdrow"><span class="mdname">${LABELS[k]}</span>${REC.has(k)?'<span class="mdtag">pick</span>':''}`
       + `<button class="mdi" type="button" tabindex="-1" aria-label="About ${LABELS[k]}">i</button></div>`
       + `<div class="mddesc">${stripLabel(MODEL_TIP[k])}</div></div>`
@@ -1279,22 +1286,35 @@
     const tb = document.querySelector('.topbar');
     const off = (tb ? tb.offsetHeight : 0) + 12;
     const y = el.getBoundingClientRect().top + window.scrollY - off;
-    window.scrollTo({top: Math.max(0, y), behavior:'smooth'});
+    window.scrollTo({top: Math.max(0, y), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
   }
 
-  // tabs
-  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
-    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  // tabs (ARIA tablist: roving tabindex, arrow-key navigation, aria-selected)
+  const tabEls = [...document.querySelectorAll('.tab')];
+  function activateTab(btn, focus){
+    tabEls.forEach(b => { const on = b===btn;
+      b.classList.toggle('on', on); b.setAttribute('aria-selected', on); b.tabIndex = on?0:-1; });
     document.querySelectorAll('section').forEach(s=>s.classList.remove('on'));
-    btn.classList.add('on');
     document.getElementById(btn.dataset.t).classList.add('on');
+    if (focus) btn.focus();
     if (btn.dataset.t === 'schedule') { scrollToCurrentMatch(); return; }
     // only pull up to the sticky bar if it has been scrolled past, so switching
     // tabs near the top does not jump the page around
     const tb = document.querySelector('.topbar');
     const tgt = tb ? tb.offsetTop : 0;
-    if (window.scrollY > tgt + 2) window.scrollTo({top:tgt, behavior:'smooth'});
-  }));
+    if (window.scrollY > tgt + 2) window.scrollTo({top:tgt, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  }
+  tabEls.forEach(btn => btn.addEventListener('click', () => activateTab(btn, false)));
+  const tablistEl = document.querySelector('nav[role="tablist"]');
+  if (tablistEl) tablistEl.addEventListener('keydown', e => {
+    const i = tabEls.indexOf(document.activeElement); if (i<0) return;
+    let j = -1;
+    if (e.key==='ArrowRight'||e.key==='ArrowDown') j = (i+1)%tabEls.length;
+    else if (e.key==='ArrowLeft'||e.key==='ArrowUp') j = (i-1+tabEls.length)%tabEls.length;
+    else if (e.key==='Home') j = 0;
+    else if (e.key==='End') j = tabEls.length-1;
+    if (j>=0){ e.preventDefault(); activateTab(tabEls[j], true); }
+  });
   // in-prose links that jump to another tab
   // Title Odds tab: Live vs Day 0 (frozen pre-tournament) view
   const titleToggleEl = document.getElementById('titleToggle');
