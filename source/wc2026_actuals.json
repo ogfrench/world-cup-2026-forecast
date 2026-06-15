@@ -63,10 +63,24 @@
   "as": 1
  },
  {
+  "group": "E",
+  "home": "Ivory Coast",
+  "away": "Ecuador",
+  "hs": 1,
+  "as": 0
+ },
+ {
   "group": "F",
   "home": "Netherlands",
   "away": "Japan",
   "hs": 2,
   "as": 2
+ },
+ {
+  "group": "F",
+  "home": "Sweden",
+  "away": "Tunisia",
+  "hs": 5,
+  "as": 1
  }
 ]
