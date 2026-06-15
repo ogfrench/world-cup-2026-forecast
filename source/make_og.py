@@ -69,21 +69,8 @@ def main():
     tracked(d, (x, ty), "2026", tf, LIME, track=1)
     tracked(d, (P, ty+108*S), "FORECAST", tf, TXT, track=1)
 
-    # podium: three favorites, like the app
-    pods = [("1ST", "SPAIN", "16.6", LIME), ("2ND", "FRANCE", "15.8", BLUE), ("3RD", "ENGLAND", "11.5", GOLD)]
-    cw, gap = 330*S, 24*S
-    px0, ch = P, 180*S
-    py = H - P - ch
-    for i,(rk,team,pct,col) in enumerate(pods):
-        x0 = px0 + i*(cw+gap)
-        d.rounded_rectangle([x0, py, x0+cw, py+ch], radius=16*S, fill=SURF, outline=LINE, width=1*S)
-        d.rectangle([x0, py, x0+cw, py+4*S], fill=col)
-        tracked(d, (x0+22*S, py+22*S), rk+" FAVORITE", monor(13), FAINT, track=2)
-        d.text((x0+20*S, py+44*S), team, font=anton(42), fill=TXT)
-        d.text((x0+20*S, py+100*S), pct, font=mono(40), fill=col)
-        pw = d.textlength(pct, font=mono(40))
-        d.text((x0+20*S+pw+6*S, py+112*S), "%", font=mono(20), fill=col)
-        d.text((x0+22*S, py+150*S), "to win the World Cup", font=monor(13), fill=MUT)
+    # The title-odds podium is intentionally NOT drawn here: those percentages go stale as
+    # soon as games are played, so they make a poor evergreen share image. Just the title.
 
     # url, bottom-right of the header
     url = "wc2026forecast.xyz"
