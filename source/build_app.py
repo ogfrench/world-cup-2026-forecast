@@ -12,7 +12,10 @@ Usage (from anywhere):
 
 Exit codes: 0 ok; 1 build/template error; 2 (--check) index.html is stale.
 """
+import base64
+import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -22,6 +25,31 @@ TEMPLATE = HERE / "wc2026_template.html"
 DATA = HERE / "wc2026_results.json"
 OUTPUT = ROOT / "index.html"
 TOKEN = "/*DATA*/"
+CSP_ANCHOR = '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+
+
+def csp_meta(html: str) -> str:
+    """A Content-Security-Policy <meta> whose script-src hashes the page's inline
+    <script> blocks, so a strict policy allows exactly those and no other script.
+
+    Computed from the built HTML every run, so editing the template's JS and
+    rebuilding keeps the hashes correct automatically (and build --check enforces it).
+    frame-ancestors is set as an HTTP header in netlify.toml instead; <meta> CSP
+    does not support it.
+    """
+    blocks = re.findall(r"<script>([\s\S]*?)</script>", html)
+    hashes = " ".join(
+        "'sha256-" + base64.b64encode(hashlib.sha256(b.encode("utf-8")).digest()).decode() + "'"
+        for b in blocks
+    )
+    policy = ("default-src 'none'; "
+              f"script-src 'self' {hashes}; "
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+              "font-src https://fonts.gstatic.com; "
+              "img-src 'self' data:; "
+              "connect-src https://raw.githubusercontent.com; "
+              "base-uri 'none'; form-action 'none'")
+    return f'<meta http-equiv="Content-Security-Policy" content="{policy}">'
 
 
 def build() -> str:
@@ -31,7 +59,11 @@ def build() -> str:
                  f"found {tpl.count(TOKEN)}")
     raw = DATA.read_text(encoding="utf-8")
     json.loads(raw)  # fail loudly if the results file is not valid JSON
-    return tpl.replace(TOKEN, raw)
+    html = tpl.replace(TOKEN, raw)
+    if CSP_ANCHOR not in html:
+        sys.exit("error: viewport meta anchor not found; cannot insert the CSP meta")
+    # the CSP must sit in <head>, before the scripts it hashes
+    return html.replace(CSP_ANCHOR, CSP_ANCHOR + "\n" + csp_meta(html), 1)
 
 
 def main() -> None:
@@ -40,7 +72,8 @@ def main() -> None:
     if check:
         current = OUTPUT.read_text(encoding="utf-8") if OUTPUT.exists() else ""
         if current != html:
-            sys.exit("index.html is out of date. Run: python3 source/build_app.py")
+            print("index.html is out of date. Run: python3 source/build_app.py", file=sys.stderr)
+            sys.exit(2)
         print("index.html is up to date.")
         return
     OUTPUT.write_text(html, encoding="utf-8", newline="\n")

@@ -8,3 +8,8 @@
   [headers.values]
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    # clickjacking: the page has no embeddable use. The Content-Security-Policy
+    # (script-src hashes, etc.) is a <meta> tag in index.html, written by build_app.py,
+    # because the per-build script hashes cannot live in this static file.
+    X-Frame-Options = "DENY"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"

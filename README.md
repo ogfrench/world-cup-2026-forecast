@@ -157,6 +157,11 @@ In progress: the predicted-vs-actual knockout bracket and its in-play badges are
 once the round of 32 is set (around June 28). The remaining bracket-data wiring is tracked in
 [issue #17](https://github.com/ogfrench/world-cup-2026-prediction/issues/17).
 
+## License
+
+MIT, see [LICENSE](LICENSE). The forecast draws on public data (openfootball, CC0; eloratings.net),
+which keeps its own terms.
+
 ## Disclaimer
 
 A transparent baseline built from public data, not tested against a real World Cup. Not betting advice.
