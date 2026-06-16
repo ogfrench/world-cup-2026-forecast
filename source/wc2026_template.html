@@ -1351,9 +1351,9 @@
   }
   function scrollToCurrentMatch(){
     const list = document.getElementById('schedList'); if (!list) return;
-    const w = liveWindow();
-    if (!w.inplay && !w.pending && w.next >= 90*60e3) return;   // nothing live or imminent: stay at the top so the scoreboard and legend show first
-    const target = scheduleAnchor(allMatches(), Date.now()); if (!target) return;
+    const all = allMatches();
+    if (all.every(m => actualFor(m))) return;   // every game played: tournament over, stop auto-scrolling
+    const target = scheduleAnchor(all, Date.now()); if (!target) return;
     const el = list.querySelector(`.m[data-ko="${target.kickoff_utc}"]`); if (!el) return;
     const tb = document.querySelector('.topbar');
     const off = (tb ? tb.offsetHeight : 0) + 12;
