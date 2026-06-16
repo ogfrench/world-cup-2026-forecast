@@ -11,8 +11,10 @@ Every model runs the identical simulation: 72 group games, the eight best third-
 official FIFA Annex C round-of-32 assignment (all 495 group-finish combinations), then the real
 bracket through the final with extra time and penalty shootouts. The models differ only in how each
 match's two expected-goal rates are set. The app lets you switch models live, and every tab (Title
-Race, Knockout Odds, Groups and Scores, a Netherlands match timeline, and Method and Caveats)
-re-renders for the selected model. It opens on Pure Market, the recommended forecast (see section 6).
+Odds, Schedule, Groups & Scores, Knockout Phase, Top Scorers, and Method & Caveats) re-renders for
+the selected model. As games are played, real results overlay on the predictions and the odds
+re-condition against a frozen Day 0 baseline. It opens on Pure Market, the recommended forecast (see
+section 6).
 
 ## 2. The five models
 
@@ -77,19 +79,11 @@ with the honest nuance that blending pulls a model toward a stronger forecaster,
 it. The caveat is that this was club football; the World Cup is among the most heavily bet events, so
 its market is likely just as sharp, but that part is not proven here.
 
-## 5. The Netherlands match timeline
+## 5. A model-vs-market disagreement: the Netherlands
 
-A focused tab gives one coherent storyline per Dutch fixture: first-goal minute, half-time score, and
-full-time score, derived together so they actually agree. It follows the model switcher, so switching
-to Pure Market shows the market's read.
-
-**How it is built.** The result lean and goal volume come from the selected model's expected goals.
-The cards then commit to a single representative scenario per match (the modal scoreline, skipping a
-goalless draw) and read the half-time and the first-goal minute from that same scenario, so they
-cannot contradict each other. The first-goal minute itself comes from the real empirical curve of
-when goals are scored (scoring rises through a match, lowest in the opening fifteen, a peak in the
-closing fifteen): a first-half goal lands near the 26th minute, and if the half projects goalless the
-lone goal lands near the 70th.
+An earlier build carried per-team match-timeline tabs (Netherlands and France). They were retired as
+a prediction-only surface not worth the maintenance, so the shipped app is the shared forecast tabs
+only. The methodological point those tabs surfaced still stands and is worth recording.
 
 **The interesting finding: the market and the model disagree about the Netherlands.** The market
 rates the Netherlands a shade above the results-based rating (implied Elo about 1973 versus the
@@ -100,7 +94,7 @@ which because it is a two-goal game pulls the projected first goal forward from 
 before the break. Sweden is a comfortable Dutch win under every model. Switching models is the honest
 way to see how much of this is method rather than fact.
 
-**Health warning, repeated on the tab.** The exact score is soft (each is only the tallest bar in a
+**Health warning.** The exact score is soft (each is only the tallest bar in a
 flat pile), and the first-goal minute is the softest output of all: it is driven almost entirely by a
 league-average timing curve identical in shape for every team, so it carries little that is specific
 to these sides. Read the result lean and the goal volume; treat the minute as the typical rhythm of a
@@ -150,7 +144,7 @@ match like this, not a real per-game forecast.
 
 Canonical set:
 
-- `wc2026_predictions.html`: the interactive app, self-contained (built artifact, do not hand-edit).
+- `index.html`: the interactive app, self-contained (built artifact at the repo root, do not hand-edit).
 - `wc2026_template.html`: the app source, with a `/*DATA*/` token. Edit this, then re-inject to build.
 - `wc2026_engine.py`: the simulation engine (all five models, market calibration, Annex C).
 - `wc2026_results.json`: the 50k simulation output the app renders.
@@ -161,18 +155,19 @@ Canonical set:
 - `val_market.py`: the market-versus-model proxy backtest on club odds.
 - `REPORT.md` (this file) and `CLAUDE.md` (project handoff for future sessions).
 
-Rebuild in two steps. First regenerate the simulation: `python3 wc2026_engine.py 50000` writes
-`wc2026_results.json`. Then build the app by replacing the `/*DATA*/` token in
-`wc2026_template.html` with the contents of `wc2026_results.json`, writing `wc2026_predictions.html`.
-The fitting pipeline (`fit_dc.py` then `build_params.py`) regenerates `model_params.json` and needs
-the match dataset `results.csv` (49,411 internationals, public).
+Rebuild (canonical steps are in `CLAUDE.md`): `python3 fetch_actuals.py` to refresh played results,
+`python3 make_data.py 50000` to write `wc2026_results.json` and the Day 0 `wc2026_baseline.json`,
+`python3 merge_schedule.py` to fold in dates and official home/away, then `python3 build_app.py` to
+inject `wc2026_results.json` into the `/*DATA*/` token in `wc2026_template.html` and write
+`index.html`. Running `wc2026_engine.py` directly is only an engine smoke test, not the build. The
+fitting pipeline (`fit_dc.py` then `build_params.py`) regenerates `model_params.json` and needs the
+match dataset `results.csv` (49,411 internationals, public).
 
 ## 9. Sanity check
 
 Passed end to end: the engine compiles and all five model paths execute; every model conserves at
 every bracket stage (champions sum to 100, finalists to 200, on through round of 32 to 3,200); each
 model carries 12 groups of 6 match predictions with W/D/L summing to 100; Pure Market reproduces the
-published odds within 0.58 points; the Netherlands tab derives a coherent scenario under every model
-(first-goal minute under 45 exactly when half-time shows a goal); the shipped page has no unfilled
-data, valid JavaScript, all five models and labels, the tiered switcher, and the mobile rules intact;
-no stale copy; and every number cited in the prose matches the data.
+published odds within 0.58 points; the shipped page has no unfilled data, valid JavaScript, all five
+models and labels, the model dropdown, and the mobile rules intact; no stale copy; and every number
+cited in the prose matches the data.

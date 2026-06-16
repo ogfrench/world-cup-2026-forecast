@@ -30,4 +30,20 @@ for (const k of ['elo', 'score', 'hybrid', 'market', 'market_pure']) {
   if (!models.includes(k)) fail(`missing model "${k}".`);
 }
 
-console.log(`OK: ${blocks.length} script blocks parse, ${models.length} models present, build is clean.`);
+// each model must carry real content (a crash mid-write could leave an empty model that builds
+// clean but breaks in the browser), and the group matches must carry the merged schedule the app
+// sorts and renders (date + kickoff time). This catches a make_data/merge step that silently failed.
+for (const k of models) {
+  const m = data.models[k] || {};
+  if (!m.teams || !Object.keys(m.teams).length) fail(`model "${k}" has no teams.`);
+  if (!m.group_matches || !Object.keys(m.group_matches).length) fail(`model "${k}" has no group_matches.`);
+}
+const gm = data.models.market_pure.group_matches;
+const sample = gm[Object.keys(gm)[0]][0];
+if (!sample || !sample.kickoff_utc || !sample.date)
+  fail('group matches lack the merged schedule (kickoff_utc/date); did merge_schedule.py run?');
+const def = (data.meta || {}).default_model;
+if (!['elo', 'score', 'hybrid', 'market', 'market_pure'].includes(def))
+  fail(`meta.default_model "${def}" is not one of the five models.`);
+
+console.log(`OK: ${blocks.length} script blocks parse, ${models.length} models present with teams + scheduled group matches, build is clean.`);

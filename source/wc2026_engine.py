@@ -17,7 +17,9 @@ otherwise makes favourites overconfident. sigma is a judgment value, NOT fit to 
 The per-match prediction tables use the full Dixon-Coles distribution; the Monte Carlo
 samples goals as Poisson with form noise (the rho correction is negligible for who-advances).
 
-Usage: python3 wc2026_engine.py [n_sims] [sigma]
+Run directly for an engine smoke test that prints the title odds:
+    python3 wc2026_engine.py [n_sims]
+This does NOT write app data. Regenerate that with the full pipeline: make_data.py then merge_schedule.py.
 """
 import sys, os, json, math
 from itertools import combinations
@@ -474,18 +476,12 @@ if __name__ == '__main__':
     print(f"  pure-market max error to published odds: {resid:.2f}pp")
 
     order = ('elo', 'score', 'hybrid', 'market', 'market_pure')
-    gm = {key: group_match_predictions(key) for key in order}
     for key in order:
         top = sorted(out[key], key=lambda t: -out[key][t]['champ'])[:6]
         print(f"  {LABELS[key]:<22}: " + "  ".join(f"{t} {out[key][t]['champ']:.1f}" for t in top))
 
-    data = {'meta': dict(n_sims=n, default_model='market_pure', labels=LABELS,
-                         rho=RHO, home_mult=round(math.exp(HOME), 3), c=C, total=TOTAL,
-                         oos_logloss=dict(pure_dc=0.8558, pure_elo=0.8464, hybrid=0.8409),
-                         dc_matches=PARAMS['meta'].get('dc_matches')),
-            'opta': OPTA, 'market': MARKET,
-            'groups': {g: [t[0] for t in GROUPS[g]] for g in GROUPS},
-            'market_implied_elo': {t: round(MARKET_ELO[t]) for t in MARKET_FULL},
-            'models': {key: dict(teams=out[key], group_matches=gm[key]) for key in order}}
-    json.dump(data, open(os.path.join(_HERE, 'wc2026_results.json'), 'w'), indent=1)
-    print("\nSaved wc2026_results.json")
+    # Deliberately does NOT write wc2026_results.json. That file is the product of the full pipeline:
+    # make_data.py runs the Day 0 and conditioned passes and the knockout section, then merge_schedule.py
+    # folds in dates and official home/away. Running this module is an engine smoke test only; writing a
+    # results file here would ship a stale, schedule-less, knockout-less file the app cannot fully render.
+    print("\nEngine smoke test only. To regenerate app data: python make_data.py 50000 && python merge_schedule.py")

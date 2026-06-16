@@ -58,7 +58,7 @@ jobs:
       - name: Re-simulate (50k), conditioned on the played games
         if: steps.changed.outputs.go == 'true'
         run: |
-          python -m pip install --quiet numpy
+          python -m pip install --quiet "numpy>=2,<3"
           python source/make_data.py 50000
           python source/merge_schedule.py
           python source/build_app.py
@@ -81,5 +81,6 @@ jobs:
             echo "Nothing to commit."
           else
             git commit -m "Refresh live forecast from played results [skip ci]"
+            git pull --rebase origin main   # avoid a non-fast-forward abort if main moved during the re-sim
             git push
           fi

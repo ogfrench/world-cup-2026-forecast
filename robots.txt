@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://wc2026forecast.xyz/sitemap.xml

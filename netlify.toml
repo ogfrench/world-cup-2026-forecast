@@ -8,3 +8,10 @@
   [headers.values]
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    # The page has no embeddable use, so refuse framing (clickjacking) two ways.
+    X-Frame-Options = "DENY"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    # Defense-in-depth behind the in-render escaping: a static allowlist of exactly what the page
+    # loads (self, the inline scripts/styles, Google Fonts, and the openfootball feed). Kept as data
+    # here, not a build step: no per-build hashes, so it never needs to track the inline scripts.
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"

@@ -4,9 +4,9 @@
 
 **Live: https://wc2026forecast.xyz/**
 
-A Monte Carlo forecast of the 2026 World Cup. It plays the full tournament, all 104 matches and the
-knockout bracket, 50,000 times under five match-rating models and reports each team's probability of
-reaching every stage. As games are played, real results overlay onto the predictions and the odds
+A Monte Carlo forecast of the 2026 World Cup. It plays the full tournament, all 104 matches across the
+group stage and knockout bracket, 50,000 times under five match-rating models and reports each team's
+probability of reaching every stage. As games are played, real results overlay onto the predictions and the odds
 re-simulate to condition on what has happened, so you see both where the forecast is holding up and
 how the title race is shifting against its Day 0 starting point.
 
@@ -28,7 +28,7 @@ Methodology and validation are in [source/REPORT.md](source/REPORT.md).
 
 ## What the app shows
 
-One model selected at a time (pills on desktop, a dropdown on mobile), across these tabs:
+One model selected at a time, chosen from a dropdown that carries a one-line description of each, across these tabs:
 
 - **Title Odds** - each team's chance of winning the tournament, plus how often it reaches each round, against Opta and the betting market as a sanity check. Once games are played the odds re-condition on the results, with a Day 0 marker on each bar showing the pre-tournament starting point and the move since; the reach-round table can flip to show the change since Day 0.
 - **Schedule** - every fixture by kickoff time, the model's predicted score, and the real result as it comes in, color-coded (dark green exact, green right result, red wrong).
@@ -59,8 +59,10 @@ Two layers keep the page current, both backend-free and low-maintenance:
   match is in play, paused when the tab is hidden). This overlay is deterministic: it never alters the
   underlying odds, and if the feed is unreachable the page falls back to predictions only. A kicked-off
   match shows an "In play" badge, then an "Awaiting result" badge that stays until the feed posts the
-  score (the community feed can lag by hours), each linking to a search so you can check the score
-  meanwhile. The badge never expires early, so a played game never reverts to looking unplayed.
+  score (the community feed can lag by hours). A search link on every card (the live badge, and a
+  button on played cards) opens a Google query for the exact match, teams and date plus the score
+  once known, so you can always find it. The badge never expires early, so a played game never
+  reverts to looking unplayed.
 - **The odds themselves (on redeploy).** A scheduled GitHub Action (`.github/workflows/refresh.yml`)
   re-runs the 50,000-tournament simulation conditioned on the played games and commits the result, so
   Netlify redeploys. It polls the feed on a windowed cron but only re-simulates when a new result
@@ -145,7 +147,10 @@ Open `index.html` in a browser, or run `python -m http.server` from the reposito
 ## Deployment
 
 Deployed on Netlify, served from the repository root and redeployed on each push to `main`. Live at
-<https://wc2026forecast.xyz/>, with a backup at <https://wc2026forecast.netlify.app/>.
+<https://wc2026forecast.xyz/>, with a backup at <https://wc2026forecast.netlify.app/>. Security
+headers (a Content-Security-Policy, `frame-ancestors`/`X-Frame-Options` deny, nosniff) are set in
+`netlify.toml`, and `robots.txt`, `sitemap.xml`, and JSON-LD structured data are served for search
+engines and social cards.
 
 ## Status
 
@@ -156,6 +161,11 @@ before/after; the autonomous refresh; and the Top Scorers tab.
 In progress: the predicted-vs-actual knockout bracket and its in-play badges are built and light up
 once the round of 32 is set (around June 28). The remaining bracket-data wiring is tracked in
 [issue #17](https://github.com/ogfrench/world-cup-2026-prediction/issues/17).
+
+## License
+
+MIT, see [LICENSE](LICENSE). The forecast draws on public data (openfootball, CC0; eloratings.net),
+which keeps its own terms.
 
 ## Disclaimer
 

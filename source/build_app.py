@@ -40,7 +40,8 @@ def main() -> None:
     if check:
         current = OUTPUT.read_text(encoding="utf-8") if OUTPUT.exists() else ""
         if current != html:
-            sys.exit("index.html is out of date. Run: python3 source/build_app.py")
+            print("index.html is out of date. Run: python3 source/build_app.py", file=sys.stderr)
+            sys.exit(2)
         print("index.html is up to date.")
         return
     OUTPUT.write_text(html, encoding="utf-8", newline="\n")
