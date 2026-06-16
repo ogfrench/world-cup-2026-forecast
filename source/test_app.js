@@ -56,12 +56,20 @@ const snippet = [
   pull(/function koActual\(t\)\{[\s\S]*?\n  \}/, 'koActual'),
   pull(/const byKO = [^\n]*/, 'byKO'),
   pull(/function scheduleAnchor\(matches, now\)\{[\s\S]*?\n  \}/, 'scheduleAnchor'),
+  pull(/const esc = s => [^\n]*/, 'esc'),
+  pull(/function scRow\(rk, who, sub, val\)\{[\s\S]*?\n  \}/, 'scRow'),
+  'let G = {}, MODELS = {}, CUR = "", T = {};',                   // group context groupStandings closes over
+  pull(/function groupStandings\(g\)\{[\s\S]*?\n  \}/, 'groupStandings'),
+  pull(/function matchSearch\(mm, a\)\{[\s\S]*?\n  \}/, 'matchSearch'),
+  pull(/const liveSearch = [^\n]*/, 'liveSearch'),
   'this.predTier = predTier; this.setActuals = o => { ACTUALS = o; };',
+  'this.esc = esc; this.scRow = scRow; this.groupStandings = groupStandings; this.matchSearch = matchSearch; this.liveSearch = liveSearch;',
+  'this.setGroupCtx = (g, models, cur, t) => { G = g; MODELS = models; CUR = cur; T = t; };',
 ].join('\n');
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor } = sandbox;
+const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor, esc, scRow, groupStandings, matchSearch, liveSearch } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -187,6 +195,61 @@ eq(anchorAt('2026-06-21T05:00Z'), '2026-06-21T00:00Z', 'all done: the last game 
 const lateNight = [M('2026-06-20T23:00Z'), M('2026-06-21T16:00Z')];
 eq(scheduleAnchor(lateNight, Date.parse('2026-06-21T00:30Z')).kickoff_utc, '2026-06-20T23:00Z',
    'a game running past midnight keeps focus at 00:30, not jumping to the next day');
+
+// ---- esc + scRow: feed-derived scorer names and teams are escaped before they reach innerHTML ----
+// regression: a hostile or garbled feed line must not inject live markup into the Golden Boot list.
+eq(esc('<img src=x onerror=alert(1)>'), '&lt;img src=x onerror=alert(1)&gt;', 'esc neutralizes angle brackets');
+eq(esc('Mbappe'), 'Mbappe', 'esc leaves a normal name unchanged');
+const xrow = scRow(1, '<b>x</b>', 'A&B', 3);
+eq(xrow.includes('<b>x</b>'), false, 'scRow does not emit raw injected markup from a feed name');
+eq(xrow.includes('&lt;b&gt;x&lt;/b&gt;'), true, 'scRow emits the escaped scorer name');
+eq(xrow.includes('A&amp;B'), true, 'scRow escapes the ampersand in the team field');
+
+// ---- groupStandings: the live table follows FIFA 2026 order (head-to-head before overall GD) ----
+// A1 and A2 finish level on points; A1 beat A2 head-to-head but A2 has the better overall goal
+// difference. The official rule ranks A1 above A2; an overall-GD-first sort would wrongly flip them.
+sandbox.setGroupCtx(
+  { A: ['A1', 'A2', 'A3', 'A4'] },
+  { m: { teams: { A1: { elo: 1800 }, A2: { elo: 1810 }, A3: { elo: 1820 }, A4: { elo: 1790 } },
+         group_matches: { A: [
+    { home: 'A1', away: 'A2', date: '2026-06-20' },
+    { home: 'A1', away: 'A3', date: '2026-06-21' },
+    { home: 'A2', away: 'A4', date: '2026-06-22' },
+    { home: 'A3', away: 'A4', date: '2026-06-23' },
+  ] } } },
+  'm', {});
+sandbox.setActuals({
+  '2026-06-20|A1|A2': { home: 'A1', away: 'A2', hs: 1, as: 0 },   // A1 beats A2 head-to-head
+  '2026-06-21|A1|A3': { home: 'A1', away: 'A3', hs: 0, as: 2 },   // A1 overall GD sinks to -1
+  '2026-06-22|A2|A4': { home: 'A2', away: 'A4', hs: 4, as: 0 },   // A2 overall GD climbs to +3
+  '2026-06-23|A3|A4': { home: 'A3', away: 'A4', hs: 1, as: 0 },
+});
+const gs = groupStandings('A');
+eq(gs.tbl.A1.pts === 3 && gs.tbl.A2.pts === 3, true, 'A1 and A2 are level on points');
+eq(gs.tbl.A2.gd > gs.tbl.A1.gd, true, 'A2 has the better overall goal difference');
+eq(gs.pos, { A3: 1, A1: 2, A2: 3, A4: 4 },
+   'head-to-head ranks A1 above A2 despite A2 having the better overall GD (overall-GD-first would flip them)');
+
+// a total tie (drawn head-to-head, equal points/GD/GF) falls through to the Elo tiebreak, last of all.
+// regression guard: groupStandings reads Elo from MODELS[CUR].teams, not an out-of-scope global (which
+// threw "T is not defined" at first render, when every team is level on zero points).
+sandbox.setGroupCtx(
+  { B: ['B1', 'B2'] },
+  { m: { teams: { B1: { elo: 1700 }, B2: { elo: 1900 } }, group_matches: { B: [
+    { home: 'B1', away: 'B2', date: '2026-06-20' },
+  ] } } },
+  'm', {});
+sandbox.setActuals({ '2026-06-20|B1|B2': { home: 'B1', away: 'B2', hs: 0, as: 0 } });
+eq(groupStandings('B').pos, { B2: 1, B1: 2 },
+   'a total tie breaks to the higher Elo, and reading Elo never throws');
+
+// ---- matchSearch / liveSearch: a Google query that always pins one exact match ----
+const finURL = matchSearch({ home: 'Mexico', away: 'South Africa', date: '2026-06-14' }, { hs: 2, as: 0 });
+eq(decodeURIComponent(finURL.split('q=')[1]), 'Mexico vs South Africa 2-0 2026-06-14 World Cup',
+   'finished card search: teams, score, date, and "World Cup" all in the query');
+const liveURL = liveSearch({ home: 'Mexico', away: 'South Africa', date: '2026-06-14' });
+eq(decodeURIComponent(liveURL.split('q=')[1]), 'Mexico vs South Africa 2026-06-14 World Cup',
+   'in play / awaiting search: teams and date, no score (unknown), no leftover double space');
 
 console.log(failed
   ? `\n${failed} failed, ${passed} passed.`

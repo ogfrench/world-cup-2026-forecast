@@ -5,21 +5,64 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>World Cup 2026 Forecast</title>
 <meta name="description" content="World Cup 2026 forecast: every match and the knockout bracket simulated 50,000 times, five ways, from past results to the bookmakers' odds, with real results overlaid on the predictions as games play out.">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <link rel="canonical" href="https://wc2026forecast.xyz/">
 <meta name="theme-color" content="#0a0b0d">
 <meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="World Cup 2026 Forecast">
 <meta property="og:url" content="https://wc2026forecast.xyz/">
 <meta property="og:title" content="World Cup 2026 Forecast">
-<meta property="og:description" content="The whole World Cup, all 104 matches and the knockouts, simulated 50,000 times, five ways, from past results to the bookmakers' odds. Real results overlay on the predictions as games play out.">
+<meta property="og:description" content="The whole World Cup, all 104 matches across the group stage and knockouts, simulated 50,000 times, five ways, from past results to the bookmakers' odds. Real results overlay on the predictions as games play out.">
 <meta property="og:image" content="https://wc2026forecast.xyz/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="World Cup 2026 Forecast: the tournament simulated 50,000 times, five ways. Spain, France, England lead the title odds.">
+<meta property="og:image:alt" content="World Cup 2026 Forecast: the whole tournament simulated 50,000 times, five ways, with live results overlaid on the predictions.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="World Cup 2026 Forecast">
 <meta name="twitter:description" content="Every match and the knockout bracket simulated 50,000 times, five ways, from past results to the bookmakers' odds. Real results overlay on the predictions as games play out.">
 <meta name="twitter:image" content="https://wc2026forecast.xyz/og.png">
+<meta name="twitter:image:alt" content="World Cup 2026 Forecast: the whole tournament simulated 50,000 times, five ways, with live results overlaid on the predictions.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://wc2026forecast.xyz/#website",
+      "url": "https://wc2026forecast.xyz/",
+      "name": "World Cup 2026 Forecast",
+      "description": "A Monte Carlo forecast of the 2026 World Cup, simulated 50,000 times under five match-rating models.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "WebApplication",
+      "@id": "https://wc2026forecast.xyz/#app",
+      "name": "World Cup 2026 Forecast",
+      "url": "https://wc2026forecast.xyz/",
+      "applicationCategory": "SportsApplication",
+      "operatingSystem": "Any (web browser)",
+      "browserRequirements": "Requires JavaScript",
+      "isAccessibleForFree": true,
+      "inLanguage": "en",
+      "image": "https://wc2026forecast.xyz/og.png",
+      "description": "Every match and the knockout bracket of the 2026 World Cup, simulated 50,000 times under five match-rating models, from past results to the bookmakers' odds, with real results overlaid on the predictions as games are played.",
+      "about": {
+        "@type": "SportsEvent",
+        "name": "2026 FIFA World Cup",
+        "startDate": "2026-06-11",
+        "endDate": "2026-07-19",
+        "sport": "Association football",
+        "location": [
+          { "@type": "Country", "name": "United States" },
+          { "@type": "Country", "name": "Canada" },
+          { "@type": "Country", "name": "Mexico" }
+        ]
+      }
+    }
+  ]
+}
+</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230a0b0d'/><circle cx='16' cy='16' r='8' fill='%23c8ff4d'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,7 +89,7 @@
   body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.025;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
   .wrap{position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;padding:0 18px 80px}
-  a:focus-visible,button:focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:6px}
+  a:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:6px}
 
   /* ---------- header ---------- */
   header{padding:40px 0 22px;border-bottom:1px solid var(--line)}
@@ -66,7 +109,10 @@
           margin:0 0 26px}
   /* border lives on nav (and the modelbar) so the rules sit at content width,
      aligned with the header and section rules, not bled to the page edge */
-  nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line)}
+  nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line);
+      /* fade the right edge so the overflow (extra tabs) is visible on narrow screens */
+      -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);
+      mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent)}
   nav::-webkit-scrollbar{display:none}
   .tab{font-family:'Archivo';font-weight:700;font-size:13px;letter-spacing:.02em;
        color:var(--muted);background:none;border:none;cursor:pointer;
@@ -76,11 +122,6 @@
   .tab .soon{font-family:'DM Mono';font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;
        color:var(--lime-dim);border:1px solid rgba(200,255,77,.32);border-radius:4px;
        padding:1px 4px;margin-left:5px;vertical-align:middle;font-weight:500}
-  /* the two single-team pages get a distinct pill style, set apart by a divider */
-  .tab.team{align-self:center;border:1px solid var(--line2);border-radius:999px;padding:7px 13px}
-  .tab.team:hover{color:var(--txt);border-color:var(--faint)}
-  .tab.team.on{color:var(--bg);background:var(--lime);border-color:var(--lime)}
-
   section{display:none;animation:fade .35s ease}
   section.on{display:block}
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -106,7 +147,7 @@
   .fill{position:absolute;left:0;top:0;bottom:0;border-radius:5px;
         background:linear-gradient(90deg,var(--lime-dim),var(--lime));min-width:2px;
         transition:width .9s cubic-bezier(.2,.8,.2,1)}
-  .mk{position:absolute;top:-3px;height:32px;width:0;border-left:2px dashed;transform:translateX(-1px)}
+  .mk{position:absolute;top:-3px;height:32px;width:0;border-left:2.5px dashed;transform:translateX(-1px);filter:drop-shadow(0 0 1px rgba(0,0,0,.85))}
   .mk.opta{border-color:var(--blue)}
   .mk.mkt{border-color:var(--gold)}
   .mk.day0{border-color:var(--faint);opacity:.6}
@@ -153,10 +194,11 @@
   table{border-collapse:collapse;width:100%;min-width:560px;font-size:13px}
   th,td{padding:9px 8px;text-align:center}
   thead th{font-family:'DM Mono';font-weight:500;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
-           color:var(--muted);background:var(--bg2);border-bottom:1px solid var(--line2);position:sticky;top:0}
+           color:var(--muted);background:var(--bg2);border-bottom:1px solid var(--line2)}
   tbody td{font-family:'DM Mono';border-bottom:1px solid var(--line);color:var(--txt)}
   tbody tr:last-child td{border-bottom:none}
   .tname{text-align:left!important;font-family:'Archivo'!important;font-weight:700;white-space:nowrap;position:sticky;left:0;background:var(--surface)}
+  thead th.tname{background:var(--bg2)}   /* the Team header matches its header row, not the sticky-left body cells */
   .tname small{font-family:'DM Mono';font-weight:400;color:var(--faint);margin-left:6px}
   .grp-pill{display:inline-block;min-width:16px;font-size:9px;color:var(--bg);background:var(--faint);
             border-radius:3px;padding:1px 4px;font-family:'DM Mono';margin-left:6px;vertical-align:middle}
@@ -268,20 +310,13 @@
   .madeby a svg{width:14px;height:14px;display:block}
   .madeby .sep{color:var(--line2)}
 
-  /* ---------- model switcher: pills (desktop) + dropdown (mobile) ---------- */
+  /* ---------- model switcher: a single dropdown at all widths ---------- */
   .modelbar{display:flex;align-items:center;gap:10px;margin:0;padding:9px 0 9px 14px;border-bottom:1px solid var(--line)}
   .mlbl{font-family:'DM Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-right:1px}
-  .mpills{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .mbtn{font-family:'Archivo';font-weight:700;font-size:12.5px;color:var(--txt);background:var(--surface);
-        border:1px solid var(--line2);border-radius:999px;padding:8px 14px;cursor:pointer;transition:.15s;white-space:nowrap}
-  .mbtn.rec{border-color:rgba(200,255,77,.55)}
-  .mbtn.dim{color:var(--muted);border-color:var(--line)}
-  .mbtn:hover{color:var(--txt);border-color:var(--faint)}
-  .mbtn.on{color:var(--bg);background:var(--lime);border-color:var(--lime)}
-  .mdrop{position:relative;display:none}
-  .mdtrigger{display:inline-flex;align-items:center;gap:9px;font-family:'Archivo';font-weight:700;font-size:13.5px;
-       color:var(--txt);background:none;border:none;border-radius:999px;
-       padding:6px 4px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .mdrop{position:relative;display:inline-block}
+  .mdtrigger{display:inline-flex;align-items:center;gap:9px;font-family:'Archivo';font-weight:700;font-size:13px;
+       color:var(--txt);background:var(--surface);border:1px solid var(--line2);border-radius:999px;
+       padding:8px 14px;cursor:pointer;transition:.15s;white-space:nowrap}
   .mdtrigger:hover{color:var(--lime)}
   .mdrop.open .mdtrigger{color:var(--lime)}
   .mdcaret{width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;
@@ -290,30 +325,24 @@
   /* centered under the trigger so it never spills off-screen */
   .mdmenu{position:absolute;top:calc(100% + 9px);left:50%;z-index:40;width:min(300px,calc(100vw - 24px));
        background:var(--surface2);border:1px solid var(--line2);border-radius:13px;padding:6px;
-       box-shadow:0 18px 44px rgba(0,0,0,.55);opacity:0;transform:translateX(-50%) translateY(-7px);pointer-events:none;
-       transition:opacity .15s ease,transform .15s ease}
-  .mdrop.open .mdmenu{opacity:1;transform:translateX(-50%);pointer-events:auto}
-  .mditem{border-radius:9px;color:var(--txt);transition:background .12s,color .12s}
+       box-shadow:0 18px 44px rgba(0,0,0,.55);opacity:0;transform:translateX(-50%) translateY(-7px);
+       pointer-events:none;visibility:hidden;transition:opacity .15s ease,transform .15s ease,visibility .15s}
+  .mdrop.open .mdmenu{opacity:1;transform:translateX(-50%);pointer-events:auto;visibility:visible}
+  .mditem{display:flex;align-items:center;border-radius:9px;color:var(--txt);transition:background .12s,color .12s}
   .mditem:hover{background:var(--surface)}
   .mditem.on{color:var(--lime);background:var(--surface)}
-  .mdrow{display:flex;align-items:center;gap:8px;padding:9px 6px 9px 11px;cursor:pointer;
-       font-family:'Archivo';font-weight:600;font-size:13px}
+  .mdrow{flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:9px 6px 9px 11px;cursor:pointer;
+       background:none;border:none;color:inherit;text-align:left;font-family:'Archivo';font-weight:600;font-size:13px}
   .mdname{flex:1;min-width:0}
   .mdtag{flex:none;font-family:'DM Mono';font-size:9px;letter-spacing:.08em;text-transform:uppercase;
        color:var(--lime-dim);border:1px solid rgba(200,255,77,.4);border-radius:5px;padding:1px 6px}
-  /* per-option (i): tap to reveal the model's description, does not select the option */
-  .mdi{flex:none;width:30px;height:30px;margin:-5px -3px -5px 0;border:none;background:none;cursor:pointer;
+  /* per-row (i): hover, keyboard focus, or tap shows the model's description as a tooltip; never selects */
+  .mdi{flex:none;width:32px;height:32px;margin-right:4px;border:none;background:none;cursor:help;
        color:var(--faint);font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:700;font-size:14px;
        display:inline-flex;align-items:center;justify-content:center;border-radius:50%;transition:.12s}
-  .mdi:hover{color:var(--lime)}
-  .mditem.info .mdi{color:var(--lime)}
-  .mddesc{display:none;padding:0 11px 11px;font-family:'Archivo';font-weight:400;font-size:12px;
-       color:var(--muted);line-height:1.5}
-  .mddesc b{color:var(--txt);font-weight:600}
-  .mditem.info .mddesc{display:block}
+  .mdi:hover,.mdi:focus-visible{color:var(--lime)}
   /* below the tablet breakpoint: dropdown switcher, and the sticky bar runs full width */
   @media(max-width:760px){
-    .mpills{display:none} .mdrop{display:block}
     .modelbar{justify-content:center;padding:9px 18px}
     .topbar{margin-left:-18px;margin-right:-18px}
     nav{padding:0 18px}
@@ -338,6 +367,10 @@
   .m .mcap .captime{flex:none;color:var(--muted)}
   .m .mcap .captz{color:var(--faint);font-size:9px}
   .m .mcap .capven{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .m .mcap .msrch{flex:none;margin-left:auto;display:inline-flex;align-items:center;justify-content:center;
+       width:21px;height:21px;border:1px solid var(--line2);border-radius:6px;color:var(--faint);
+       text-decoration:none;font-size:12px;line-height:1;transition:.12s}
+  .m .mcap .msrch:hover,.m .mcap .msrch:focus-visible{color:var(--lime);border-color:var(--faint);background:var(--surface)}
   .m .sc.ft{color:var(--txt);border-color:var(--line2);background:var(--surface2)}
   .m .sclab{font-family:'DM Mono';font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
   .m .predline{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:9px}
@@ -427,7 +460,7 @@
     .cal th,.cal td{padding:8px 7px;font-size:11.5px}
     .modelbar{padding:7px 13px}
     .mlbl{display:none}
-    .mbtn{font-size:11.5px;padding:6px 11px}
+    .mdtrigger{font-size:12.5px;padding:7px 12px}
     .tab{padding:13px 11px;font-size:12.5px}
     .tip{font-size:12px;padding:8px 10px}
     .prose,.prose p,.note,.lead{overflow-wrap:break-word}
@@ -455,6 +488,11 @@
     .schedsync{margin:6px 0 24px}
     .sday{margin:32px 0 11px}
   }
+
+  /* respect a reduced-motion preference: drop the section fade, the looping live-dot pulses, and transitions */
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+  }
 </style>
 </head>
 <body>
@@ -462,30 +500,30 @@
   <header>
     <div class="kicker">The whole World Cup, predicted game by game</div>
     <h1>World Cup <span class="yr">2026</span> Forecast</h1>
-    <p class="sub">The whole World Cup, all 104 matches and the knockouts, simulated 50,000 times, five different ways, from past results to the bookmakers' odds. Switch models below and explore each tab.</p>
+    <p class="sub">The whole World Cup, all 104 matches across the group stage and knockouts, simulated 50,000 times, five different ways, from past results to the bookmakers' odds. Switch models below and explore each tab.</p>
     <div class="meta-row" id="meta"></div>
   </header>
 
   <div class="topbar">
     <div class="modelbar" id="modelbar"></div>
-    <nav>
-      <button class="tab on" data-t="race">Title Odds</button>
-      <button class="tab" data-t="schedule">Schedule</button>
-      <button class="tab" data-t="groups">Groups &amp; Scores</button>
-      <button class="tab" data-t="knockout">Knockout Phase <span class="soon">soon</span></button>
-      <button class="tab" data-t="topscorers">Top Scorers</button>
-      <button class="tab" data-t="method">Method &amp; Caveats</button>
+    <nav role="tablist" aria-label="Views">
+      <button class="tab on" data-t="race" role="tab" id="tab-race" aria-controls="race" aria-selected="true">Title Odds</button>
+      <button class="tab" data-t="schedule" role="tab" id="tab-schedule" aria-controls="schedule" aria-selected="false">Schedule</button>
+      <button class="tab" data-t="groups" role="tab" id="tab-groups" aria-controls="groups" aria-selected="false">Groups &amp; Scores</button>
+      <button class="tab" data-t="knockout" role="tab" id="tab-knockout" aria-controls="knockout" aria-selected="false">Knockout Phase <span class="soon">soon</span></button>
+      <button class="tab" data-t="topscorers" role="tab" id="tab-topscorers" aria-controls="topscorers" aria-selected="false">Top Scorers</button>
+      <button class="tab" data-t="method" role="tab" id="tab-method" aria-controls="method" aria-selected="false">Method &amp; Caveats</button>
     </nav>
   </div>
 
   <!-- TITLE RACE -->
-  <section class="on" id="race">
+  <section class="on" id="race" role="tabpanel" aria-labelledby="tab-race" tabindex="0">
     <div class="koseg" id="titleToggle" style="display:none">
       <button data-v="live" class="on" data-tip="The current forecast, updated for the games played so far.">Live</button>
       <button data-v="day0" data-tip="The frozen pre-tournament forecast, before any games were played.">Day 0</button>
     </div>
     <div class="podium" id="podium"></div>
-    <div class="sec-h">Who lifts the trophy</div>
+    <h2 class="sec-h">Who lifts the trophy</h2>
     <p class="lead">Each bar is a team's chance of winning the tournament under the selected model. The dots mark Opta's supercomputer and the bookmakers, as an outside comparison.</p>
     <div class="legend">
       <span data-tip="The model you've selected. Each bar is its chance that the team wins the whole tournament."><i class="sw model"></i> <span class="has-tip">Selected model</span></span>
@@ -496,40 +534,40 @@
     <div class="livebar" id="titleLive" style="display:none"></div>
     <div id="raceBars"></div>
 
-    <div class="sec-h">Road to the final</div>
+    <h2 class="sec-h">Road to the final</h2>
     <p class="lead">How far each team gets: how often they reach each round across the 50,000 simulations. The odds pile onto the favorites as the field thins.</p>
     <div class="tbl-scroll"><table id="koTable"></table></div>
   </section>
 
   <!-- GROUPS -->
-  <section id="groups">
-    <div class="sec-h">Group winner odds &amp; match-by-match</div>
+  <section id="groups" role="tabpanel" aria-labelledby="tab-groups" tabindex="0">
+    <h2 class="sec-h">Group winner odds &amp; match-by-match</h2>
     <p class="lead">Each group's live standings next to where the model predicted the teams to finish, so you can see who is running ahead of the forecast and who is behind. Expand a group for the match-by-match predictions and results.</p>
     <div class="scoreboard" id="grpScore"></div>
     <div class="grid" id="groupGrid"></div>
   </section>
 
   <!-- KNOCKOUT PHASE (placeholder, built once the round of 32 is set) -->
-  <section id="knockout">
-    <div class="sec-h">Knockout bracket</div>
+  <section id="knockout" role="tabpanel" aria-labelledby="tab-knockout" tabindex="0">
+    <h2 class="sec-h">Knockout bracket</h2>
     <p class="lead">The model's pick and advance odds for every knockout tie, with the real result slotting in color-coded, round by round. It fills in automatically once the group stage ends and the round of 32 is set.</p>
     <div class="scoreboard" id="koScore"></div>
     <div id="koBracket"></div>
   </section>
 
   <!-- SCHEDULE -->
-  <section id="schedule">
-    <div class="sec-h">The tournament, by date</div>
+  <section id="schedule" role="tabpanel" aria-labelledby="tab-schedule" tabindex="0">
+    <h2 class="sec-h">The tournament, by date</h2>
     <p class="lead">Every fixture by kickoff time, with the model's predicted score. Real results slot in as games are played. Knockouts join once the bracket is set.</p>
     <div class="scoreboard" id="schedScore"></div>
     <div class="predkey" id="predKey"></div>
-    <div class="schedsync" id="schedSync"></div>
+    <div class="schedsync" id="schedSync" role="status" aria-live="polite"></div>
     <div class="sched" id="schedList"></div>
   </section>
 
   <!-- TOP SCORERS -->
-  <section id="topscorers">
-    <div class="sec-h">Golden Boot</div>
+  <section id="topscorers" role="tabpanel" aria-labelledby="tab-topscorers" tabindex="0">
+    <h2 class="sec-h">Golden Boot</h2>
     <p class="lead">The bookmakers' pre-tournament pick for the Golden Boot, next to who is actually scoring. The model rates teams, not players, so the expected side comes from the bookmakers, not the simulation, and it does not move once the tournament starts.</p>
     <div class="scgrid">
       <div class="sccol exp">
@@ -544,10 +582,10 @@
     <p class="scnote" id="scNote"></p>
   </section>
 
-  <section id="method">
+  <section id="method" role="tabpanel" aria-labelledby="tab-method" tabindex="0">
     <div class="prose">
       <div class="methodhero" id="methodHero"></div>
-      <div class="sec-h">The five models, compared</div>
+      <h2 class="sec-h">The five models, compared</h2>
       <p>One tournament, played out <b id="nsim2"></b> times. Each run goes through all 104 games, the eight best third-placed teams, the official FIFA round of 32, and the bracket the rest of the way, with extra time and penalties when a tie needs them. The engine underneath stays the same. What changes between the five is how a single match is rated, from the ones that use only past results to the ones that use the betting market.</p>
       <p>The first three use results only. <b>Pure Elo</b> treats a team like a chess rating, going on who has been beating whom. It is steady and hard to fool with one odd scoreline, it has no feel for how a team plays, and of the five it leans on the favorites most. <b>Pure Goals</b> learns each team's attack and defense from <b><span id="dcm1"></span> internationals</b> since 2010, where the home side scores about <b>1.31x</b> as often, so it works in scorelines rather than just winners. It also rewards a team for scoring heavily against weaker opponents, which lifts teams like Japan and Algeria. <b>Hybrid</b> averages the two, and each covers for the other's blind spot. On 1,230 internationals it had not seen, it does at least as well as either one alone, with the steadiest confidence of the three:</p>
       <table class="cal" id="ooTable"></table>
@@ -562,7 +600,7 @@
 
       <h3>Where it's weak</h3>
       <p><b>It backs the favorites too hard.</b> A fixed-strength simulation cannot see a tournament turn the way a real one does, an injury, a sudden run of great form, a red card at the wrong moment, so probability piles onto the big teams (Pure Elo most, Pure Market least). The head-to-heads still look right: Spain against Argentina is close to a coin flip.</p>
-      <p><b>The live odds follow results, not form.</b> Once a game is played the odds re-simulate with that score locked in, but the underlying ratings stay where they were before kickoff (6 June). Winning by a little and winning by a lot move them the same amount, and injuries, current form, and a re-pricing market do not show up at all.</p>
+      <p><b>The live odds follow results, not form.</b> Once a game is played the odds re-simulate with that score locked in, but the underlying ratings stay at their pre-tournament strength, frozen on 6 June. Winning by a little and winning by a lot move them the same amount, and injuries, current form, and a re-pricing market do not show up at all.</p>
       <p><b>The validation is encouraging, not the last word.</b> The 1,230 test games are mostly one-sided qualifiers and friendlies that almost any model gets right, and there are very few of the tight knockout ties a World Cup turns on. The test grades match calls, not title odds, and those cannot be checked until the trophy is lifted.</p>
       <p><b>The single most likely score is shaky.</b> In an even game 1-1, 1-0 and 0-0 sit within a few percent of each other, so the headline score can flip on very little. The win, draw and loss split is firmer than the exact number. The model also draws a little less than real life, around 23 to 24 percent in the groups against a 26 to 28 percent norm.</p>
       <p><b>There is no top-scorer model.</b> The engine rates teams, not players. The <a class="xlink" href="#" data-go="topscorers">Top Scorers</a> tab puts the bookmakers' pre-tournament pick next to whoever is actually scoring.</p>
@@ -632,19 +670,45 @@
     }
     return `<div class="sbnote"><span>How the <b>${lab}</b> model is doing${sc} so far.</span></div><div class="sbrow">${row}</div>`;
   }
-  // live group table from actual results, ranked points then goal difference then goals for
+  // live group table from actual results, in FIFA 2026 order: points first, then head-to-head
+  // (points, goal difference, goals for) among teams level on points, then overall goal difference,
+  // goals for, and Elo. Mirrors rank_group in wc2026_engine.py so the live position agrees with the
+  // order the simulation uses to decide who qualifies.
   function groupStandings(g){
-    const teams = G[g];
+    const teams = G[g], tdata = MODELS[CUR].teams;   // tdata holds each team's Elo, the final tiebreak
     const tbl = {}; teams.forEach(t => tbl[t] = {P:0,pts:0,gf:0,ga:0,gd:0});
+    const played = [];
     MODELS[CUR].group_matches[g].forEach(m => {
       const a = actualFor(m); if (!a) return;
       const h = m.home, aw = m.away;
+      played.push({h, aw, hs:a.hs, as:a.as});
       tbl[h].P++; tbl[aw].P++; tbl[h].gf += a.hs; tbl[h].ga += a.as; tbl[aw].gf += a.as; tbl[aw].ga += a.hs;
       if (a.hs > a.as) tbl[h].pts += 3; else if (a.hs < a.as) tbl[aw].pts += 3; else { tbl[h].pts++; tbl[aw].pts++; }
     });
     teams.forEach(t => tbl[t].gd = tbl[t].gf - tbl[t].ga);
-    const order = teams.slice().sort((x,y) => tbl[y].pts-tbl[x].pts || tbl[y].gd-tbl[x].gd || tbl[y].gf-tbl[x].gf || x.localeCompare(y));
-    const pos = {}; order.forEach((t,i) => pos[t] = i+1);
+    // mini-table over only the games played among a set of teams tied on points
+    function h2h(block){
+      const set = new Set(block), hp={}, hgf={}, hga={};
+      block.forEach(t => { hp[t]=0; hgf[t]=0; hga[t]=0; });
+      played.forEach(p => { if (set.has(p.h) && set.has(p.aw)){
+        hgf[p.h]+=p.hs; hga[p.h]+=p.as; hgf[p.aw]+=p.as; hga[p.aw]+=p.hs;
+        if (p.hs>p.as) hp[p.h]+=3; else if (p.hs<p.as) hp[p.aw]+=3; else { hp[p.h]++; hp[p.aw]++; }
+      }});
+      return {hp, hgf, hga};
+    }
+    const order = teams.slice().sort((x,y) => tbl[y].pts-tbl[x].pts);   // points first, blocks resolved below
+    const ranked = [];
+    for (let i=0; i<order.length; ){
+      let j=i; while (j<order.length && tbl[order[j]].pts===tbl[order[i]].pts) j++;
+      const block = order.slice(i,j);
+      if (block.length>1){
+        const {hp,hgf,hga} = h2h(block);
+        block.sort((x,y) => (hp[y]-hp[x]) || ((hgf[y]-hga[y])-(hgf[x]-hga[x])) || (hgf[y]-hgf[x])
+          || (tbl[y].gd-tbl[x].gd) || (tbl[y].gf-tbl[x].gf) || (tdata[y].elo-tdata[x].elo) || x.localeCompare(y));
+      }
+      ranked.push(...block); i=j;
+    }
+    const pos = {}; ranked.forEach((t,i) => pos[t] = i+1);
     return {tbl, pos, anyPlayed: teams.some(t => tbl[t].P>0)};
   }
 
@@ -722,8 +786,11 @@
       tally[name].goals += goals;
     }
   }
+  // escape feed-derived strings before they reach innerHTML: scorer names and teams come from a
+  // public, hand-edited feed, so a stray '<' must not become live markup (see test_app.js).
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function scRow(rk, who, sub, val){
-    return `<div class="scrow"><span class="rk">${rk}</span><span class="who">${who}<small>${sub}</small></span><span class="v">${val}</span></div>`;
+    return `<div class="scrow"><span class="rk">${rk}</span><span class="who">${esc(who)}<small>${esc(sub)}</small></span><span class="v">${val}</span></div>`;
   }
   // ---- knockout bracket: predicted-vs-actual tie cards, round by round ----
   // the real 120-minute result for a tie: the server-conditioned `played` if present, else the live
@@ -753,7 +820,7 @@
       if(t.kickoff_utc && matchPending(mm)) predRow = `<div class="predline">${liveBadge(mm)}</div>`;  // in-play / awaiting badge
     }
     return `<div class="m">
-      <div class="mcap"><span class="capven">${fav} favored · ${fmt(favAdv)}% to advance</span></div>
+      <div class="mcap"><span class="capven">${fav} favored · ${fmt(favAdv)}% to advance</span>${a ? `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="Find this tie and result on Google" data-tip="Search this tie and result on Google">&#8599;</a>` : ''}</div>
       <div class="top"><div class="ta">${t.a}</div>${chip}<div class="tb">${t.b}</div><div class="sclab clab">${clab}</div></div>
       ${predRow}
       <div class="wdl" data-tip="Chance each side advances, after extra time and any shootout."><i class="w" style="width:${t.adv_a}%"></i><i class="l" style="width:${t.adv_b}%"></i></div>
@@ -771,7 +838,7 @@
     const ROUNDS = [['r32','Round of 32'],['r16','Round of 16'],['qf','Quarter-finals'],['sf','Semi-finals'],['final','Final']];
     host.innerHTML = ROUNDS.map(([r,label])=>{
       const rt = ties.filter(t=>t.round===r).sort((a,b)=>a.slot-b.slot);
-      return rt.length ? `<div class="sec-h koround">${label}</div><div class="grid">${rt.map(koCard).join('')}</div>` : '';
+      return rt.length ? `<h2 class="sec-h koround">${label}</h2><div class="grid">${rt.map(koCard).join('')}</div>` : '';
     }).join('');
     // performance over played ties: scores called right / exact, plus advancers called
     let played=0, against=0, exact=0, advRight=0, advTot=0;
@@ -823,9 +890,13 @@
   }
   function matchPending(mm){ const s = matchClock(mm); return s === 'live' || s === 'awaiting'; }
   function matchLive(mm){ return matchClock(mm) === 'live'; }
-  // no live feed, so the badge links to a Google search: its live match card while in play,
-  // its finished card during the gap before openfootball posts the result
-  const liveSearch = mm => 'https://www.google.com/search?q=' + encodeURIComponent(mm.home + ' vs ' + mm.away);
+  // a Google search that reliably finds one specific match: the two teams, the date, and the score
+  // when we have it. Used by the live badge link (in play / awaiting) and the search button on played cards.
+  function matchSearch(mm, a){
+    const day = (mm.date || '').trim(), score = a ? ` ${a.hs}-${a.as}` : '';
+    return 'https://www.google.com/search?q=' + encodeURIComponent(`${mm.home} vs ${mm.away}${score} ${day} World Cup`.replace(/\s+/g,' ').trim());
+  }
+  const liveSearch = mm => matchSearch(mm, null);   // in play / awaiting: teams + date, no score yet
   const liveBadge = mm => {
     const live = matchLive(mm);
     const label = live ? 'In play' : 'Awaiting result';
@@ -853,8 +924,9 @@
       clab = 'predicted';
       if (matchPending(mm)) predRow = `<div class="predline">${liveBadge(mm)}</div>`;
     }
+    const srch = a ? `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="Find this match and result on Google" data-tip="Search this match and result on Google">&#8599;</a>` : '';
     return `<div class="m" data-ko="${mm.kickoff_utc}">
-      <div class="mcap">${cap}</div>
+      <div class="mcap">${cap}${srch}</div>
       <div class="top"><div class="ta">${mm.home}</div>${chip}<div class="tb">${mm.away}</div><div class="sclab clab">${clab}</div></div>
       ${predRow}
       <div class="wdl"><i class="w" style="width:${mm.p_home/tot*100}%"></i><i class="d" style="width:${mm.p_draw/tot*100}%"></i><i class="l" style="width:${mm.p_away/tot*100}%"></i></div>
@@ -891,7 +963,7 @@
   }
   function fetchFeed(){                                 // the one network call; repaints only on a real change
     LAST_FETCH = Date.now();
-    return fetch(ACT_SRC, {cache:'no-store'})
+    return fetch(ACT_SRC, {cache:'no-store', signal: AbortSignal.timeout?.(15e3)})   // bail on a stalled connection, like the Python fetcher's timeout
       .then(r => { if (!r.ok) throw 0; return r.text(); })
       .then(txt => {
         const parsed = parseActuals(txt), sig = JSON.stringify(parsed);
@@ -959,35 +1031,30 @@
   const REC=new Set(['hybrid','market_pure']);
   const MODEL_TIP={
     elo:'<b>Pure Elo.</b> Ranks teams on results alone, like a chess rating. Simple and hard to fool, but knows nothing about how a team plays. Backs the favorites hardest.',
-    score:`<b>Pure Goals.</b> Learns each team’s attack and defense from ${dcm} internationals, so it predicts actual scorelines. Tends to overrate teams that score a lot against weak opponents.`,
-    hybrid:'<b>Hybrid.</b> Pure Elo and Dixon-Coles simply averaged. Each patches the other’s blind spot. The best guess built from results alone, and the only one validated on internationals.',
+    score:`<b>Pure Goals.</b> Learns each team's attack and defense from ${dcm} internationals, so it predicts actual scorelines. Tends to overrate teams that score a lot against weak opponents.`,
+    hybrid:'<b>Hybrid.</b> Pure Elo and Pure Goals simply averaged. Each patches the other\'s blind spot. The best guess built from results alone, and the best performer on the out-of-sample international test.',
     market:'<b>Hybrid + Market.</b> The Hybrid nudged halfway toward the bookmakers. Roughly how a lot of professional models work.',
-    market_pure:'<b>Pure Market.</b> The bookmakers alone, calibrated so the simulated title odds match the published ones. The smartest single guess of the five.'
+    market_pure:'<b>Pure Market.</b> The bookmakers alone, calibrated so the simulated title odds match the published ones. On the evidence (a club-odds proxy) the closest thing to a single best guess of the five.'
   };
   // model switcher: pills on desktop, dropdown on mobile (same options, same tooltips)
-  const stripLabel = s => (s||'').replace(/^<b>.*?<\/b>\s*/,'');   // drop the leading bold name, the row already shows it
   document.getElementById('modelbar').innerHTML =
     '<span class="mlbl">Model</span>' +
-    '<div class="mpills" id="mpills"></div>' +
     '<div class="mdrop" id="mdrop">' +
-      '<button class="mdtrigger" id="mdtrigger" aria-haspopup="listbox" aria-expanded="false"></button>' +
-      '<div class="mdmenu" id="mdmenu" role="listbox"></div>' +
+      '<button class="mdtrigger" id="mdtrigger" aria-haspopup="true" aria-expanded="false"></button>' +
+      '<div class="mdmenu" id="mdmenu"></div>' +
     '</div>';
-  const mpills = document.getElementById('mpills'),
-        mdrop = document.getElementById('mdrop'),
+  const mdrop = document.getElementById('mdrop'),
         mdtrigger = document.getElementById('mdtrigger'),
         mdmenu = document.getElementById('mdmenu');
   function renderModel(){
-    mpills.innerHTML = order.map(k=>{
-      const c = 'mbtn' + (REC.has(k)?' rec':' dim') + (k===CUR?' on':'');
-      return `<button class="${c}" data-m="${k}" data-tip="${MODEL_TIP[k]||''}">${LABELS[k]}</button>`;
-    }).join('');
     mdtrigger.innerHTML = `<span class="mdcur">${LABELS[CUR]}</span><span class="mdcaret"></span>`;
+    // each row is a real button (keyboard-operable); the (i) carries the description as a data-tip,
+    // so hover, focus, and tap all surface it through the shared tooltip engine.
     mdmenu.innerHTML = order.map(k=>
-      `<div class="mditem${k===CUR?' on':''}" role="option" aria-selected="${k===CUR}" data-m="${k}">`
-      + `<div class="mdrow"><span class="mdname">${LABELS[k]}</span>${REC.has(k)?'<span class="mdtag">pick</span>':''}`
-      + `<button class="mdi" type="button" tabindex="-1" aria-label="About ${LABELS[k]}">i</button></div>`
-      + `<div class="mddesc">${stripLabel(MODEL_TIP[k])}</div></div>`
+      `<div class="mditem${k===CUR?' on':''}">`
+      + `<button class="mdrow" type="button" data-m="${k}"${k===CUR?' aria-current="true"':''}>`
+      + `<span class="mdname">${LABELS[k]}</span>${REC.has(k)?'<span class="mdtag">pick</span>':''}</button>`
+      + `<button class="mdi" type="button" data-tip="${MODEL_TIP[k]}" aria-label="About ${LABELS[k]}">i</button></div>`
     ).join('');
   }
   function closeDrop(){ mdrop.classList.remove('open'); mdtrigger.setAttribute('aria-expanded','false'); }
@@ -995,17 +1062,9 @@
     CUR = k; closeDrop(); renderModel(); paintLive();
   }
   renderModel();
-  mpills.addEventListener('click', e=>{ const b=e.target.closest('.mbtn'); if(b) selectModel(b.dataset.m); });
   mdmenu.addEventListener('click', e=>{
-    const info = e.target.closest('.mdi');
-    if(info){                                   // (i): reveal this model's description, keep the menu open, do not select
-      e.stopPropagation();
-      const item = info.closest('.mditem'), wasOpen = item.classList.contains('info');
-      mdmenu.querySelectorAll('.mditem.info').forEach(x=>x.classList.remove('info'));
-      if(!wasOpen) item.classList.add('info');
-      return;
-    }
-    const it = e.target.closest('.mditem'); if(it) selectModel(it.dataset.m);
+    if(e.target.closest('.mdi')){ e.stopPropagation(); return; }   // (i): tooltip only, keep the menu open, never select
+    const it = e.target.closest('.mdrow'); if(it) selectModel(it.dataset.m);
   });
   mdtrigger.addEventListener('click', e=>{
     e.stopPropagation();
@@ -1026,13 +1085,13 @@
           trust:'Goal counts and the home edge (about 1.31x), not only who wins.',
           watch:'It rewards scoring heavily against weak teams, so it overrates teams like Japan and Algeria.'},
     hybrid: {def:"Pure Elo and Pure Goals averaged together, each one covering the other's blind spot.",
-          trust:'The best results-only read, and the only model checked against real internationals. The steadiest of them all.',
-          watch:'It leans on recent form, so it loves Argentina and rates France below the bookmakers.'},
+          trust:'The best results-only read, validated on internationals like Pure Elo and Pure Goals, and the steadiest of them all.',
+          watch:'Built from results, it rates Argentina high and France below the bookmakers.'},
     market: {def:"The Hybrid nudged halfway toward the ratings the bookmakers' title odds imply.",
           trust:"A middle path: some of the market's wisdom without handing it the whole forecast.",
           watch:'It lost out in testing, never quite the market and no longer the pure results read. Not the one to build around.'},
     market_pure: {def:"The bookmakers' own implied ratings, played all the way through the bracket.",
-          trust:'The title call. It beat a solid Elo model across 5,327 matches of real odds, so it is the one to trust.',
+          trust:'The title call. The market beat a solid Elo model across 5,327 club matches of real odds (a proxy, since international odds were unavailable), the main reason to lean on it.',
           watch:'It is pinned to pre-tournament odds, not live match prices, so it is only ever as sharp as the bookmakers.'}
   };
 
@@ -1131,8 +1190,8 @@
           const movePhrase = d>0 ? ` They sit ${d} ${d>1?'spots':'spot'} higher than that now.`
                            : d<0 ? ` They sit ${-d} ${-d>1?'spots':'spot'} lower than that now.`
                            : ' Right on it so far.';
-          const move = d>0 ? ` <span class="gmove up">${d}</span>`
-                     : d<0 ? ` <span class="gmove down">${-d}</span>` : '';
+          const move = d>0 ? ` <span class="gmove up" aria-label="up ${d}">${d}</span>`
+                     : d<0 ? ` <span class="gmove down" aria-label="down ${-d}">${-d}</span>` : '';
           return `<div class="grow">
             <div class="tn"><span class="livepos${st.pos[t]<=2?' qual':''}" data-tip="Currently <b>${ord(st.pos[t])}</b> in Group ${g} on results. Top two and the best third-placed teams advance.">${st.pos[t]}</span>${t} <i>Elo ${T[t].elo}</i></div>
             <div class="gp" data-tip="Points so far.">${r.pts}<small>pts</small></div>
@@ -1273,26 +1332,28 @@
   }
   function scrollToCurrentMatch(){
     const list = document.getElementById('schedList'); if (!list) return;
+    const w = liveWindow();
+    if (!w.inplay && !w.pending && w.next >= 90*60e3) return;   // nothing live or imminent: stay at the top so the scoreboard and legend show first
     const target = scheduleAnchor(allMatches(), Date.now()); if (!target) return;
     const el = list.querySelector(`.m[data-ko="${target.kickoff_utc}"]`); if (!el) return;
     const tb = document.querySelector('.topbar');
     const off = (tb ? tb.offsetHeight : 0) + 12;
     const y = el.getBoundingClientRect().top + window.scrollY - off;
-    window.scrollTo({top: Math.max(0, y), behavior:'smooth'});
+    window.scrollTo({top: Math.max(0, y), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
   }
 
   // tabs
   document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
-    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+    document.querySelectorAll('.tab').forEach(b=>{ b.classList.remove('on'); b.setAttribute('aria-selected','false'); });
     document.querySelectorAll('section').forEach(s=>s.classList.remove('on'));
-    btn.classList.add('on');
+    btn.classList.add('on'); btn.setAttribute('aria-selected','true');
     document.getElementById(btn.dataset.t).classList.add('on');
     if (btn.dataset.t === 'schedule') { scrollToCurrentMatch(); return; }
     // only pull up to the sticky bar if it has been scrolled past, so switching
     // tabs near the top does not jump the page around
     const tb = document.querySelector('.topbar');
     const tgt = tb ? tb.offsetTop : 0;
-    if (window.scrollY > tgt + 2) window.scrollTo({top:tgt, behavior:'smooth'});
+    if (window.scrollY > tgt + 2) window.scrollTo({top:tgt, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
   }));
   // in-prose links that jump to another tab
   // Title Odds tab: Live vs Day 0 (frozen pre-tournament) view

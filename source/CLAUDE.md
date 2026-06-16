@@ -129,7 +129,7 @@ club-match validation figures are still hardcoded in the copy and must be refres
 - Market proxy (5,327 club matches, real odds): the market beats a competent Elo model; a 50/50 blend
   beats the model but does not beat the market. Markets tend to win.
 - Recommendation: Pure Market for the best forecast; Hybrid as the defensible standalone model
-  (only one validated on internationals); do not center Hybrid + Market (dominated both ways); hold
+  (the one recommendation validated on internationals, not a club-odds proxy); do not center Hybrid + Market (dominated both ways); hold
   all of it loosely (none validated on a real World Cup).
 
 ## The Knockout tab
