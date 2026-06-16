@@ -1317,6 +1317,23 @@
       sync.innerHTML = `<span class="dotoff"></span>Loading results…`;
   }
 
+  // open one group's match predictions, open the whole grid row (the groups sitting side by side).
+  // capture phase because the native <details> toggle event does not bubble; offsetTop groups a row.
+  (function(){
+    const grid = document.getElementById('groupGrid'); if(!grid) return;
+    let syncing = false;
+    grid.addEventListener('toggle', e=>{
+      const d = e.target;
+      if(syncing || !(d instanceof HTMLDetailsElement) || !d.classList.contains('matches')) return;
+      const top = d.closest('.gcard').offsetTop;
+      syncing = true;
+      grid.querySelectorAll('details.matches').forEach(o=>{
+        if(o!==d && Math.abs(o.closest('.gcard').offsetTop - top) < 2) o.open = d.open;
+      });
+      syncing = false;
+    }, true);
+  })();
+
   // first paint + start the single live heartbeat (hydrates cached results, then polls)
   startLive();
 
