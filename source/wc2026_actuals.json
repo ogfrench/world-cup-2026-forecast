@@ -110,5 +110,12 @@
   "away": "Cape Verde",
   "hs": 0,
   "as": 0
+ },
+ {
+  "group": "I",
+  "home": "France",
+  "away": "Senegal",
+  "hs": 3,
+  "as": 1
  }
 ]
