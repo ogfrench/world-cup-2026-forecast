@@ -552,7 +552,7 @@
   <!-- KNOCKOUT PHASE (placeholder, built once the round of 32 is set) -->
   <section id="knockout" role="tabpanel" aria-labelledby="tab-knockout" tabindex="0">
     <h2 class="sec-h">Knockout bracket</h2>
-    <p class="lead">The model's pick and advance odds for every knockout tie, with the real result slotting in color-coded, round by round. It fills in automatically once the group stage ends and the round of 32 is set.</p>
+    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. It fills in automatically once the group stage ends and the round of 32 is set.</p>
     <div class="scoreboard" id="koScore"></div>
     <div id="koBracket"></div>
   </section>
@@ -603,7 +603,7 @@
       <h3>Where it's weak</h3>
       <p><b>It backs the favorites too hard.</b> A fixed-strength simulation cannot see a tournament turn the way a real one does, an injury, a sudden run of great form, a red card at the wrong moment, so probability piles onto the big teams (Pure Elo most, Pure Market least). The head-to-heads still look right: Spain against Argentina is close to a coin flip.</p>
       <p><b>The live odds follow results, not form.</b> Once a game is played the odds re-simulate with that score locked in, but the underlying ratings stay at their pre-tournament strength, frozen on 6 June. Winning by a little and winning by a lot move them the same amount, and injuries, current form, and a re-pricing market do not show up at all.</p>
-      <p><b>The validation is encouraging, not the last word.</b> The 1,230 test games are mostly one-sided qualifiers and friendlies that almost any model gets right, and there are very few of the tight knockout ties a World Cup turns on. The test grades match calls, not title odds, and those cannot be checked until the trophy is lifted.</p>
+      <p><b>The validation is encouraging, not the last word.</b> The 1,230 test games are mostly one-sided qualifiers and friendlies that almost any model gets right, and there are very few of the tight knockout matches a World Cup turns on. The test grades match calls, not title odds, and those cannot be checked until the trophy is lifted.</p>
       <p><b>The single most likely score is shaky.</b> In an even game 1-1, 1-0 and 0-0 sit within a few percent of each other, so the headline score can flip on very little. The win, draw and loss split is firmer than the exact number. The model also draws a little less than real life, around 23 to 24 percent in the groups against a 26 to 28 percent norm.</p>
       <p><b>There is no top-scorer model.</b> The engine rates teams, not players. The <a class="xlink" href="#" data-go="topscorers">Top Scorers</a> tab puts the bookmakers' pre-tournament pick next to whoever is actually scoring.</p>
       <p><b>It is a baseline, not a sure thing.</b> Built from public data and standard methods, it is good for the shape of a tournament and a feel for the odds, and not for staking anything you would miss.</p>
@@ -822,7 +822,7 @@
       if(t.kickoff_utc && matchPending(mm)) predRow = `<div class="predline">${liveBadge(mm)}</div>`;  // in-play / awaiting badge
     }
     return `<div class="m">
-      <div class="mcap"><span class="capven">${fav} favored · ${fmt(favAdv)}% to advance</span>${a ? `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="Find this tie and result on Google" data-tip="Search this tie and result on Google">&#8599;</a>` : ''}</div>
+      <div class="mcap"><span class="capven">${fav} favored · ${fmt(favAdv)}% to advance</span>${a ? `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="Find this match and result on Google" data-tip="Search this match and result on Google">&#8599;</a>` : ''}</div>
       <div class="top"><div class="ta">${t.a}</div>${chip}<div class="tb">${t.b}</div><div class="sclab clab">${clab}</div></div>
       ${predRow}
       <div class="wdl" data-tip="Chance each side advances, after extra time and any shootout."><i class="w" style="width:${t.adv_a}%"></i><i class="l" style="width:${t.adv_b}%"></i></div>
@@ -834,7 +834,7 @@
     const KO = MODELS[CUR].knockout || {}, ties = Object.values(KO);
     const sb = document.getElementById('koScore');
     if(!ties.length){
-      host.innerHTML = `<div class="pending">The bracket fills in here automatically once the group stage ends and the round of 32 is set (around June 28). Each tie then shows the ${LABELS[CUR]||CUR} prediction next to the real result, color-coded, round by round.</div>`;
+      host.innerHTML = `<div class="pending">The bracket fills in here automatically once the group stage ends and the round of 32 is set (around June 28). Each match then shows the ${LABELS[CUR]||CUR} prediction next to the real result, color-coded, round by round.</div>`;
       if(sb) sb.innerHTML=''; return;
     }
     const ROUNDS = [['r32','Round of 32'],['r16','Round of 16'],['qf','Quarter-finals'],['sf','Semi-finals'],['final','Final']];
@@ -850,8 +850,8 @@
       if(a.winner){ advTot++; if((t.adv_a>=t.adv_b?t.a:t.b)===a.winner) advRight++; } });
     if(sb) sb.innerHTML = scoreboardHTML({played,against,exact}, LABELS[CUR]||CUR,
       advTot ? {num:`${advRight}/${advTot}`, cap:'advancers called',
-                tip:'Knockout ties where the model favored the team that actually advanced.'} : null,
-      'on the knockout ties');
+                tip:'Knockout matches where the model favored the team that actually advanced.'} : null,
+      'on the knockout matches');
   }
   function renderScorers(){
     const exp=document.getElementById('scExpected');
