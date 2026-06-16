@@ -92,6 +92,13 @@
  },
  {
   "group": "H",
+  "home": "Saudi Arabia",
+  "away": "Uruguay",
+  "hs": 1,
+  "as": 1
+ },
+ {
+  "group": "H",
   "home": "Spain",
   "away": "Cape Verde",
   "hs": 0,
