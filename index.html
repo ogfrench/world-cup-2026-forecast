@@ -1124,7 +1124,7 @@
         <div class="tnm">${t}</div>
         <div class="pct">${fmt(gv(t,'champ'))}<span style="font-size:15px">%</span></div>
         <div class="lbl">to win the World Cup</div>
-        <div class="elo">Elo ${T[t].elo} · reaches final ${fmt(gv(t,'final'))}%</div>
+        <div class="elo">Elo ${T[t].elo} · reaches final ${fmt(gv(t,'final'))}% of runs</div>
         ${(live && !day0)?podMove(T[t].champ,T[t].champ0):''}
       </div>`).join('');
 
