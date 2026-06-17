@@ -145,5 +145,12 @@
   "away": "DR Congo",
   "hs": 1,
   "as": 1
+ },
+ {
+  "group": "L",
+  "home": "England",
+  "away": "Croatia",
+  "hs": 4,
+  "as": 2
  }
 ]
