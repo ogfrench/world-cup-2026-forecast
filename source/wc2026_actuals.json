@@ -1,6 +1,13 @@
 [
  {
   "group": "A",
+  "home": "Czechia",
+  "away": "South Africa",
+  "hs": 1,
+  "as": 1
+ },
+ {
+  "group": "A",
   "home": "Mexico",
   "away": "South Africa",
   "hs": 2,
