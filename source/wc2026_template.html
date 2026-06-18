@@ -137,9 +137,8 @@
   .sw{width:14px;height:10px;border-radius:2px;display:inline-block}
   .sw.model{background:var(--lime)}
   .sw.day0{background:none;width:0;height:13px;border-radius:0;border-left:2px dashed var(--faint);opacity:.7}
-  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;border:2px solid}
-  .dot.opta{border-color:var(--blue)}
-  .dot.mkt{border-color:var(--gold)}
+  .sw.opta{background:none;width:0;height:13px;border-radius:0;border-left:2px dashed var(--blue)}
+  .sw.mkt{background:none;width:0;height:13px;border-radius:0;border-left:2px dashed var(--gold)}
 
   .bar-row{display:grid;grid-template-columns:128px 1fr 54px;align-items:center;gap:12px;padding:7px 0}
   .bar-row .nm{font-weight:700;font-size:13.5px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -525,11 +524,11 @@
     </div>
     <div class="podium" id="podium"></div>
     <h2 class="sec-h">Who lifts the trophy</h2>
-    <p class="lead">Each bar is a team's chance of winning the tournament under the selected model. The dots mark Opta's supercomputer and the bookmakers, as an outside comparison.</p>
+    <p class="lead">Each bar is a team's chance of winning the tournament under the selected model. The dashed ticks on each bar mark Opta's supercomputer, the bookmakers, and the Day 0 odds, as outside comparisons.</p>
     <div class="legend">
       <span data-tip="The model you've selected. Each bar is its chance that the team wins the whole tournament."><i class="sw model"></i> <span class="has-tip">Selected model</span></span>
-      <span data-tip="Opta's published supercomputer title odds, shown as an outside comparison. None of these models was trained on them."><i class="dot opta"></i> <span class="has-tip">Opta supercomputer</span></span>
-      <span data-tip="The bookmakers' title odds (Polymarket / Kalshi / FanDuel) with their built-in margin removed. A separate published-odds reference, not the Pure Market model."><i class="dot mkt"></i> <span class="has-tip">Bookmakers</span></span>
+      <span data-tip="Opta's published supercomputer title odds, shown as an outside comparison. None of these models was trained on them."><i class="sw opta"></i> <span class="has-tip">Opta supercomputer</span></span>
+      <span data-tip="The bookmakers' title odds (Polymarket / Kalshi / FanDuel) with their built-in margin removed. A separate published-odds reference, not the Pure Market model."><i class="sw mkt"></i> <span class="has-tip">Bookmakers</span></span>
       <span data-tip="The grey tick on each bar marks where the team started before the tournament: its Day 0 (pre-tournament) odds, shown once games are played."><i class="sw day0"></i> <span class="has-tip">Day 0</span></span>
       <span style="color:var(--faint)" data-tip="Monte Carlo standard error: how much this number would wobble if you re-ran the 50,000 tournaments. Small means the estimate is stable."><span class="has-tip">± = Monte Carlo standard error</span></span>
     </div>
