@@ -29,6 +29,13 @@
  },
  {
   "group": "B",
+  "home": "Canada",
+  "away": "Qatar",
+  "hs": 6,
+  "as": 0
+ },
+ {
+  "group": "B",
   "home": "Qatar",
   "away": "Switzerland",
   "hs": 1,
