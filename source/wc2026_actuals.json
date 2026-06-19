@@ -84,6 +84,13 @@
   "as": 1
  },
  {
+  "group": "D",
+  "home": "USA",
+  "away": "Australia",
+  "hs": 2,
+  "as": 0
+ },
+ {
   "group": "E",
   "home": "Germany",
   "away": "Curacao",
