@@ -134,6 +134,13 @@
  },
  {
   "group": "F",
+  "home": "Netherlands",
+  "away": "Sweden",
+  "hs": 5,
+  "as": 1
+ },
+ {
+  "group": "F",
   "home": "Sweden",
   "away": "Tunisia",
   "hs": 5,
