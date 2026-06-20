@@ -92,6 +92,13 @@
  },
  {
   "group": "D",
+  "home": "Turkiye",
+  "away": "Paraguay",
+  "hs": 0,
+  "as": 1
+ },
+ {
+  "group": "D",
   "home": "USA",
   "away": "Paraguay",
   "hs": 4,
