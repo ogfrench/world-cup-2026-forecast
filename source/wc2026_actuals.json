@@ -120,6 +120,13 @@
  },
  {
   "group": "E",
+  "home": "Germany",
+  "away": "Ivory Coast",
+  "hs": 2,
+  "as": 1
+ },
+ {
+  "group": "E",
   "home": "Ivory Coast",
   "away": "Ecuador",
   "hs": 1,
