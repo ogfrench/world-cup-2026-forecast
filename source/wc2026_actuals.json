@@ -176,6 +176,13 @@
  },
  {
   "group": "G",
+  "home": "Belgium",
+  "away": "Iran",
+  "hs": 0,
+  "as": 0
+ },
+ {
+  "group": "G",
   "home": "Iran",
   "away": "New Zealand",
   "hs": 2,
