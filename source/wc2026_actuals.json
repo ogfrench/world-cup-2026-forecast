@@ -113,6 +113,13 @@
  },
  {
   "group": "E",
+  "home": "Ecuador",
+  "away": "Curacao",
+  "hs": 0,
+  "as": 0
+ },
+ {
+  "group": "E",
   "home": "Germany",
   "away": "Curacao",
   "hs": 7,
