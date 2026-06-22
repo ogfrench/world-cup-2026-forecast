@@ -246,6 +246,13 @@
  },
  {
   "group": "J",
+  "home": "Argentina",
+  "away": "Austria",
+  "hs": 2,
+  "as": 0
+ },
+ {
+  "group": "J",
   "home": "Austria",
   "away": "Jordan",
   "hs": 3,
