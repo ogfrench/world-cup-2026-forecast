@@ -189,6 +189,13 @@
   "as": 2
  },
  {
+  "group": "G",
+  "home": "New Zealand",
+  "away": "Egypt",
+  "hs": 1,
+  "as": 3
+ },
+ {
   "group": "H",
   "home": "Saudi Arabia",
   "away": "Uruguay",
