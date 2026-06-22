@@ -80,7 +80,10 @@ jobs:
           if git diff --cached --quiet; then
             echo "Nothing to commit."
           else
-            git commit -m "Refresh live forecast from played results [skip ci]"
+            # [skip actions] (not [skip ci]) so GitHub Actions CI is skipped but Netlify still deploys.
+            # Netlify treats [skip ci] / [ci skip] / [skip netlify] as "skip this build", which would
+            # leave the live odds frozen while the repo refreshes. [skip actions] only GitHub honours.
+            git commit -m "Refresh live forecast from played results [skip actions]"
             git pull --rebase origin main   # avoid a non-fast-forward abort if main moved during the re-sim
             git push
           fi
