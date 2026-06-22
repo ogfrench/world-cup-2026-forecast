@@ -8,6 +8,9 @@
   [headers.values]
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    # Always revalidate the single HTML file so a reload picks up the latest deploy (the live odds
+    # are baked into the page, so a stale cached page would show an old "updated for N games" count).
+    Cache-Control = "public, max-age=0, must-revalidate"
     # The page has no embeddable use, so refuse framing (clickjacking) two ways.
     X-Frame-Options = "DENY"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
