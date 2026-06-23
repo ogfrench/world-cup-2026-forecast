@@ -245,6 +245,13 @@
   "as": 4
  },
  {
+  "group": "I",
+  "home": "Norway",
+  "away": "Senegal",
+  "hs": 3,
+  "as": 2
+ },
+ {
   "group": "J",
   "home": "Argentina",
   "away": "Algeria",
@@ -264,6 +271,13 @@
   "away": "Jordan",
   "hs": 3,
   "as": 1
+ },
+ {
+  "group": "J",
+  "home": "Jordan",
+  "away": "Algeria",
+  "hs": 1,
+  "as": 2
  },
  {
   "group": "K",
