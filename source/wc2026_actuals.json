@@ -232,6 +232,13 @@
  },
  {
   "group": "I",
+  "home": "France",
+  "away": "Iraq",
+  "hs": 3,
+  "as": 0
+ },
+ {
+  "group": "I",
   "home": "Iraq",
   "away": "Norway",
   "hs": 1,
