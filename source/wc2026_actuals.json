@@ -309,6 +309,13 @@
  },
  {
   "group": "L",
+  "home": "England",
+  "away": "Ghana",
+  "hs": 0,
+  "as": 0
+ },
+ {
+  "group": "L",
   "home": "Ghana",
   "away": "Panama",
   "hs": 1,
