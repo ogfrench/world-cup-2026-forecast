@@ -29,6 +29,13 @@
  },
  {
   "group": "B",
+  "home": "Bosnia-Herzegovina",
+  "away": "Qatar",
+  "hs": 3,
+  "as": 1
+ },
+ {
+  "group": "B",
   "home": "Canada",
   "away": "Bosnia-Herzegovina",
   "hs": 1,
@@ -53,6 +60,13 @@
   "home": "Switzerland",
   "away": "Bosnia-Herzegovina",
   "hs": 4,
+  "as": 1
+ },
+ {
+  "group": "B",
+  "home": "Switzerland",
+  "away": "Canada",
+  "hs": 2,
   "as": 1
  },
  {
