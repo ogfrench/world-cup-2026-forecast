@@ -1399,11 +1399,17 @@
     btn.classList.add('on'); btn.setAttribute('aria-selected','true');
     document.getElementById(btn.dataset.t).classList.add('on');
     if (btn.dataset.t === 'schedule') { scrollToCurrentMatch(); return; }
-    // only pull up to the sticky bar if it has been scrolled past, so switching
-    // tabs near the top does not jump the page around
-    const tb = document.querySelector('.topbar');
-    const tgt = tb ? tb.offsetTop : 0;
-    if (window.scrollY > tgt + 2) window.scrollTo({top:tgt, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    // Only pull up to the sticky bar if it has been scrolled past, so switching tabs near the top
+    // does not jump the page around. The bar's natural offset is the bottom of the header above it
+    // (the bar's own offsetTop tracks the scroll while it is stuck, so it can't be used). Deferred to
+    // the next frame: switching from a tall tab to a shorter one makes the browser clamp the scroll
+    // on the section swap, so the target and the scroll must be read/issued after that settles,
+    // otherwise you are stranded at the bottom of the shorter tab.
+    const hdr = document.querySelector('header');
+    requestAnimationFrame(()=>{
+      const tgt = hdr ? hdr.getBoundingClientRect().bottom + window.scrollY : 0;
+      if (window.scrollY > tgt + 2) window.scrollTo({top:tgt, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    });
   }));
   // in-prose links that jump to another tab
   // Title Odds tab: Live vs Day 0 (frozen pre-tournament) view
