@@ -8,6 +8,13 @@
  },
  {
   "group": "A",
+  "home": "Czechia",
+  "away": "Mexico",
+  "hs": 0,
+  "as": 3
+ },
+ {
+  "group": "A",
   "home": "Mexico",
   "away": "South Africa",
   "hs": 2,
@@ -16,6 +23,13 @@
  {
   "group": "A",
   "home": "Mexico",
+  "away": "South Korea",
+  "hs": 1,
+  "as": 0
+ },
+ {
+  "group": "A",
+  "home": "South Africa",
   "away": "South Korea",
   "hs": 1,
   "as": 0

@@ -46,6 +46,8 @@ Build artifacts and source:
 - `wc2026_actuals.json`: played group results in engine team names, the conditioning input (refreshed
   from openfootball). `wc2026_ko_actuals.json` is the same for played knockout ties.
 - `wc2026_schedule.json`: the official 72-match group schedule (date, kickoff, home/away, venue), from openfootball.
+- `wc2026_ko_schedule.json`: the official knockout calendar keyed by engine bracket slot (73-103), date/
+  kickoff/venue plus the bracket descriptors used to verify slot alignment, from openfootball `cup_finals.txt`.
 
 Checks and tests:
 - `check_app.js`: CI check that `index.html` is built, every `<script>` block parses, and all five models are present.
@@ -134,25 +136,54 @@ club-match validation figures are still hardcoded in the copy and must be refres
 
 ## The Knockout tab
 
-Once the round of 32 is set, `make_data` emits a per-model `knockout` section (via `ko_predictions`)
-and `renderKnockout` draws the bracket, each tie showing the model's pick next to the real result.
+The bracket fills in incrementally as groups finish, not all-at-once. `actual_bracket` settles each
+group that has all six games played and emits an R32 tie the moment both its feeders are known: the
+eight ties with no third-placed team unlock as their two groups complete, and the eight third-fed ties
+once the set of eight best thirds is known. A third's slot is combination-dependent for ten groups but
+fixed for K (slot 80) and L (slot 87), so a K/L third is placed early once `_third_qualified` shows it
+has clinched a top-8 finish (`C + R <= 7`: settled thirds above it plus one per unsettled group, worst
+case). `make_data` emits the per-model `knockout` section via `ko_predictions`; `renderKnockout` shows a
+"N of 16 set" note while the R32 is partial.
+
+The whole bracket is built under both Elo tails (`_bracket_core(..., elo_sign=+1/-1)`) and only slots
+that agree are emitted. This is the defer guard: a boundary that only the Elo tail would decide (a dead
+tie FIFA would settle on fair play / ranking / lots, which we have no data for) is left pending rather
+than guessed. It resolves once the official bracket is published.
+
 `koCard` is 120-minute correct: the score shown and graded is the regulation-plus-extra-time result,
-and penalties never count toward it (a 1-1 that goes to a shootout stays 1-1; the shootout only
-decides who advances, carried separately as `played.winner`). This mirrors how Scorito scores knockout
-games. The 90-minute Poisson is only for the group cards; `ko_report` handles extra time and the
-shootout for KO ties.
+and penalties never count toward it (a 1-1 that goes to a shootout stays 1-1; the shootout only decides
+who advances, carried separately as `played.winner`). The 90-minute Poisson is only for the group cards;
+`ko_report` handles extra time and the shootout for KO ties.
 
 The bracket has the same live state as Schedule and Groups, reusing `matchState`/`liveBadge`/`actualFor`.
 `koActual(t)` resolves a tie's real result, preferring the server-conditioned `played`, else the live
 browser feed keyed by the tie's `date` (the advancer derived from a decisive score; a draw is a shootout
-the feed score cannot read, so the winner is left unknown). A tie with a `kickoff_utc` shows the
-in-play/awaiting badge, and `koTies()` folds the ties into the live heartbeat (`liveWindow`/`badgeSig`).
-For this to light up, the `knockout` ties need `date`/`kickoff_utc` attached once the R32 is set (tracked
-in its issue); the front end is already built and tested against a synthetic bracket.
+the feed score cannot read, so the winner is left unknown). KO scheduling is keyed by bracket slot (the
+teams are unknown until the groups finish): `wc2026_ko_schedule.json` carries date/kickoff/venue per slot
+from the official openfootball calendar, and `merge_schedule.py` attaches it onto each emitted tie.
+`test_pipeline.py` guards that every slot's bracket descriptors match the engine (`R32_SYMBOLIC` and the
+feeder pairs), so a tie can never carry the wrong date. Note the engine has no third-place playoff and
+its final is slot 103, which maps to official match 104 (openfootball match 103 is the third-place game).
+A tie with a `kickoff_utc` shows the in-play/awaiting badge and folds into the live heartbeat via
+`koTies()`. The one thing only confirmable once the R32 actually plays is the live feed's KO line format;
+the front end degrades safely if a predicted matchup did not happen (no result shown, never a wrong one).
 
 The per-team Netherlands and France timeline tabs were removed: prediction-only surface (a generic
 first-goal-minute curve, a derived half-time) with no live state, not worth the maintenance. The app
 is the shared forecast tabs only.
+
+## Group ranking (FIFA 2026)
+
+`rank_group` (engine) and `groupStandings` (JS) implement the 2026 order: points, then head-to-head
+(points, GD, goals) among the tied teams, then overall GD, overall goals. Head-to-head before overall
+GD is new for 2026; do not "correct" it back. Both do FIFA's re-application: when head-to-head separates
+some teams but leaves a subset tied, the criteria are re-applied to that subset with its head-to-head
+recomputed among just those teams (a flat sort gets 3-/4-way ties wrong). Elo is the final separator,
+standing in for fair play (cards), the FIFA world ranking, and drawing of lots, none of which we have
+data for. In the simulation that substitution is harmless (exact multi-way ties are rare). In the live
+bracket it could drift, so `actual_bracket` defers any boundary the Elo tail alone decides (see above).
+The group "standings called" stat grades the full finishing order against the Day 0 prediction
+(`win_group0`), not the live-conditioned `win_group`, and only counts finished groups.
 
 ## The conceptual trap that bit us repeatedly (do not repeat)
 
