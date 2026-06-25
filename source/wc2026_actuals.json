@@ -92,10 +92,24 @@
  },
  {
   "group": "C",
+  "home": "Morocco",
+  "away": "Haiti",
+  "hs": 4,
+  "as": 2
+ },
+ {
+  "group": "C",
   "home": "Scotland",
   "away": "Morocco",
   "hs": 0,
   "as": 1
+ },
+ {
+  "group": "C",
+  "home": "Scotland",
+  "away": "Brazil",
+  "hs": 0,
+  "as": 3
  },
  {
   "group": "D",
