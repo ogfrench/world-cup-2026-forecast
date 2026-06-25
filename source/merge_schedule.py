@@ -25,6 +25,24 @@ import json, os
 HERE = os.path.dirname(os.path.abspath(__file__))
 RESULTS = os.path.join(HERE, 'wc2026_results.json')
 SCHEDULE = os.path.join(HERE, 'wc2026_schedule.json')
+KO_SCHEDULE = os.path.join(HERE, 'wc2026_ko_schedule.json')
+
+
+def annotate_knockout(results, ko_sched):
+    """Attach date/kickoff/venue to each known knockout tie by its bracket slot. Returns the count.
+    Knockout ties are keyed by slot, not team pair (the teams are unknown until the groups finish),
+    and are neutral-venue, so there is no home/away reorientation. Idempotent."""
+    by_slot = {r['slot']: r for r in ko_sched}
+    n = 0
+    for model in results['models'].values():
+        for tie in (model.get('knockout') or {}).values():
+            s = by_slot.get(tie['slot'])
+            if s is None:
+                raise SystemExit(f"no KO schedule entry for slot {tie['slot']}")
+            for k in ('date', 'local_time', 'tz', 'kickoff_utc', 'venue'):
+                tie[k] = s[k]
+            n += 1
+    return n
 
 
 def reorient(m):
@@ -61,9 +79,14 @@ def main():
                 m['venue'] = s['venue']
                 n_annotated += 1
 
+    # The KO calendar is fixed in advance, so this attaches date/kickoff/venue to whatever ties the
+    # engine has resolved so far (by slot). See annotate_knockout above.
+    n_ko = annotate_knockout(results, json.load(open(KO_SCHEDULE, encoding='utf-8')))
+
     json.dump(results, open(RESULTS, 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
-    print(f"annotated {n_annotated} match predictions, reoriented {n_reoriented} to official home/away")
+    print(f"annotated {n_annotated} group predictions (reoriented {n_reoriented}) "
+          f"and {n_ko} knockout ties")
 
 
 if __name__ == '__main__':

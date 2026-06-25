@@ -162,7 +162,7 @@ def build_fx():
                       blh=np.array(blh), bla=np.array(bla))
     return fxd
 
-def rank_group(group, results):
+def rank_group(group, results, elo_sign=1):
     teams = [t[0] for t in GROUPS[group]]
     pts = {t: 0 for t in teams}; gf = {t: 0 for t in teams}; ga = {t: 0 for t in teams}
     for h, a, hg, ag in results:
@@ -171,26 +171,39 @@ def rank_group(group, results):
         elif hg < ag: pts[a] += 3
         else: pts[h] += 1; pts[a] += 1
     def h2h(among):
-        hp = {t: 0 for t in among}; hgf = {t: 0 for t in among}; hga = {t: 0 for t in among}
+        s = set(among); hp = {t: 0 for t in among}; hgf = {t: 0 for t in among}; hga = {t: 0 for t in among}
         for h, a, hg, ag in results:
-            if h in among and a in among:
+            if h in s and a in s:
                 hgf[h] += hg; hga[h] += ag; hgf[a] += ag; hga[a] += hg
                 if hg > ag: hp[h] += 3
                 elif hg < ag: hp[a] += 3
                 else: hp[h] += 1; hp[a] += 1
         return hp, hgf, hga
+    # FIFA 2026 order with re-application: within a points-tied block, apply head-to-head among the
+    # block (points, GD, goals), then overall GD, overall goals, then Elo (a deterministic stand-in
+    # for fair play / FIFA ranking / lots, which we have no data for). The first criterion that
+    # splits the block partitions it; any subgroup still tied is re-ranked from the top with its
+    # head-to-head recomputed among just those teams (this recomputation is what the old flat sort
+    # missed). elo_sign flips the Elo tail so callers can detect tail-dependent boundaries.
+    def order_block(block):
+        if len(block) == 1: return list(block)
+        hp, hgf, hga = h2h(block)
+        crits = (lambda t: hp[t], lambda t: hgf[t] - hga[t], lambda t: hgf[t],
+                 lambda t: gf[t] - ga[t], lambda t: gf[t], lambda t: elo_sign * ELO[t])
+        for crit in crits:
+            vals = sorted({crit(t) for t in block}, reverse=True)
+            if len(vals) > 1:                                  # this criterion separates the block
+                out = []
+                for v in vals:
+                    sub = [t for t in block if crit(t) == v]
+                    out.extend(order_block(sub) if len(sub) > 1 else sub)
+                return out
+        return list(block)                                     # unreachable: the Elo tail is unique
     order = sorted(teams, key=lambda t: -pts[t]); final = []; i = 0
     while i < len(order):
         j = i
         while j < len(order) and pts[order[j]] == pts[order[i]]: j += 1
-        block = order[i:j]
-        if len(block) == 1:
-            final.append(block[0])
-        else:
-            hp, hgf, hga = h2h(block)
-            block.sort(key=lambda t: (-hp[t], -(hgf[t] - hga[t]), -hgf[t],
-                                      -(gf[t] - ga[t]), -gf[t], -ELO[t]))
-            final.extend(block)
+        final.extend(order_block(order[i:j]))
         i = j
     stats = {t: (pts[t], gf[t] - ga[t], gf[t]) for t in teams}
     return final, stats
@@ -367,16 +380,47 @@ def load_ko_actuals(path=None):
     path = path or os.path.join(_HERE, 'wc2026_ko_actuals.json')
     return json.load(open(path)) if os.path.exists(path) else []
 
-def _r32_from_standings(group_results):
-    """The round-of-32 ties from FINAL group standings (needs all six games per group)."""
-    winners, runners, thirds, tstats = {}, {}, {}, {}
-    for g in GROUPS:
-        order, stats = rank_group(g, group_results[g])
-        winners[g], runners[g], thirds[g] = order[0], order[1], order[2]
-        tstats[g] = stats[order[2]]
-    ranked = sorted(GROUPS, key=lambda g: (-tstats[g][0], -tstats[g][1], -tstats[g][2], -ELO[thirds[g]]))
-    adv = ranked[:8]
-    return _r32_map(winners, runners, {g: thirds[g] for g in adv}, assign_thirds(adv))
+# Symbolic round-of-32, derived from _r32_map itself so it can never drift from the real bracket:
+# each slot's two feeders become tagged tuples ('W',group), ('R',group), or ('3',slot).
+R32_SYMBOLIC = _r32_map({g: ('W', g) for g in GROUPS}, {g: ('R', g) for g in GROUPS},
+                        {s: ('3', s) for s in ELIG}, {s: s for s in ELIG})
+
+def _third_key(rec, elo_sign=1):
+    """Cross-group third-place ranking key (higher better): points, GD, goals, then the Elo tail."""
+    p, gd, gf = rec['tstat']
+    return (p, gd, gf, elo_sign * ELO[rec['third']])
+
+def _third_qualified(g, settled, elo_sign=1):
+    """True iff group g's third is guaranteed among the best 8 thirds: at most 7 others can finish
+    above it (settled thirds that outrank it, plus one per still-unsettled group, worst case)."""
+    if g not in settled:
+        return False
+    remaining = len(GROUPS) - len(settled)
+    kx = _third_key(settled[g], elo_sign)
+    ahead = sum(1 for h, rec in settled.items() if h != g and _third_key(rec, elo_sign) > kx)
+    return ahead + remaining <= 7
+
+def _resolve_thirds(settled, elo_sign=1):
+    """{slot: team} for third-place slots we can place. Full set of 12 settled: rank all thirds and
+    place the top 8 via Annex C. Partial: only K and L, whose third has a single fixed slot (80, 87),
+    and only once that third has clinched a top-8 finish."""
+    out = {}
+    if len(settled) == len(GROUPS):
+        ranked = sorted(GROUPS, key=lambda g: tuple(-v for v in _third_key(settled[g], elo_sign)))
+        tmap = assign_thirds(ranked[:8])
+        for slot, grp in tmap.items():
+            out[slot] = settled[grp]['third']
+        return out
+    for grp, slot in (('K', 80), ('L', 87)):
+        if _third_qualified(grp, settled, elo_sign):
+            out[slot] = settled[grp]['third']
+    return out
+
+def _resolve_feeder(ref, settled, thirds):
+    kind, key = ref
+    if kind == '3':
+        return thirds.get(key)
+    return settled[key]['W' if kind == 'W' else 'R'] if key in settled else None
 
 def ko_report(a, b):
     """Neutral-venue knockout prediction: modal regulation scoreline, win/draw/loss over 90,
@@ -396,14 +440,22 @@ def ko_report(a, b):
                 adv_a=round(adv_a * 100, 1), adv_b=round((1 - adv_a) * 100, 1),
                 elo_a=ELO[a], elo_b=ELO[b])
 
-def actual_bracket(group_actuals, ko_played):
-    """Resolve the known bracket from played games. Returns {slot: {round, a, b, played|None}}
-    for every matchup whose two teams are known. Empty until every group has finished."""
-    if not all(len(group_actuals.get(g, [])) >= 6 for g in GROUPS):
-        return {}
+def _bracket_core(group_actuals, ko_played, elo_sign):
+    """Build the known bracket under one Elo tail. Fills incrementally: each group with all six games
+    played is settled (winner, runner-up, third); an R32 tie is emitted once both its feeders resolve,
+    and a later-round tie once both its feeder winners are known from played results."""
+    settled = {}
+    for g in GROUPS:
+        res = group_actuals.get(g, [])
+        if len(res) >= 6:
+            order, stats = rank_group(g, res, elo_sign)
+            settled[g] = dict(W=order[0], R=order[1], third=order[2], tstat=stats[order[2]])
+    thirds = _resolve_thirds(settled, elo_sign)
     bracket = {}
-    for slot, (a, b) in _r32_from_standings({g: group_actuals[g] for g in GROUPS}).items():
-        bracket[slot] = dict(round='r32', a=a, b=b, played=None)
+    for slot, (fa, fb) in R32_SYMBOLIC.items():
+        a = _resolve_feeder(fa, settled, thirds); b = _resolve_feeder(fb, settled, thirds)
+        if a and b:
+            bracket[slot] = dict(round='r32', a=a, b=b, played=None)
     played = {frozenset((p['home'], p['away'])): p for p in (ko_played or [])}
     def fill(slot):
         e = bracket.get(slot)
@@ -421,6 +473,17 @@ def actual_bracket(group_actuals, ko_played):
             bracket[slot] = dict(round=ROUND_OF[slot], a=wp, b=wq, played=None)
             fill(slot)
     return bracket
+
+def actual_bracket(group_actuals, ko_played):
+    """Resolve the known bracket from played games, filling ties in as groups finish. Returns
+    {slot: {round, a, b, played|None}} for every tie whose two teams are determined by the criteria
+    we can compute. A boundary that only the Elo tail would decide (a dead tie that FIFA would settle
+    on fair play / ranking / lots, which we have no data for) is left pending instead of guessed: the
+    bracket is built under both Elo tails and only slots that agree on both teams are emitted."""
+    hi = _bracket_core(group_actuals, ko_played, +1)
+    lo = _bracket_core(group_actuals, ko_played, -1)
+    return {s: e for s, e in hi.items()
+            if s in lo and lo[s]['a'] == e['a'] and lo[s]['b'] == e['b']}
 
 def ko_predictions(model='hybrid', group_actuals=None, ko_played=None):
     """Per-model prediction for every known knockout tie, keyed by slot. Empty until the R32 is set."""

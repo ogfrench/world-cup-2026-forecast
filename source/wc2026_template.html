@@ -551,7 +551,7 @@
   <!-- KNOCKOUT PHASE (placeholder, built once the round of 32 is set) -->
   <section id="knockout" role="tabpanel" aria-labelledby="tab-knockout" tabindex="0">
     <h2 class="sec-h">Knockout bracket</h2>
-    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. It fills in automatically once the group stage ends and the round of 32 is set.</p>
+    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. It fills in match by match as each group finishes and the bracket is set.</p>
     <div class="scoreboard" id="koScore"></div>
     <div id="koBracket"></div>
   </section>
@@ -697,20 +697,53 @@
       }});
       return {hp, hgf, hga};
     }
+    // FIFA 2026 with re-application (mirrors the engine's rank_group): within a points-tied block,
+    // head-to-head (points, GD, goals) recomputed among the block, then overall GD, overall goals,
+    // then Elo. The first criterion that splits the block partitions it; a still-tied subgroup is
+    // re-ranked from the top with its head-to-head recomputed among just those teams.
+    function orderBlock(block){
+      if (block.length <= 1) return block.slice();
+      const {hp,hgf,hga} = h2h(block);
+      const crits = [t=>hp[t], t=>hgf[t]-hga[t], t=>hgf[t], t=>tbl[t].gd, t=>tbl[t].gf, t=>tdata[t].elo];
+      for (const crit of crits){
+        const vals = [...new Set(block.map(crit))].sort((a,b)=>b-a);
+        if (vals.length > 1){
+          const out = [];
+          for (const v of vals){
+            const sub = block.filter(t=>crit(t)===v);
+            out.push(...(sub.length>1 ? orderBlock(sub) : sub));
+          }
+          return out;
+        }
+      }
+      return block.slice().sort((x,y)=>x.localeCompare(y));   // Elo is unique, so reached only on a true dead heat
+    }
     const order = teams.slice().sort((x,y) => tbl[y].pts-tbl[x].pts);   // points first, blocks resolved below
     const ranked = [];
     for (let i=0; i<order.length; ){
       let j=i; while (j<order.length && tbl[order[j]].pts===tbl[order[i]].pts) j++;
-      const block = order.slice(i,j);
-      if (block.length>1){
-        const {hp,hgf,hga} = h2h(block);
-        block.sort((x,y) => (hp[y]-hp[x]) || ((hgf[y]-hga[y])-(hgf[x]-hga[x])) || (hgf[y]-hgf[x])
-          || (tbl[y].gd-tbl[x].gd) || (tbl[y].gf-tbl[x].gf) || (tdata[y].elo-tdata[x].elo) || x.localeCompare(y));
-      }
-      ranked.push(...block); i=j;
+      ranked.push(...orderBlock(order.slice(i,j))); i=j;
     }
     const pos = {}; ranked.forEach((t,i) => pos[t] = i+1);
     return {tbl, pos, anyPlayed: teams.some(t => tbl[t].P>0)};
+  }
+
+  // the model's pre-tournament (Day 0) predicted finishing order for a group -> {team: rank 1..4}.
+  // Day 0 (win_group0), not the live-conditioned win_group, so it is a genuine forecast, not one
+  // that has already absorbed the results.
+  function predRankOf(g){
+    const td = MODELS[CUR].teams;                  // module scope, like groupStandings (not render's local T)
+    const ord = G[g].slice().sort((a,b)=>
+      td[b].win_group0-td[a].win_group0 || td[b].advance0-td[a].advance0 || td[b].elo-td[a].elo);
+    const r = {}; ord.forEach((t,i)=>r[t]=i+1); return r;
+  }
+  // a FINISHED group (all six games) is "called" only if the model's predicted finishing order
+  // matches the actual order for every team. Returns null for a group not yet finished (ungradable).
+  function fullStandingCalled(g){
+    const st = groupStandings(g);
+    if (!G[g].every(t => st.tbl[t].P === 3)) return null;
+    const pr = predRankOf(g);
+    return G[g].every(t => pr[t] === st.pos[t]);
   }
 
   // ---- live actual results -----------------------------------------------
@@ -833,11 +866,14 @@
     const KO = MODELS[CUR].knockout || {}, ties = Object.values(KO);
     const sb = document.getElementById('koScore');
     if(!ties.length){
-      host.innerHTML = `<div class="pending">The bracket fills in here automatically once the group stage ends and the round of 32 is set (around June 28). Each match then shows the ${LABELS[CUR]||CUR} prediction next to the real result, color-coded, round by round.</div>`;
+      host.innerHTML = `<div class="pending">The bracket fills in here match by match as each group finishes and its round-of-32 ties become known. Each match then shows the ${LABELS[CUR]||CUR} prediction next to the real result, color-coded, round by round.</div>`;
       if(sb) sb.innerHTML=''; return;
     }
     const ROUNDS = [['r32','Round of 32'],['r16','Round of 16'],['qf','Quarter-finals'],['sf','Semi-finals'],['final','Final']];
-    host.innerHTML = ROUNDS.map(([r,label])=>{
+    const r32n = ties.filter(t=>t.round==='r32').length;
+    const note = (r32n>0 && r32n<16)
+      ? `<div class="pending">Filling in as groups finish: ${r32n} of 16 round-of-32 ties set so far. The rest appear as their groups complete.</div>` : '';
+    host.innerHTML = note + ROUNDS.map(([r,label])=>{
       const rt = ties.filter(t=>t.round===r).sort((a,b)=>a.slot-b.slot);
       return rt.length ? `<h2 class="sec-h koround">${label}</h2><div class="grid">${rt.map(koCard).join('')}</div>` : '';
     }).join('');
@@ -1178,13 +1214,13 @@
     grid.innerHTML = Object.keys(G).map(g=>{
       const st = groupStandings(g);
       const maxw = Math.max(...G[g].map(t=>T[t].win_group)) || 1;
-      // the model's predicted finishing order, strongest first
-      const predOrder = G[g].slice().sort((a,b)=> T[b].win_group-T[a].win_group || T[b].advance-T[a].advance || T[b].elo-T[a].elo);
-      const predRank = {}; predOrder.forEach((t,i)=>predRank[t]=i+1);
+      // the model's pre-tournament (Day 0) predicted finishing order, strongest first
+      const predRank = predRankOf(g);
+      const predOrder = G[g].slice().sort((a,b)=>predRank[a]-predRank[b]);
       const teams = st.anyPlayed ? G[g].slice().sort((a,b)=>st.pos[a]-st.pos[b]) : predOrder;
       const rows = teams.map(t=>{
         const r = st.tbl[t], pr = predRank[t];
-        const predTip = `${t}: the ${LABELS[CUR]} model had them finishing <b>${ord(pr)}</b> in Group ${g} (${fmt(T[t].win_group)}% to win the group).`;
+        const predTip = `${t}: the ${LABELS[CUR]} model had them finishing <b>${ord(pr)}</b> in Group ${g} (${fmt(T[t].win_group0)}% pre-tournament to win the group).`;
         if (st.anyPlayed) {
           const d = pr - st.pos[t];   // > 0 means above the predicted finish
           // the whole "predicted Nth (arrow)" carries one combined tooltip, so a tap anywhere on it works
@@ -1215,20 +1251,19 @@
         </details></div>`;
     }).join('');
 
-    // groups scoreboard: match accuracy over every group game, plus group winners called
+    // groups scoreboard: match accuracy over every group game, plus full finishing orders called.
+    // A group counts only once it has finished, and only if the model's pre-tournament order matched
+    // the final table exactly (all four places), not just the winner.
     let gWin=0, gTot=0;
     Object.keys(G).forEach(g=>{
-      const st=groupStandings(g); if(!st.anyPlayed) return;
-      gTot++;
-      const predWinner=G[g].slice().sort((a,b)=> T[b].win_group-T[a].win_group || T[b].advance-T[a].advance || T[b].elo-T[a].elo)[0];
-      const leader=G[g].find(t=>st.pos[t]===1);
-      if(leader===predWinner) gWin++;
+      const called=fullStandingCalled(g); if(called===null) return;   // skip groups not yet finished
+      gTot++; if(called) gWin++;
     });
     const grpAll=allMatches();
     const grpSb=document.getElementById('grpScore');
     if(grpSb) grpSb.innerHTML = scoreboardHTML(scoreOver(grpAll), LABELS[CUR]||CUR,
-      gTot ? {num:`${gWin}/${gTot}`, cap:'groups called',
-              tip:'Groups whose current leader is the team the model picked to win the group, across groups that have kicked off. Provisional until the group finishes.'} : null);
+      gTot ? {num:`${gWin}/${gTot}`, cap:'standings called',
+              tip:'Finished groups where the model’s pre-tournament predicted finishing order matched the final table exactly, all four places, not just the winner.'} : null);
 
     // calibration table (selected model vs Opta/market)
     const calTeams=['Spain','France','England','Argentina','Brazil','Portugal','Germany','Netherlands'];

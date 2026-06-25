@@ -39,9 +39,10 @@ repo root as-is, so the homepage is the app.
   - `wc2026_baseline.json` - the frozen Day 0 (pre-tournament) snapshot the live before/after compares against.
   - `wc2026_actuals.json` - the played group results that condition the live run. Refreshed from the feed by `fetch_actuals.py`.
   - `wc2026_schedule.json` - the official 72-match group schedule (date, kickoff, home/away, venue), parsed from the public openfootball dataset. Data, so it lives here, not in the template.
+  - `wc2026_ko_schedule.json` - the official knockout calendar keyed by bracket slot (date, kickoff, venue), from openfootball `cup_finals.txt`. Merged onto each known knockout tie by `merge_schedule.py`.
   - `make_data.py` - the data generator: runs the engine unconditioned (Day 0) and conditioned (live) from one shared calibration, writes both JSON files. This is the regeneration entry point.
   - `fetch_actuals.py` - pulls played group games from the openfootball feed into `wc2026_actuals.json` (engine names, official home/away).
-  - `merge_schedule.py` - merges the schedule into `wc2026_results.json`: annotates each group match with its date/venue and reorients home/away to the official side. Idempotent, no re-simulation.
+  - `merge_schedule.py` - merges the schedule into `wc2026_results.json`: annotates each group match with its date/venue and reorients home/away to the official side, and attaches the knockout calendar to each known tie by slot. Idempotent, no re-simulation.
   - `build_app.py` - injects the JSON into the template and writes `index.html`.
   - `check_app.js` - CI sanity check: script blocks parse, five models present, file is built.
   - `test_pipeline.py` - tests for the update pipeline (feed parse, home/away orientation, engine conditioning + validation). Stdlib unittest; engine tests skip without numpy. Run: `python -m unittest discover -s source -p 'test_*.py'`.

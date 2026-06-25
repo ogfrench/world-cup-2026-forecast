@@ -60,16 +60,19 @@ const snippet = [
   pull(/function scRow\(rk, who, sub, val\)\{[\s\S]*?\n  \}/, 'scRow'),
   'let G = {}, MODELS = {}, CUR = "", T = {};',                   // group context groupStandings closes over
   pull(/function groupStandings\(g\)\{[\s\S]*?\n  \}/, 'groupStandings'),
+  pull(/function predRankOf\(g\)\{[\s\S]*?\n  \}/, 'predRankOf'),
+  pull(/function fullStandingCalled\(g\)\{[\s\S]*?\n  \}/, 'fullStandingCalled'),
   pull(/function matchSearch\(mm, a\)\{[\s\S]*?\n  \}/, 'matchSearch'),
   pull(/const liveSearch = [^\n]*/, 'liveSearch'),
   'this.predTier = predTier; this.setActuals = o => { ACTUALS = o; };',
   'this.esc = esc; this.scRow = scRow; this.groupStandings = groupStandings; this.matchSearch = matchSearch; this.liveSearch = liveSearch;',
+  'this.predRankOf = predRankOf; this.fullStandingCalled = fullStandingCalled;',
   'this.setGroupCtx = (g, models, cur, t) => { G = g; MODELS = models; CUR = cur; T = t; };',
 ].join('\n');
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor, esc, scRow, groupStandings, matchSearch, liveSearch } = sandbox;
+const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, matchSearch, liveSearch } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -242,6 +245,55 @@ sandbox.setGroupCtx(
 sandbox.setActuals({ '2026-06-20|B1|B2': { home: 'B1', away: 'B2', hs: 0, as: 0 } });
 eq(groupStandings('B').pos, { B2: 1, B1: 2 },
    'a total tie breaks to the higher Elo, and reading Elo never throws');
+
+// ---- groupStandings: head-to-head re-application in a three-way tie (mirrors the engine) ----
+// A1 beat A2 2-0, A2 beat A3 3-0, A3 beat A1 1-0; all three beat A4. The three-team head-to-head is
+// a cycle, head-to-head GD ties A1 and A2 (A3 drops to 3rd). FIFA re-applies to {A1,A2}: A1 2-0 A2 ->
+// A1 first. A flat sort would go to three-team head-to-head goals (A1 2, A2 3) and wrongly put A2 first.
+sandbox.setGroupCtx(
+  { A: ['A1', 'A2', 'A3', 'A4'] },
+  { m: { teams: { A1: { elo: 1800 }, A2: { elo: 1810 }, A3: { elo: 1820 }, A4: { elo: 1790 } },
+         group_matches: { A: [
+    { home: 'A1', away: 'A2', date: '2026-06-20' }, { home: 'A2', away: 'A3', date: '2026-06-21' },
+    { home: 'A3', away: 'A1', date: '2026-06-22' }, { home: 'A1', away: 'A4', date: '2026-06-23' },
+    { home: 'A2', away: 'A4', date: '2026-06-24' }, { home: 'A3', away: 'A4', date: '2026-06-25' },
+  ] } } }, 'm', {});
+sandbox.setActuals({
+  '2026-06-20|A1|A2': { home: 'A1', away: 'A2', hs: 2, as: 0 },
+  '2026-06-21|A2|A3': { home: 'A2', away: 'A3', hs: 3, as: 0 },
+  '2026-06-22|A3|A1': { home: 'A3', away: 'A1', hs: 1, as: 0 },
+  '2026-06-23|A1|A4': { home: 'A1', away: 'A4', hs: 1, as: 0 },
+  '2026-06-24|A2|A4': { home: 'A2', away: 'A4', hs: 1, as: 0 },
+  '2026-06-25|A3|A4': { home: 'A3', away: 'A4', hs: 1, as: 0 },
+});
+eq(groupStandings('A').pos, { A1: 1, A2: 2, A3: 3, A4: 4 },
+   'three-way tie: re-applying head-to-head to the survivors ranks A1 above A2 (a flat sort would flip them)');
+
+// ---- fullStandingCalled: grades the whole finishing order against the Day 0 prediction ----
+// A finished group: each higher-listed team beats the lower 1-0, so the table is T1,T2,T3,T4.
+const rr = [['T1', 'T2'], ['T1', 'T3'], ['T1', 'T4'], ['T2', 'T3'], ['T2', 'T4'], ['T3', 'T4']];
+const rrMatches = rr.map(([h, a], i) => ({ home: h, away: a, date: `2026-06-2${i}` }));
+const rrActuals = {};
+rr.forEach(([h, a], i) => { rrActuals[`2026-06-2${i}|${h}|${a}`] = { home: h, away: a, hs: 1, as: 0 }; });
+const teamsWith = g0 => ({
+  T1: { elo: 1800, win_group0: g0[0], advance0: 90 }, T2: { elo: 1700, win_group0: g0[1], advance0: 80 },
+  T3: { elo: 1600, win_group0: g0[2], advance0: 70 }, T4: { elo: 1500, win_group0: g0[3], advance0: 60 },
+});
+// Day 0 order T1>T2>T3>T4 matches the actual table -> called (T is the teams dict, as in the app)
+let tw = teamsWith([50, 30, 15, 5]);
+sandbox.setGroupCtx({ A: ['T1', 'T2', 'T3', 'T4'] },
+  { m: { teams: tw, group_matches: { A: rrMatches } } }, 'm', tw);
+sandbox.setActuals(rrActuals);
+eq(fullStandingCalled('A'), true, 'finished group whose Day 0 order matches the final table is called');
+// Day 0 order reversed -> the model missed it
+tw = teamsWith([5, 15, 30, 50]);
+sandbox.setGroupCtx({ A: ['T1', 'T2', 'T3', 'T4'] },
+  { m: { teams: tw, group_matches: { A: rrMatches } } }, 'm', tw);
+sandbox.setActuals(rrActuals);
+eq(fullStandingCalled('A'), false, 'finished group whose predicted order misses the table is not called');
+// only some games played -> not gradable yet
+sandbox.setActuals({ '2026-06-20|T1|T2': { home: 'T1', away: 'T2', hs: 1, as: 0 } });
+eq(fullStandingCalled('A'), null, 'an unfinished group is null (excluded from the count)');
 
 // ---- matchSearch / liveSearch: a Google query that always pins one exact match ----
 const finURL = matchSearch({ home: 'Mexico', away: 'South Africa', date: '2026-06-14' }, { hs: 2, as: 0 });
