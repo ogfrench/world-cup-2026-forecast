@@ -155,10 +155,24 @@
  },
  {
   "group": "E",
+  "home": "Curacao",
+  "away": "Ivory Coast",
+  "hs": 0,
+  "as": 2
+ },
+ {
+  "group": "E",
   "home": "Ecuador",
   "away": "Curacao",
   "hs": 0,
   "as": 0
+ },
+ {
+  "group": "E",
+  "home": "Ecuador",
+  "away": "Germany",
+  "hs": 2,
+  "as": 1
  },
  {
   "group": "E",
