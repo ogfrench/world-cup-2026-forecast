@@ -119,9 +119,6 @@
        padding:16px 14px;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s}
   .tab:hover{color:var(--txt)}
   .tab.on{color:var(--lime);border-bottom-color:var(--lime)}
-  .tab .soon{font-family:'DM Mono';font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;
-       color:var(--lime-dim);border:1px solid rgba(200,255,77,.32);border-radius:4px;
-       padding:1px 4px;margin-left:5px;vertical-align:middle;font-weight:500}
   section{display:none;animation:fade .35s ease}
   section.on{display:block}
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -510,7 +507,7 @@
       <button class="tab on" data-t="race" role="tab" id="tab-race" aria-controls="race" aria-selected="true">Title Odds</button>
       <button class="tab" data-t="schedule" role="tab" id="tab-schedule" aria-controls="schedule" aria-selected="false">Schedule</button>
       <button class="tab" data-t="groups" role="tab" id="tab-groups" aria-controls="groups" aria-selected="false">Groups &amp; Scores</button>
-      <button class="tab" data-t="knockout" role="tab" id="tab-knockout" aria-controls="knockout" aria-selected="false">Knockout Phase <span class="soon">soon</span></button>
+      <button class="tab" data-t="knockout" role="tab" id="tab-knockout" aria-controls="knockout" aria-selected="false">Knockout Phase</button>
       <button class="tab" data-t="topscorers" role="tab" id="tab-topscorers" aria-controls="topscorers" aria-selected="false">Top Scorers</button>
       <button class="tab" data-t="method" role="tab" id="tab-method" aria-controls="method" aria-selected="false">Method &amp; Caveats</button>
     </nav>
