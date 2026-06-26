@@ -197,6 +197,13 @@
  },
  {
   "group": "F",
+  "home": "Japan",
+  "away": "Sweden",
+  "hs": 1,
+  "as": 1
+ },
+ {
+  "group": "F",
   "home": "Netherlands",
   "away": "Japan",
   "hs": 2,
@@ -222,6 +229,13 @@
   "away": "Japan",
   "hs": 0,
   "as": 4
+ },
+ {
+  "group": "F",
+  "home": "Tunisia",
+  "away": "Netherlands",
+  "hs": 1,
+  "as": 3
  },
  {
   "group": "G",
