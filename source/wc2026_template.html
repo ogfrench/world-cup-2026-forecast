@@ -837,7 +837,13 @@
   function koCard(t){
     const favA = t.adv_a>=t.adv_b, fav = favA?t.a:t.b, favAdv = Math.max(t.adv_a,t.adv_b);
     const alts = t.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
-    const a = koActual(t), mm = {home:t.a, away:t.b, date:t.date, kickoff_utc:t.kickoff_utc};
+    const a = koActual(t), mm = {home:t.a, away:t.b, date:t.date, kickoff_utc:t.kickoff_utc, venue:t.venue};
+    // caption: kickoff date/time and venue once the tie is scheduled, else the model's headline pick
+    const cap = t.kickoff_utc
+      ? `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span>`
+        + (t.venue ? `<span class="capven" data-tip="${t.venue}">${venueName(t.venue)}</span>` : '')
+      : `<span class="capven">${fav} favored &middot; ${fmt(favAdv)}% to advance</span>`;
+    const srch = a ? `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="Find this match and result on Google" data-tip="Search this match and result on Google">&#8599;</a>` : '';
     let chip, clab, predRow='';
     if(a){
       const tier = predTier({modal:t.modal, p_home:t.p_a, p_draw:t.p_draw, p_away:t.p_b}, {hs:a.hs, as:a.as});
@@ -850,8 +856,8 @@
       clab = 'predicted';
       if(t.kickoff_utc && matchPending(mm)) predRow = `<div class="predline">${liveBadge(mm)}</div>`;  // in-play / awaiting badge
     }
-    return `<div class="m">
-      <div class="mcap"><span class="capven">${fav} favored · ${fmt(favAdv)}% to advance</span>${a ? `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="Find this match and result on Google" data-tip="Search this match and result on Google">&#8599;</a>` : ''}</div>
+    return `<div class="m" data-ko="${t.kickoff_utc||''}">
+      <div class="mcap">${cap}${srch}</div>
       <div class="top"><div class="ta">${t.a}</div>${chip}<div class="tb">${t.b}</div><div class="sclab clab">${clab}</div></div>
       ${predRow}
       <div class="wdl" data-tip="Chance each side advances, after extra time and any shootout."><i class="w" style="width:${t.adv_a}%"></i><i class="l" style="width:${t.adv_b}%"></i></div>
