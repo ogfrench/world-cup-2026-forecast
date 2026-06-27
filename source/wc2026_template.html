@@ -618,6 +618,9 @@
 <script>
 (function(){
   const MODELS = DATA.models, META = DATA.meta, OPTA = DATA.opta, MKT = DATA.market, G = DATA.groups;
+  // the tournament is over once the final (slot 103) has a result, or we are past the sundown cutoff.
+  // Used to stop the "Live ... so far" copy reading as ongoing after the World Cup has been decided.
+  const tournamentOver = () => (MODELS[META.default_model]?.knockout?.['103']?.played != null) || Date.now() > SUNDOWN;
   const LABELS = META.labels, n = META.n_sims;
   const dcm = (META.dc_matches!=null?META.dc_matches:15751).toLocaleString();   // Dixon-Coles fit size, read from the data so it never goes stale
   const fmt = x => (Math.round(x*10)/10).toFixed(1);
@@ -1054,13 +1057,15 @@
     'Simulations':'Each model plays the entire tournament out this many times. More runs, smoother odds.',
     'Models':'Five different ways to rate a single match, all sitting on the same shared tournament engine.',
     'As of':'Team ratings are frozen at their pre-tournament strength as of this date, with no knowledge of who is actually fit for kickoff. The full method and fitted parameters are in the Method tab.',
-    'Live':'Title and round odds re-simulated with the games already played locked in. The Day 0 ticks on the title bars show where each team started.'
+    'Live':'Title and round odds re-simulated with the games already played locked in. The Day 0 ticks on the title bars show where each team started.',
+    'Final':'The tournament is complete. The odds shown are conditioned on every game that was played.'
   };
+  const metaOver = tournamentOver();
   document.getElementById('meta').innerHTML = [
     ['Simulations', n.toLocaleString()],
     ['Models', '5'],
     ['As of', 'Jun 6 2026'],
-    ...(META.live && META.played ? [['Live', `${META.played} played`]] : [])
+    ...(META.live && META.played ? [[metaOver?'Final':'Live', metaOver?'tournament over':`${META.played} played`]] : [])
   ].map(([k,v])=>`<span class="chip" data-tip="${CHIP_TIP[k]||''}">${k} <b>${v}</b></span>`).join('');
   const n2=document.getElementById('nsim2'); if(n2) n2.textContent=n.toLocaleString();
   const n3=document.getElementById('nsim3'); if(n3) n3.textContent=n.toLocaleString();
@@ -1187,6 +1192,8 @@
       if(live){ tl.style.display='flex';
         tl.innerHTML = day0
           ? `<span class="ld" style="animation:none;background:var(--faint)"></span><span>The Day 0 forecast: the pre-tournament odds, before any games were played.</span>`
+          : tournamentOver()
+          ? `<span class="ld" style="animation:none;background:var(--faint)"></span><span>Final title odds, conditioned on every game played. The tournament is complete.</span>`
           : `<span class="ld"></span><span>Live title odds, updated for the <b>${META.played} group ${META.played===1?'game':'games'}</b> played so far.</span>`;
       } else tl.style.display='none';
     }
