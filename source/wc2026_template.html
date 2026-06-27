@@ -888,17 +888,20 @@
     const host = document.getElementById('koBracket'); if(!host) return;
     const KO = MODELS[CUR].knockout || {}, ties = Object.values(KO);
     const sb = document.getElementById('koScore');
-    if(!ties.length){
-      host.innerHTML = `<div class="pending">The bracket fills in here match by match as each group finishes and its round-of-32 ties become known. Each match then shows the ${LABELS[CUR]||CUR} prediction next to the real result, color-coded, round by round.</div>`;
+    const fixtures = DATA.ko_schedule || [];
+    if(!fixtures.length){
+      host.innerHTML = `<div class="pending">The bracket appears here once the knockout calendar is set. Each match shows the ${LABELS[CUR]||CUR} prediction next to the real result, color-coded, round by round.</div>`;
       if(sb) sb.innerHTML=''; return;
     }
+    // the whole bracket, round by round: a resolved tie shows its full prediction card, an unresolved
+    // one shows its bracket slots (e.g. "Winner E v 3rd place") until the teams are known.
     const ROUNDS = [['r32','Round of 32'],['r16','Round of 16'],['qf','Quarter-finals'],['sf','Semi-finals'],['final','Final']];
     const r32n = ties.filter(t=>t.round==='r32').length;
     const note = (r32n>0 && r32n<16)
-      ? `<div class="pending">Filling in as groups finish: ${r32n} of 16 round-of-32 ties set so far. The rest appear as their groups complete.</div>` : '';
+      ? `<div class="pending">Filling in as groups finish: ${r32n} of 16 round-of-32 ties set so far. The rest show their bracket slots until then.</div>` : '';
     host.innerHTML = note + ROUNDS.map(([r,label])=>{
-      const rt = ties.filter(t=>t.round===r).sort((a,b)=>a.slot-b.slot);
-      return rt.length ? `<h2 class="sec-h koround">${label}</h2><div class="grid">${rt.map(koCard).join('')}</div>` : '';
+      const fx = fixtures.filter(f=>f.round===r).sort((a,b)=>a.slot-b.slot);
+      return fx.length ? `<h2 class="sec-h koround">${label}</h2><div class="grid">${fx.map(schedKoCard).join('')}</div>` : '';
     }).join('');
     // performance over played ties: scores called right / exact, plus advancers called
     let played=0, against=0, exact=0, advRight=0, advTot=0;
@@ -1386,7 +1389,7 @@
     if (tie) return koCard(tie);
     const mm = {kickoff_utc:fix.kickoff_utc, venue:fix.venue};
     return `<div class="m kofix" data-ko="${fix.kickoff_utc}">
-      <div class="mcap"><span class="captime">${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span><span class="capven" data-tip="${fix.venue}">${venueName(fix.venue)}</span></div>
+      <div class="mcap"><span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span><span class="capven" data-tip="${fix.venue}">${venueName(fix.venue)}</span></div>
       <div class="top"><div class="ta tbd">${koDesc(fix.home_desc)}</div><div class="sc tbd" data-tip="The teams are set once the groups (or the previous round) finish.">v</div><div class="tb tbd">${koDesc(fix.away_desc)}</div><div class="sclab clab">${ROUND_LABEL[fix.round]||''}</div></div>
     </div>`;
   }
@@ -1399,8 +1402,20 @@
       .sort((a,b)=> a.k<b.k?-1:a.k>b.k?1:0);
     const dayCount = {};
     items.forEach(it => { const k = localDay(it.obj); dayCount[k] = (dayCount[k]||0)+1; });
+    // prediction accuracy across every played fixture: group games and knockout ties alike
     let played = 0, against = 0, exact = 0;
-    groupAll.forEach(mm => { const a = actualFor(mm); if (a) { played++; const t = predTier(mm,a); if (t==='miss') against++; else if (t==='exact') exact++; } });
+    items.forEach(it => {
+      const fix = it.obj;
+      if (fix.slot != null) {                                  // knockout fixture
+        const tie = (MODELS[CUR].knockout||{})[fix.slot]; if (!tie) return;
+        const a = koActual(tie); if (!a) return;
+        played++; const t = predTier({modal:tie.modal, p_home:tie.p_a, p_draw:tie.p_draw, p_away:tie.p_b}, {hs:a.hs, as:a.as});
+        if (t==='miss') against++; else if (t==='exact') exact++;
+      } else {
+        const a = actualFor(fix); if (!a) return;
+        played++; const t = predTier(fix, a); if (t==='miss') against++; else if (t==='exact') exact++;
+      }
+    });
     let html = '', curDay = null, open = false;
     items.forEach(it => {
       const day = localDay(it.obj);
@@ -1414,7 +1429,6 @@
     });
     if (open) html += '</div>';
     host.innerHTML = html;
-    const all = groupAll;   // scoreboard + sync below track the group-game predictions
     const sb = document.getElementById('schedScore');
     if (sb) sb.innerHTML = scoreboardHTML({played, against, exact}, LABELS[CUR] || CUR);
     const pk = document.getElementById('predKey');
@@ -1424,7 +1438,7 @@
     const sync = document.getElementById('schedSync'); if (!sync) return;
     const when = ACT_SYNC ? new Date(ACT_SYNC).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
     if (ACT_STATE==='live' || ACT_STATE==='cache')
-      sync.innerHTML = `<span class="dotlive"></span>Live results &middot; ${played} of ${all.length} played`
+      sync.innerHTML = `<span class="dotlive"></span>Live results &middot; ${played} of ${items.length} played`
                      + (when ? ` &middot; synced ${when}` : '');
     else if (ACT_STATE==='off')
       sync.innerHTML = `<span class="dotoff"></span>Live results unavailable, showing predictions only`;
