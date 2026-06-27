@@ -543,7 +543,7 @@
   <!-- GROUPS -->
   <section id="groups" role="tabpanel" aria-labelledby="tab-groups" tabindex="0">
     <h2 class="sec-h">Group winner odds &amp; match-by-match</h2>
-    <p class="lead">Each group's live standings next to where the model predicted the teams to finish, so you can see who is running ahead of the forecast and who is behind. Expand a group for the match-by-match predictions and results.</p>
+    <p class="lead">Each group's standings next to where the model predicted the teams to finish, so you can see who is ahead of the forecast and who is behind. Expand a group for the match-by-match predictions and results.</p>
     <div class="scoreboard" id="grpScore"></div>
     <div class="grid" id="groupGrid"></div>
     <div id="thirdsTable"></div>
@@ -1231,6 +1231,7 @@
     const openG = new Set([...grid.querySelectorAll('details.matches[open]')].map(d=>d.dataset.g));
     grid.innerHTML = Object.keys(G).map(g=>{
       const st = groupStandings(g);
+      const done = st.anyPlayed && G[g].every(t=>st.tbl[t].P===3);   // all six group games played
       const maxw = Math.max(...G[g].map(t=>T[t].win_group)) || 1;
       // the model's pre-tournament (Day 0) predicted finishing order, strongest first
       const predRank = predRankOf(g);
@@ -1241,15 +1242,24 @@
         const predTip = `${t}: the ${LABELS[CUR]} model had them finishing <b>${ord(pr)}</b> in Group ${g} (${fmt(T[t].win_group0)}% pre-tournament to win the group).`;
         if (st.anyPlayed) {
           const d = pr - st.pos[t];   // > 0 means above the predicted finish
-          // the whole "predicted Nth (arrow)" carries one combined tooltip, so a tap anywhere on it works
-          const movePhrase = d>0 ? ` They sit ${d} ${d>1?'spots':'spot'} higher than that now.`
-                           : d<0 ? ` They sit ${-d} ${-d>1?'spots':'spot'} lower than that now.`
-                           : ' Right on it so far.';
+          // the whole "predicted Nth (arrow)" carries one combined tooltip, so a tap anywhere on it works.
+          // wording goes final once the group has finished, so it never reads as "ongoing" when it is not.
+          const sp = n => n>1?'spots':'spot';
+          const movePhrase = done
+            ? (d>0 ? ` They finished ${d} ${sp(d)} higher than predicted.`
+               : d<0 ? ` They finished ${-d} ${sp(-d)} lower than predicted.`
+               : ' Exactly where the model had them.')
+            : (d>0 ? ` They sit ${d} ${sp(d)} higher than that now.`
+               : d<0 ? ` They sit ${-d} ${sp(-d)} lower than that now.`
+               : ' Right on it so far.');
           const move = d>0 ? ` <span class="gmove up" aria-label="up ${d}">${d}</span>`
                      : d<0 ? ` <span class="gmove down" aria-label="down ${-d}">${-d}</span>` : '';
+          const posTip = done
+            ? `Finished <b>${ord(st.pos[t])}</b> in Group ${g}. Top two and the best third-placed teams advance.`
+            : `Currently <b>${ord(st.pos[t])}</b> in Group ${g} on results. Top two and the best third-placed teams advance.`;
           return `<div class="grow">
-            <div class="tn"><span class="livepos${st.pos[t]<=2?' qual':''}" data-tip="Currently <b>${ord(st.pos[t])}</b> in Group ${g} on results. Top two and the best third-placed teams advance.">${st.pos[t]}</span>${t} <i>Elo ${T[t].elo}</i></div>
-            <div class="gp" data-tip="Points so far.">${r.pts}<small>pts</small></div>
+            <div class="tn"><span class="livepos${st.pos[t]<=2?' qual':''}" data-tip="${posTip}">${st.pos[t]}</span>${t} <i>Elo ${T[t].elo}</i></div>
+            <div class="gp" data-tip="${done?'Final points.':'Points so far.'}">${r.pts}<small>pts</small></div>
             <div class="gsub"><span>P${r.P} · GD ${r.gd>=0?'+':''}${r.gd}</span><span class="gpred" data-tip="${predTip}${movePhrase}">predicted ${ord(pr)}${move}</span></div>
           </div>`;
         }
@@ -1261,7 +1271,7 @@
       }).join('');
       const matches = GM[g].slice().sort(byKO).map(mm=>matchCard(mm,false)).join('');
       const mp = MODELS[CUR].group_matches[g].filter(m=>actualFor(m)).length;
-      return `<div class="gcard"><div class="ghd"><div class="g">${g}</div><div class="t">${st.anyPlayed?'Live vs predicted':'Group '+g}</div></div>
+      return `<div class="gcard"><div class="ghd"><div class="g">${g}</div><div class="t">${done?'Final vs predicted':st.anyPlayed?'Live vs predicted':'Group '+g}</div></div>
         ${rows}
         <details class="matches" data-g="${g}"${openG.has(g)?' open':''}>
           <summary><span>Match predictions${mp?` <span class="mpc">${mp} played</span>`:''}</span><span class="chev"></span></summary>
@@ -1288,12 +1298,16 @@
     const thd = document.getElementById('thirdsTable');
     if (thd) {
       const thirds = thirdsRanking();
+      const allDone = thirds.every(x => x.P === 3);   // every group's third has played all three: group stage complete
+      const rowTip = (i) => allDone
+        ? (i<8 ? 'In the top 8: through to the round of 32.' : 'Outside the top 8: out.')
+        : (i<8 ? 'Currently in the top 8: into the round of 32.' : 'Currently outside the top 8.');
       thd.innerHTML = thirds.some(x => x.P > 0) ? `
         <h2 class="sec-h">Best third-placed teams</h2>
-        <p class="lead">Eight of the twelve third-placed teams reach the round of 32. Ranked by points, then goal difference, then goals scored; teams above the line are through. Provisional until every group has finished.</p>
+        <p class="lead">Eight of the twelve third-placed teams reach the round of 32. Ranked by points, then goal difference, then goals scored; the eight above the line ${allDone?'are through.':'are through, provisional until every group has finished.'}</p>
         <div class="tbl-scroll"><table class="cal thirds">
           <tr><th>#</th><th>Team</th><th>Grp</th><th>Pl</th><th>Pts</th><th>GD</th><th>GF</th></tr>
-          ${thirds.map((x,i)=>`<tr class="${i<8?'qin':'qout'}${i===7?' cut':''}" data-tip="${i<8?'Currently in the top 8: into the round of 32.':'Currently outside the top 8.'}">
+          ${thirds.map((x,i)=>`<tr class="${i<8?'qin':'qout'}${i===7?' cut':''}" data-tip="${rowTip(i)}">
             <td>${i+1}</td><td>${x.team}</td><td>${x.g}</td><td>${x.P}</td><td>${x.pts}</td><td>${x.gd>=0?'+':''}${x.gd}</td><td>${x.gf}</td></tr>`).join('')}
         </table></div>` : '';
     }
