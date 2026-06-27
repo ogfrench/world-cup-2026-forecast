@@ -373,6 +373,8 @@ class TestKoScheduleAlignment(unittest.TestCase):
         token = lambda ref: ({'W': '1', 'R': '2'}[ref[0]] + ref[1]) if ref[0] in ('W', 'R') else '3'
         feeders = {**e.R16_PAIRS, **e.QF_PAIRS, **e.SF_PAIRS, 103: e.FINAL_FEEDERS}
         for r in ko:
+            if r['round'] == 'third':
+                continue                      # display-only consolation match, no engine slot to align
             s = r['slot']
             if s in e.R32_SYMBOLIC:
                 fa_, fb_ = e.R32_SYMBOLIC[s]
@@ -391,7 +393,11 @@ class TestKoScheduleFile(unittest.TestCase):
         self.ko = json.load(open(os.path.join(HERE, 'wc2026_ko_schedule.json'), encoding='utf-8'))
 
     def test_covers_every_engine_slot_once(self):
-        self.assertEqual(sorted(r['slot'] for r in self.ko), list(range(73, 104)))
+        engine = sorted(r['slot'] for r in self.ko if r['round'] != 'third')
+        self.assertEqual(engine, list(range(73, 104)))                 # slots 73-103: the bracket
+        third = [r for r in self.ko if r['round'] == 'third']
+        self.assertEqual(len(third), 1)                                # plus the third-place play-off
+        self.assertEqual((third[0]['home_desc'], third[0]['away_desc']), ('L101', 'L102'))
 
     def test_kickoff_utc_is_well_formed(self):
         import datetime

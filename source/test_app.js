@@ -58,23 +58,28 @@ const snippet = [
   pull(/function scheduleAnchor\(matches, now\)\{[\s\S]*?\n  \}/, 'scheduleAnchor'),
   pull(/const esc = s => [^\n]*/, 'esc'),
   pull(/function scRow\(rk, who, sub, val\)\{[\s\S]*?\n  \}/, 'scRow'),
-  'let G = {}, MODELS = {}, CUR = "", T = {};',                   // group context groupStandings closes over
+  'let G = {}, MODELS = {}, CUR = "", T = {}, DATA = {};',         // group + payload context the helpers close over
+  pull(/function allMatches\(\)\{[\s\S]*?return a; \}/, 'allMatches'),
   pull(/function groupStandings\(g\)\{[\s\S]*?\n  \}/, 'groupStandings'),
   pull(/function predRankOf\(g\)\{[\s\S]*?\n  \}/, 'predRankOf'),
   pull(/function fullStandingCalled\(g\)\{[\s\S]*?\n  \}/, 'fullStandingCalled'),
   pull(/function thirdsRanking\(\)\{[\s\S]*?\n  \}/, 'thirdsRanking'),
+  pull(/const KO_ROUNDS = \[[\s\S]*?\];/, 'KO_ROUNDS'),
   pull(/function koDesc\(d\)\{[\s\S]*?\n  \}/, 'koDesc'),
+  pull(/function scheduleUnits\(\)\{[\s\S]*?\n  \}/, 'scheduleUnits'),
+  pull(/function koRounds\(\)\{[\s\S]*?\n  \}/, 'koRounds'),
   pull(/function matchSearch\(mm, a\)\{[\s\S]*?\n  \}/, 'matchSearch'),
   pull(/const liveSearch = [^\n]*/, 'liveSearch'),
   'this.predTier = predTier; this.setActuals = o => { ACTUALS = o; };',
   'this.esc = esc; this.scRow = scRow; this.groupStandings = groupStandings; this.matchSearch = matchSearch; this.liveSearch = liveSearch;',
   'this.predRankOf = predRankOf; this.fullStandingCalled = fullStandingCalled; this.thirdsRanking = thirdsRanking; this.koDesc = koDesc;',
-  'this.setGroupCtx = (g, models, cur, t) => { G = g; MODELS = models; CUR = cur; T = t; };',
+  'this.scheduleUnits = scheduleUnits; this.koRounds = koRounds; this.parseActuals = parseActuals;',
+  'this.setGroupCtx = (g, models, cur, t) => { G = g; MODELS = models; CUR = cur; T = t; }; this.setData = d => { DATA = d; };',
 ].join('\n');
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, matchSearch, liveSearch } = sandbox;
+const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, scheduleUnits, koRounds, matchSearch, liveSearch } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -322,11 +327,41 @@ eq(fullStandingCalled('A'), null, 'an unfinished group is null (excluded from th
   eq(r[0].pts === 3 && r[1].pts === 3 && r[0].gd > r[1].gd, true, 'both on 3 points, leader has the better GD');
 })();
 
-// ---- koDesc: bracket-position placeholders rendered for the Schedule list ----
+// ---- koDesc: bracket-position placeholders rendered for the schedule / bracket ----
 eq(koDesc('1A'), 'Winner A', 'group winner descriptor');
 eq(koDesc('2C'), 'Runner-up C', 'group runner-up descriptor');
 eq(koDesc('3'), '3rd place', 'third-placed descriptor');
 eq(koDesc('W73'), 'Winner M73', 'match-winner descriptor');
+eq(koDesc('L101'), 'Loser M101', 'match-loser descriptor (third-place play-off)');
+
+// ---- scheduleUnits / koRounds: the data behind the Schedule list and the bracket ----
+(function(){
+  const koSched = [
+    {slot:73, round:'r32',  kickoff_utc:'2026-06-28T19:00Z'},
+    {slot:103,round:'final',kickoff_utc:'2026-07-19T19:00Z'},
+    {slot:104,round:'third',kickoff_utc:'2026-07-18T21:00Z'},
+  ];
+  sandbox.setGroupCtx({ A:['A1','A2'] },
+    { m:{ teams:{A1:{elo:1},A2:{elo:1}}, group_matches:{ A:[{home:'A1',away:'A2',kickoff_utc:'2026-06-11T19:00Z'}] } } }, 'm', {});
+  sandbox.setData({ ko_schedule: koSched });
+  const u = scheduleUnits();
+  eq(u.length, 4, 'schedule merges group games and the whole knockout calendar');
+  eq(u.map(x=>x.k), ['2026-06-11T19:00Z','2026-06-28T19:00Z','2026-07-18T21:00Z','2026-07-19T19:00Z'],
+     'units are sorted by kickoff (group game, R32, third-place, final)');
+  eq(u[0].kind, 'g', 'first unit is the group game'); eq(u[2].kind, 'k', 'third-place is a knockout unit');
+  const rounds = koRounds().map(r=>r.round);
+  eq(rounds, ['r32','third','final'], 'koRounds keeps round order and includes the third-place play-off');
+})();
+
+// ---- live overlay end-to-end: the real feed parser into a knockout result (closes the headless gap) ----
+(function(){
+  const feed = 'Sun June 28\n  20:00 UTC-7    South Africa   1-2 (0-1)   Canada   @ Los Angeles\n';
+  sandbox.setActuals(parseActuals(feed));                       // exactly what the live heartbeat does
+  const tie = { a:'South Africa', b:'Canada', date:'2026-06-28' };
+  const res = koActual(tie);
+  eq(res && res.hs, 1, 'a knockout result line parses through to koActual (home score)');
+  eq(res.as, 2, 'away score'); eq(res.winner, 'Canada', 'the decisive score yields the advancer');
+})();
 
 // ---- matchSearch / liveSearch: a Google query that always pins one exact match ----
 const finURL = matchSearch({ home: 'Mexico', away: 'South Africa', date: '2026-06-14' }, { hs: 2, as: 0 });

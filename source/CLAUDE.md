@@ -162,8 +162,12 @@ the feed score cannot read, so the winner is left unknown). KO scheduling is key
 teams are unknown until the groups finish): `wc2026_ko_schedule.json` carries date/kickoff/venue per slot
 from the official openfootball calendar, and `merge_schedule.py` attaches it onto each emitted tie.
 `test_pipeline.py` guards that every slot's bracket descriptors match the engine (`R32_SYMBOLIC` and the
-feeder pairs), so a tie can never carry the wrong date. Note the engine has no third-place playoff and
-its final is slot 103, which maps to official match 104 (openfootball match 103 is the third-place game).
+feeder pairs), so a tie can never carry the wrong date. The engine's final is slot 103 (official match
+104). The engine does not simulate the third-place play-off (official match 103), so it rides in the
+schedule as a display-only fixture with `round:"third"` and synthetic `slot:104`: shown in the Schedule
+and the bracket with the two beaten semi-finalists and the real score but no model pick. The alignment
+guard skips it. The Schedule and the Knockout tab both render the whole calendar from `ko_schedule` via
+`scheduleUnits()` / `koRounds()` (pure, unit-tested), so all 104 fixtures appear before the teams are known.
 A tie with a `kickoff_utc` shows the in-play/awaiting badge and folds into the live heartbeat via
 `koTies()`. The one thing only confirmable once the R32 actually plays is the live feed's KO line format;
 the front end degrades safely if a predicted matchup did not happen (no result shown, never a wrong one).
