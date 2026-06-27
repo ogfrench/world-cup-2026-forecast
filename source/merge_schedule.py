@@ -80,8 +80,12 @@ def main():
                 n_annotated += 1
 
     # The KO calendar is fixed in advance, so this attaches date/kickoff/venue to whatever ties the
-    # engine has resolved so far (by slot). See annotate_knockout above.
-    n_ko = annotate_knockout(results, json.load(open(KO_SCHEDULE, encoding='utf-8')))
+    # engine has resolved so far (by slot). See annotate_knockout above. The full calendar is also
+    # stored on the payload so the Schedule tab can list every knockout fixture (with bracket-position
+    # placeholders) before the teams are known.
+    ko_sched = json.load(open(KO_SCHEDULE, encoding='utf-8'))
+    results['ko_schedule'] = ko_sched
+    n_ko = annotate_knockout(results, ko_sched)
 
     json.dump(results, open(RESULTS, 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))

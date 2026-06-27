@@ -63,17 +63,18 @@ const snippet = [
   pull(/function predRankOf\(g\)\{[\s\S]*?\n  \}/, 'predRankOf'),
   pull(/function fullStandingCalled\(g\)\{[\s\S]*?\n  \}/, 'fullStandingCalled'),
   pull(/function thirdsRanking\(\)\{[\s\S]*?\n  \}/, 'thirdsRanking'),
+  pull(/function koDesc\(d\)\{[\s\S]*?\n  \}/, 'koDesc'),
   pull(/function matchSearch\(mm, a\)\{[\s\S]*?\n  \}/, 'matchSearch'),
   pull(/const liveSearch = [^\n]*/, 'liveSearch'),
   'this.predTier = predTier; this.setActuals = o => { ACTUALS = o; };',
   'this.esc = esc; this.scRow = scRow; this.groupStandings = groupStandings; this.matchSearch = matchSearch; this.liveSearch = liveSearch;',
-  'this.predRankOf = predRankOf; this.fullStandingCalled = fullStandingCalled; this.thirdsRanking = thirdsRanking;',
+  'this.predRankOf = predRankOf; this.fullStandingCalled = fullStandingCalled; this.thirdsRanking = thirdsRanking; this.koDesc = koDesc;',
   'this.setGroupCtx = (g, models, cur, t) => { G = g; MODELS = models; CUR = cur; T = t; };',
 ].join('\n');
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, matchSearch, liveSearch } = sandbox;
+const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, matchSearch, liveSearch } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -320,6 +321,12 @@ eq(fullStandingCalled('A'), null, 'an unfinished group is null (excluded from th
   eq(r.map(x=>x.team), ['Y3','X3'], 'thirds tied on points are ordered by goal difference (Y3 -1 above X3 -2)');
   eq(r[0].pts === 3 && r[1].pts === 3 && r[0].gd > r[1].gd, true, 'both on 3 points, leader has the better GD');
 })();
+
+// ---- koDesc: bracket-position placeholders rendered for the Schedule list ----
+eq(koDesc('1A'), 'Winner A', 'group winner descriptor');
+eq(koDesc('2C'), 'Runner-up C', 'group runner-up descriptor');
+eq(koDesc('3'), '3rd place', 'third-placed descriptor');
+eq(koDesc('W73'), 'Winner M73', 'match-winner descriptor');
 
 // ---- matchSearch / liveSearch: a Google query that always pins one exact match ----
 const finURL = matchSearch({ home: 'Mexico', away: 'South Africa', date: '2026-06-14' }, { hs: 2, as: 0 });
