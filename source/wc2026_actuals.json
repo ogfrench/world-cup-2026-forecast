@@ -267,6 +267,13 @@
  },
  {
   "group": "G",
+  "home": "Egypt",
+  "away": "Iran",
+  "hs": 1,
+  "as": 1
+ },
+ {
+  "group": "G",
   "home": "Iran",
   "away": "New Zealand",
   "hs": 2,
@@ -278,6 +285,20 @@
   "away": "Egypt",
   "hs": 1,
   "as": 3
+ },
+ {
+  "group": "G",
+  "home": "New Zealand",
+  "away": "Belgium",
+  "hs": 1,
+  "as": 5
+ },
+ {
+  "group": "H",
+  "home": "Cape Verde",
+  "away": "Saudi Arabia",
+  "hs": 0,
+  "as": 0
  },
  {
   "group": "H",
@@ -306,6 +327,13 @@
   "away": "Cape Verde",
   "hs": 2,
   "as": 2
+ },
+ {
+  "group": "H",
+  "home": "Uruguay",
+  "away": "Spain",
+  "hs": 0,
+  "as": 1
  },
  {
   "group": "I",
