@@ -62,17 +62,18 @@ const snippet = [
   pull(/function groupStandings\(g\)\{[\s\S]*?\n  \}/, 'groupStandings'),
   pull(/function predRankOf\(g\)\{[\s\S]*?\n  \}/, 'predRankOf'),
   pull(/function fullStandingCalled\(g\)\{[\s\S]*?\n  \}/, 'fullStandingCalled'),
+  pull(/function thirdsRanking\(\)\{[\s\S]*?\n  \}/, 'thirdsRanking'),
   pull(/function matchSearch\(mm, a\)\{[\s\S]*?\n  \}/, 'matchSearch'),
   pull(/const liveSearch = [^\n]*/, 'liveSearch'),
   'this.predTier = predTier; this.setActuals = o => { ACTUALS = o; };',
   'this.esc = esc; this.scRow = scRow; this.groupStandings = groupStandings; this.matchSearch = matchSearch; this.liveSearch = liveSearch;',
-  'this.predRankOf = predRankOf; this.fullStandingCalled = fullStandingCalled;',
+  'this.predRankOf = predRankOf; this.fullStandingCalled = fullStandingCalled; this.thirdsRanking = thirdsRanking;',
   'this.setGroupCtx = (g, models, cur, t) => { G = g; MODELS = models; CUR = cur; T = t; };',
 ].join('\n');
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, matchSearch, liveSearch } = sandbox;
+const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, matchSearch, liveSearch } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -294,6 +295,31 @@ eq(fullStandingCalled('A'), false, 'finished group whose predicted order misses 
 // only some games played -> not gradable yet
 sandbox.setActuals({ '2026-06-20|T1|T2': { home: 'T1', away: 'T2', hs: 1, as: 0 } });
 eq(fullStandingCalled('A'), null, 'an unfinished group is null (excluded from the count)');
+
+// ---- thirdsRanking: third-placed teams ranked across groups (points -> GD -> goals) ----
+// Two finished groups; each third has 3 points, but group X's third has GD -2 (2-0 margins) and
+// group Y's third GD -1 (1-0 margins), so Y's third must rank above X's.
+(function(){
+  const tm = g => [g+'1', g+'2', g+'3', g+'4'];
+  const G = { X: tm('X'), Y: tm('Y') };
+  const teams = {}; Object.values(G).flat().forEach((t,i)=>teams[t]={elo:1500+i});
+  const pairs = ts => { const o=[]; for(let i=0;i<ts.length;i++) for(let j=i+1;j<ts.length;j++) o.push([ts[i],ts[j]]); return o; };
+  const gm = {}, acts = {}; let d = 10;
+  [['X',2],['Y',1]].forEach(([g,margin])=>{                 // first team in each pair wins margin-0
+    gm[g] = pairs(G[g]).map(([h,a],k)=>{
+      const date = `2026-07-${String(d+k).padStart(2,'0')}`;
+      acts[`${date}|${h}|${a}`] = { home:h, away:a, hs:margin, as:0 };
+      return { home:h, away:a, date };
+    });
+    d += 10;
+  });
+  sandbox.setGroupCtx(G, { m:{ teams, group_matches: gm } }, 'm', teams);
+  sandbox.setActuals(acts);
+  const r = thirdsRanking();
+  eq(r.length, 2, 'one third-placed team per group');
+  eq(r.map(x=>x.team), ['Y3','X3'], 'thirds tied on points are ordered by goal difference (Y3 -1 above X3 -2)');
+  eq(r[0].pts === 3 && r[1].pts === 3 && r[0].gd > r[1].gd, true, 'both on 3 points, leader has the better GD');
+})();
 
 // ---- matchSearch / liveSearch: a Google query that always pins one exact match ----
 const finURL = matchSearch({ home: 'Mexico', away: 'South Africa', date: '2026-06-14' }, { hs: 2, as: 0 });
