@@ -267,6 +267,9 @@
   .cal th{background:var(--bg2);color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
   .cal td:first-child,.cal th:first-child{text-align:left;font-family:'Archivo';font-weight:700}
   .cal tr:last-child td{border-bottom:none}
+  .thirds td:nth-child(2),.thirds th:nth-child(2){text-align:left;font-family:'Archivo';font-weight:600}
+  .thirds tr.cut td{border-bottom:2px solid var(--lime)}     /* the 8/12 qualification cut */
+  .thirds tr.qout td{color:var(--faint)}
   .note{background:var(--surface);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:13px 16px;margin:18px 0;font-size:13.5px;color:var(--muted)}
   /* ---------- method: the selected-model panel ---------- */
   .methodhero{background:var(--surface);border:1px solid var(--line2);border-radius:14px;padding:17px 18px 16px;margin:0 0 26px}
@@ -543,6 +546,7 @@
     <p class="lead">Each group's live standings next to where the model predicted the teams to finish, so you can see who is running ahead of the forecast and who is behind. Expand a group for the match-by-match predictions and results.</p>
     <div class="scoreboard" id="grpScore"></div>
     <div class="grid" id="groupGrid"></div>
+    <div id="thirdsTable"></div>
   </section>
 
   <!-- KNOCKOUT PHASE (placeholder, built once the round of 32 is set) -->
@@ -741,6 +745,17 @@
     if (!G[g].every(t => st.tbl[t].P === 3)) return null;
     const pr = predRankOf(g);
     return G[g].every(t => pr[t] === st.pos[t]);
+  }
+  // the twelve third-placed teams ranked the way the bracket picks the best eight: points, then goal
+  // difference, then goals scored, then Elo as the deterministic tail (a stand-in for fair play / FIFA
+  // ranking / lots). Reads MODELS[CUR].teams, not render's local T, so it is safe at module scope.
+  function thirdsRanking(){
+    const td = MODELS[CUR].teams;
+    return Object.keys(G).map(g=>{
+      const st = groupStandings(g);
+      const t = G[g].find(x=>st.pos[x]===3), r = st.tbl[t];
+      return {g, team:t, P:r.P, pts:r.pts, gd:r.gd, gf:r.gf};
+    }).sort((a,b)=> b.pts-a.pts || b.gd-a.gd || b.gf-a.gf || (td[b.team].elo-td[a.team].elo));
   }
 
   // ---- live actual results -----------------------------------------------
@@ -1267,6 +1282,21 @@
     if(grpSb) grpSb.innerHTML = scoreboardHTML(scoreOver(grpAll), LABELS[CUR]||CUR,
       gTot ? {num:`${gWin}/${gTot}`, cap:'standings called',
               tip:'Finished groups where the model’s pre-tournament predicted finishing order matched the final table exactly, all four places, not just the winner.'} : null);
+
+    // best third-placed teams: the eight best of twelve reach the round of 32, so this is the cut
+    // that fills the last bracket spots. Provisional until every group has finished.
+    const thd = document.getElementById('thirdsTable');
+    if (thd) {
+      const thirds = thirdsRanking();
+      thd.innerHTML = thirds.some(x => x.P > 0) ? `
+        <h2 class="sec-h">Best third-placed teams</h2>
+        <p class="lead">Eight of the twelve third-placed teams reach the round of 32. Ranked by points, then goal difference, then goals scored; teams above the line are through. Provisional until every group has finished.</p>
+        <div class="tbl-scroll"><table class="cal thirds">
+          <tr><th>#</th><th>Team</th><th>Grp</th><th>Pl</th><th>Pts</th><th>GD</th><th>GF</th></tr>
+          ${thirds.map((x,i)=>`<tr class="${i<8?'qin':'qout'}${i===7?' cut':''}" data-tip="${i<8?'Currently in the top 8: into the round of 32.':'Currently outside the top 8.'}">
+            <td>${i+1}</td><td>${x.team}</td><td>${x.g}</td><td>${x.P}</td><td>${x.pts}</td><td>${x.gd>=0?'+':''}${x.gd}</td><td>${x.gf}</td></tr>`).join('')}
+        </table></div>` : '';
+    }
 
     // calibration table (selected model vs Opta/market)
     const calTeams=['Spain','France','England','Argentina','Brazil','Portugal','Germany','Netherlands'];
