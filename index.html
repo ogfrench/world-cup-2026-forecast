@@ -7,7 +7,7 @@
 <meta name="description" content="World Cup 2026 forecast: every match and the knockout bracket simulated 50,000 times, five ways, from past results to the bookmakers' odds, with real results overlaid on the predictions as games play out.">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <link rel="canonical" href="https://wc2026forecast.xyz/">
-<meta name="theme-color" content="#0a0b0d">
+<meta name="theme-color" content="#09090e">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="World Cup 2026 Forecast">
@@ -69,11 +69,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0a0b0d; --bg2:#101216; --surface:#15181e; --surface2:#1b1f27;
-    --line:#262b34; --line2:#323845;
-    --txt:#eceef1; --muted:#969ca6; --faint:#8b919d;
-    --lime:#c8ff4d; --lime-dim:#8fae3a; --gold:#ffd166; --blue:#5fb3ff;
-    --win:#5cd17f; --draw:#8a909b; --loss:#ff6f5e;
+    /* FIFA 2026 dark theme: a vibrant magenta lead (the brand's signature), kept distinct from the
+       Opta blue and the bookmaker gold, on a deep, faintly cool base. (--lime is the accent variable;
+       its value is the magenta here.) */
+    --bg:#09090e; --bg2:#0f0f18; --surface:#15151f; --surface2:#1c1d29;
+    --line:#282935; --line2:#373948;
+    --txt:#eef0f4; --muted:#9aa0ac; --faint:#888e9c;
+    --lime:#ff3d80; --lime-dim:#b83565; --gold:#ffcf5c; --blue:#5aa8ff;
+    --win:#42c878; --draw:#888e9b; --loss:#ff7a52;
     --maxw:1080px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -82,7 +85,7 @@
     background:var(--bg); color:var(--txt);
     font-family:'Archivo',system-ui,sans-serif; line-height:1.5;
     background-image:
-      radial-gradient(1200px 600px at 80% -10%, rgba(200,255,77,.06), transparent 60%),
+      radial-gradient(1200px 600px at 80% -10%, rgba(255,61,128,.06), transparent 60%),
       radial-gradient(900px 500px at -10% 10%, rgba(95,179,255,.05), transparent 55%);
     background-attachment:fixed;
   }
@@ -161,7 +164,7 @@
            background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:0 0 14px}
   .livebar b{color:var(--txt);font-weight:500}
   .livebar .ld{width:7px;height:7px;border-radius:50%;background:var(--lime);flex:none;animation:lpulse 2s infinite}
-  @keyframes lpulse{0%{box-shadow:0 0 0 0 rgba(200,255,77,.5)}70%{box-shadow:0 0 0 6px rgba(200,255,77,0)}100%{box-shadow:0 0 0 0 rgba(200,255,77,0)}}
+  @keyframes lpulse{0%{box-shadow:0 0 0 0 rgba(255,61,128,.5)}70%{box-shadow:0 0 0 6px rgba(255,61,128,0)}100%{box-shadow:0 0 0 0 rgba(255,61,128,0)}}
   .pod .mv{display:inline-flex;align-items:center;gap:4px;font-family:'DM Mono';font-size:11px;margin-top:7px;font-weight:500}
   .pod .mv::before{content:"";width:0;height:0;border-left:3.5px solid transparent;border-right:3.5px solid transparent}
   .pod .mv.up{color:var(--win)} .pod .mv.up::before{border-bottom:6px solid var(--win)}
@@ -299,7 +302,7 @@
   .scempty{color:var(--faint);font-size:13px;padding:16px 2px;font-family:'DM Mono';line-height:1.5}
   .scnote{color:var(--faint);font-size:12px;margin:14px 2px 0;line-height:1.55}
   .prose .colophon{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--faint);line-height:1.6}
-  .xlink{color:var(--lime);text-decoration:none;border-bottom:1px solid rgba(200,255,77,.35)}
+  .xlink{color:var(--lime);text-decoration:none;border-bottom:1px solid rgba(255,61,128,.35)}
   .xlink:hover{border-bottom-color:var(--lime)}
   footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-size:11px;color:var(--faint);font-family:'DM Mono'}
   .madeby{margin-top:16px;display:flex;align-items:center;justify-content:center;gap:9px;color:var(--muted);letter-spacing:.04em}
@@ -335,7 +338,7 @@
        background:none;border:none;color:inherit;text-align:left;font-family:'Archivo';font-weight:600;font-size:13px}
   .mdname{flex:1;min-width:0}
   .mdtag{flex:none;font-family:'DM Mono';font-size:9px;letter-spacing:.08em;text-transform:uppercase;
-       color:var(--lime-dim);border:1px solid rgba(200,255,77,.4);border-radius:5px;padding:1px 6px}
+       color:var(--lime-dim);border:1px solid rgba(255,61,128,.4);border-radius:5px;padding:1px 6px}
   /* per-row (i): hover, keyboard focus, or tap shows the model's description as a tooltip; never selects */
   .mdi{flex:none;width:32px;height:32px;margin-right:4px;border:none;background:none;cursor:help;
        color:var(--faint);font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:700;font-size:14px;
@@ -399,8 +402,8 @@
   /* in-play badge: links out to a Google search for the live score */
   .livelink{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono';font-weight:600;font-size:10.5px;
        letter-spacing:.1em;text-transform:uppercase;color:var(--lime);text-decoration:none;
-       border:1px solid rgba(200,255,77,.4);border-radius:999px;padding:3px 10px;transition:.15s;white-space:nowrap}
-  .livelink:hover{border-color:var(--lime);background:rgba(200,255,77,.08)}
+       border:1px solid rgba(255,61,128,.4);border-radius:999px;padding:3px 10px;transition:.15s;white-space:nowrap}
+  .livelink:hover{border-color:var(--lime);background:rgba(255,61,128,.08)}
   .livelink .livedot{width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulse 1.8s infinite}
   .livelink .livearrow{color:var(--lime-dim);font-weight:400}
   /* looks finished, result not in the feed yet: an amber "awaiting" flag, no pulse */
@@ -1237,7 +1240,7 @@
     const body='<tbody>'+byChamp.slice(0,24).map(t=>{
       const cells=cols.map(c=>{const v=gv(t,c[0]);const a=Math.min(.9,v/100*0.95+0.04);
         const dark=v>=46;  // bright cell -> dark text; a halo keeps the number legible
-        return `<td data-tip="${t} reaches <b>${c[1]}</b> in ${fmt(v)}% of runs (±${se(v).toFixed(1)})." style="background:rgba(200,255,77,${a.toFixed(3)});color:${dark?'#0a0b0d':'var(--txt)'};text-shadow:${dark?'0 1px 1px rgba(255,255,255,.22)':'0 1px 2px rgba(0,0,0,.8)'}">${fmt(v)}</td>`;}).join('');
+        return `<td data-tip="${t} reaches <b>${c[1]}</b> in ${fmt(v)}% of runs (±${se(v).toFixed(1)})." style="background:rgba(255,61,128,${a.toFixed(3)});color:${dark?'#0a0b0d':'var(--txt)'};text-shadow:${dark?'0 1px 1px rgba(255,255,255,.22)':'0 1px 2px rgba(0,0,0,.8)'}">${fmt(v)}</td>`;}).join('');
       return `<tr><td class="tname">${t}<span class="grp-pill" data-tip="Group ${T[t].group}">${T[t].group}</span></td>${cells}</tr>`;
     }).join('')+'</tbody>';
     document.getElementById('koTable').innerHTML=head+body;
