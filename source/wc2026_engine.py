@@ -401,19 +401,41 @@ def _third_qualified(g, settled, elo_sign=1):
     return ahead + remaining <= 7
 
 def _resolve_thirds(settled, elo_sign=1):
-    """{slot: team} for third-place slots we can place. Full set of 12 settled: rank all thirds and
-    place the top 8 via Annex C. Partial: only K and L, whose third has a single fixed slot (80, 87),
-    and only once that third has clinched a top-8 finish."""
+    """{slot: team} for third-place slots whose occupant is already determined.
+
+    Full set of 12 settled: rank all thirds, take the top 8, and place them via Annex C.
+
+    Partial: a third's Annex C slot depends on which eight of the twelve groups supply a qualifying
+    third, so a slot is placeable early only when it maps to the same group across every still-possible
+    qualifying set. Force in the thirds that have clinched a top-8 finish, enumerate the ways the
+    remaining qualifying spots can be filled from the open groups, and emit any slot that lands on the
+    same clinched (so already known) group in all of them. Enumerating the open groups is a slight
+    superset of the genuinely reachable sets (it ignores the fixed ordering among settled non-clinched
+    thirds), which only makes the test more conservative, never wrong: an emitted slot is locked under
+    the superset, hence under the reachable subset too. This subsumes the old K/L special case (their
+    slots are combination-invariant by construction) and generalizes it to any group whose third is
+    pinned to a single slot. Runs under each Elo tail via the caller, so a slot whose occupant or
+    ordering hangs on the Elo tie-break disagrees between tails and is deferred upstream."""
     out = {}
     if len(settled) == len(GROUPS):
         ranked = sorted(GROUPS, key=lambda g: tuple(-v for v in _third_key(settled[g], elo_sign)))
-        tmap = assign_thirds(ranked[:8])
-        for slot, grp in tmap.items():
+        for slot, grp in assign_thirds(ranked[:8]).items():
             out[slot] = settled[grp]['third']
         return out
-    for grp, slot in (('K', 80), ('L', 87)):
-        if _third_qualified(grp, settled, elo_sign):
-            out[slot] = settled[grp]['third']
+    clinched = [g for g in GROUPS if _third_qualified(g, settled, elo_sign)]
+    need = 8 - len(clinched)
+    if need < 0:
+        return out
+    open_pool = [g for g in GROUPS if g not in clinched]
+    slot_groups = {}
+    for extra in combinations(open_pool, need):
+        for slot, grp in assign_thirds(clinched + list(extra)).items():
+            slot_groups.setdefault(slot, set()).add(grp)
+    for slot, groups in slot_groups.items():
+        if len(groups) == 1:
+            g = next(iter(groups))
+            if g in settled:                  # occupant known: its group has finished
+                out[slot] = settled[g]['third']
     return out
 
 def _resolve_feeder(ref, settled, thirds):

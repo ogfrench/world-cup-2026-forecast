@@ -361,6 +361,38 @@ class TestBracket(unittest.TestCase):
         self.assertNotIn(73, e.actual_bracket({'A': tie, 'B': Bgrp}, []))        # deferred
         self.assertIn(73, e.actual_bracket({'A': self._rr('A', 1), 'B': Bgrp}, []))  # clean -> emitted
 
+    def test_locks_invariant_third_beyond_kl(self):
+        # With one group still open, a third whose Annex C slot is the same across every possible
+        # set of eight qualifiers is placed early, not just K and L. Here groups A-L minus J are
+        # settled with separated thirds; several winner-vs-third ties lock before J finishes.
+        e = self.e
+        sub = {g: self._rr(g, gi + 2) for gi, g in enumerate(e.GROUPS) if g != 'J'}
+        br = e.actual_bracket(sub, [])
+        third_fed = [s for s in br if br[s]['round'] == 'r32'
+                     and any(f[0] == '3' for f in e.R32_SYMBOLIC[s])]
+        beyond_kl = [s for s in third_fed if s not in (80, 87)]
+        self.assertTrue(beyond_kl, "no third-fed tie locked beyond the old K/L special case")
+
+    def test_emitted_third_slots_are_sound(self):
+        # Soundness: every third-fed slot the partial bracket emits must hold in the full bracket
+        # under every way the open group can finish. Vary J's third across the full strength range
+        # (and which J team finishes third); an emitted slot must never change team.
+        e = self.e
+        sub = {g: self._rr(g, gi + 2) for gi, g in enumerate(e.GROUPS) if g != 'J'}
+        partial = e.actual_bracket(sub, [])
+        emitted = {s: (partial[s]['a'], partial[s]['b']) for s in partial
+                   if partial[s]['round'] == 'r32' and any(f[0] == '3' for f in e.R32_SYMBOLIC[s])}
+        self.assertTrue(emitted)
+        jteams = [t[0] for t in e.GROUPS['J']]
+        for margin in (1, 3, 7, 30):                       # J's third weak to overwhelming
+            for win_order in (jteams, list(reversed(jteams))):
+                full = dict(sub); full['J'] = self._rr('J', margin, win_order)
+                fb = e.actual_bracket(full, [])
+                for s, pair in emitted.items():
+                    self.assertIn(s, fb)
+                    self.assertEqual((fb[s]['a'], fb[s]['b']), pair,
+                                     f"slot {s} changed once J finished: emitted early but not locked")
+
 
 @unittest.skipUnless(HAVE_NUMPY, "engine requires numpy")
 class TestKoScheduleAlignment(unittest.TestCase):
