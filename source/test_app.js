@@ -66,6 +66,9 @@ const snippet = [
   pull(/function thirdsRanking\(\)\{[\s\S]*?\n  \}/, 'thirdsRanking'),
   pull(/const KO_ROUNDS = \[[\s\S]*?\];/, 'KO_ROUNDS'),
   pull(/function koDesc\(d\)\{[\s\S]*?\n  \}/, 'koDesc'),
+  pull(/function koSide\(desc\)\{[\s\S]*?\n  \}/, 'koSide'),
+  pull(/function koLabel\(desc\)\{[\s\S]*?\n  \}/, 'koLabel'),
+  pull(/function advanceLabel\(a\)\{[\s\S]*?\n  \}/, 'advanceLabel'),
   pull(/function scheduleUnits\(\)\{[\s\S]*?\n  \}/, 'scheduleUnits'),
   pull(/function koRounds\(\)\{[\s\S]*?\n  \}/, 'koRounds'),
   pull(/function matchSearch\(mm, a\)\{[\s\S]*?\n  \}/, 'matchSearch'),
@@ -79,7 +82,7 @@ const snippet = [
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, scheduleUnits, koRounds, matchSearch, liveSearch } = sandbox;
+const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, koSide, koLabel, advanceLabel, scheduleUnits, koRounds, matchSearch, liveSearch } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -333,6 +336,36 @@ eq(koDesc('2C'), 'Runner-up C', 'group runner-up descriptor');
 eq(koDesc('3'), '3rd place', 'third-placed descriptor');
 eq(koDesc('W73'), 'Winner M73', 'match-winner descriptor');
 eq(koDesc('L101'), 'Loser M101', 'match-loser descriptor (third-place play-off)');
+
+// ---- koSide / koLabel: half-known brackets (fill the side we already know, give context for the rest) ----
+(function(){
+  const rr=[['A1','A2'],['A1','A3'],['A1','A4'],['A2','A3'],['A2','A4'],['A3','A4']];   // A1>A2>A3>A4
+  const gm=rr.map(([h,a],i)=>({home:h,away:a,date:`2026-06-2${i}`}));
+  const acts={}; rr.forEach(([h,a],i)=>acts[`2026-06-2${i}|${h}|${a}`]={home:h,away:a,hs:1,as:0});
+  const teams={A1:{elo:4},A2:{elo:3},A3:{elo:2},A4:{elo:1}};
+  const ko={90:{a:'X',b:'Y',played:{hs:2,as_:1,winner:'X'}}};                          // a played match
+  const koSched=[{slot:90,round:'r16',home_desc:'W73',away_desc:'W75'},{slot:75,round:'r32',home_desc:'1A',away_desc:'2A'}];
+  sandbox.setGroupCtx({A:['A1','A2','A3','A4']}, {m:{teams, group_matches:{A:gm}, knockout:ko}}, 'm', teams);
+  sandbox.setData({ ko_schedule: koSched });
+  sandbox.setActuals(acts);
+  eq(koSide('1A'),'A1','group winner known once the group finishes');
+  eq(koSide('2A'),'A2','runner-up known');
+  eq(koSide('W90'),'X','winner of a played match');
+  eq(koSide('L90'),'Y','loser of a played match');
+  eq(koSide('3'),null,'a best-third place stays unknown');
+  // koLabel gives context for a not-yet-played match: the feeding matchup, with teams filled where known
+  eq(koLabel('W75'),'Winner of A1/A2','undecided match reads as its feeding matchup (teams filled in)');
+  eq(koLabel('W90'),'X','a decided match reads as the team that won it');
+  // group not finished -> side unknown, label falls back to the group slot
+  sandbox.setActuals({'2026-06-20|A1|A2':{home:'A1',away:'A2',hs:1,as:0}});
+  eq(koSide('1A'),null,'group winner null until the group is finished');
+  eq(koLabel('1A'),'Winner A','an unfinished group slot still reads clearly');
+})();
+
+// ---- advanceLabel: how a knockout tie was decided (penalties shown explicitly) ----
+eq(advanceLabel({winner:'Canada',hs:1,as:0}),'Canada advanced','a decisive result advances');
+eq(advanceLabel({winner:'Canada',hs:1,as:1}),'Canada won on penalties','a draw after 120 min with an advancer is penalties');
+eq(advanceLabel({winner:null,hs:1,as:1}),'to a shootout','a draw with no advancer yet is pending the shootout');
 
 // ---- scheduleUnits / koRounds: the data behind the Schedule list and the bracket ----
 (function(){
