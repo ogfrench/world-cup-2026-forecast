@@ -888,21 +888,18 @@
     const host = document.getElementById('koBracket'); if(!host) return;
     const KO = MODELS[CUR].knockout || {}, ties = Object.values(KO);
     const sb = document.getElementById('koScore');
-    const fixtures = DATA.ko_schedule || [];
-    if(!fixtures.length){
+    const rounds = koRounds();
+    if(!rounds.length){
       host.innerHTML = `<div class="pending">The bracket appears here once the knockout calendar is set. Each match shows the ${LABELS[CUR]||CUR} prediction next to the real result, color-coded, round by round.</div>`;
       if(sb) sb.innerHTML=''; return;
     }
     // the whole bracket, round by round: a resolved tie shows its full prediction card, an unresolved
     // one shows its bracket slots (e.g. "Winner E v 3rd place") until the teams are known.
-    const ROUNDS = [['r32','Round of 32'],['r16','Round of 16'],['qf','Quarter-finals'],['sf','Semi-finals'],['final','Final']];
     const r32n = ties.filter(t=>t.round==='r32').length;
     const note = (r32n>0 && r32n<16)
       ? `<div class="pending">Filling in as groups finish: ${r32n} of 16 round-of-32 ties set so far. The rest show their bracket slots until then.</div>` : '';
-    host.innerHTML = note + ROUNDS.map(([r,label])=>{
-      const fx = fixtures.filter(f=>f.round===r).sort((a,b)=>a.slot-b.slot);
-      return fx.length ? `<h2 class="sec-h koround">${label}</h2><div class="grid">${fx.map(schedKoCard).join('')}</div>` : '';
-    }).join('');
+    host.innerHTML = note + rounds.map(r=>
+      `<h2 class="sec-h koround">${r.label}</h2><div class="grid">${r.fixtures.map(schedKoCard).join('')}</div>`).join('');
     // performance over played ties: scores called right / exact, plus advancers called
     let played=0, against=0, exact=0, advRight=0, advTot=0;
     ties.forEach(t=>{ const a=koActual(t); if(!a) return; played++;
@@ -1372,19 +1369,43 @@
   }
 
   // ---- schedule (all fixtures, by date, with live results) ----
-  const ROUND_LABEL = {r32:'Round of 32', r16:'Round of 16', qf:'Quarter-final', sf:'Semi-final', final:'Final'};
-  // a bracket-position placeholder ("1A", "2B", "3", "W73") into readable text for the schedule list
+  // the knockout rounds in order, including the third-place play-off (which the engine does not model,
+  // so it is shown without a prediction). ROUND_LABEL is derived from this.
+  const KO_ROUNDS = [['r32','Round of 32'],['r16','Round of 16'],['qf','Quarter-finals'],
+                     ['sf','Semi-finals'],['third','Third-place play-off'],['final','Final']];
+  const ROUND_LABEL = Object.fromEntries(KO_ROUNDS);
+  // a bracket-position placeholder ("1A", "2B", "3", "W73", "L101") into readable text
   function koDesc(d){
     let m;
     if (m=/^1([A-L])$/.exec(d)) return 'Winner '+m[1];
     if (m=/^2([A-L])$/.exec(d)) return 'Runner-up '+m[1];
     if (d==='3') return '3rd place';
     if (m=/^W(\d+)$/.exec(d)) return 'Winner M'+m[1];
+    if (m=/^L(\d+)$/.exec(d)) return 'Loser M'+m[1];
     return d;
   }
-  // a knockout fixture in the Schedule list: the full prediction card once the teams are known,
-  // otherwise a placeholder showing the bracket slots, date and venue.
+  // the two beaten semi-finalists (the third-place play-off teams), once both semis are decided
+  function sfLosers(){
+    const ko = MODELS[CUR].knockout||{};
+    const lose = s => { const t=ko[s]; return (t && t.played) ? (t.played.winner===t.a ? t.b : t.a) : null; };
+    return [lose(101), lose(102)];
+  }
+  // one knockout fixture for a list (Schedule or the bracket). A resolved tie shows its full prediction
+  // card; the third-place play-off shows the two beaten semi-finalists and the real score but no pick
+  // (the engine does not simulate it); any other unresolved tie shows its bracket slots.
   function schedKoCard(fix){
+    if (fix.round === 'third') {
+      const [h,a] = sfLosers();
+      const mm = {home:h, away:a, date:fix.date, kickoff_utc:fix.kickoff_utc, venue:fix.venue};
+      const res = (h && a) ? actualFor(mm) : null;
+      const chip = res
+        ? `<div class="sc ft" data-tip="The third-place play-off result.">${res.hs}-${res.as}</div>`
+        : `<div class="sc tbd" data-tip="The two beaten semi-finalists. No model pick: the engine does not simulate the third-place play-off.">v</div>`;
+      return `<div class="m kofix" data-ko="${fix.kickoff_utc}">
+        <div class="mcap"><span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span><span class="capven" data-tip="${fix.venue}">${venueName(fix.venue)}</span></div>
+        <div class="top"><div class="ta${h?'':' tbd'}">${h||koDesc(fix.home_desc)}</div>${chip}<div class="tb${a?'':' tbd'}">${a||koDesc(fix.away_desc)}</div><div class="sclab clab">Third place</div></div>
+      </div>`;
+    }
     const tie = (MODELS[CUR].knockout||{})[fix.slot];
     if (tie) return koCard(tie);
     const mm = {kickoff_utc:fix.kickoff_utc, venue:fix.venue};
@@ -1393,25 +1414,36 @@
       <div class="top"><div class="ta tbd">${koDesc(fix.home_desc)}</div><div class="sc tbd" data-tip="The teams are set once the groups (or the previous round) finish.">v</div><div class="tb tbd">${koDesc(fix.away_desc)}</div><div class="sclab clab">${ROUND_LABEL[fix.round]||''}</div></div>
     </div>`;
   }
+  // every fixture in kickoff order: group games plus the full knockout calendar (pure; unit-tested)
+  function scheduleUnits(){
+    return allMatches().map(mm=>({k:mm.kickoff_utc, kind:'g', obj:mm}))
+      .concat((DATA.ko_schedule||[]).map(fix=>({k:fix.kickoff_utc, kind:'k', obj:fix})))
+      .sort((a,b)=> a.k<b.k?-1:a.k>b.k?1:0);
+  }
+  // the bracket grouped by round, resolved + placeholder fixtures, in round order (pure; unit-tested)
+  function koRounds(){
+    const fx = DATA.ko_schedule||[];
+    return KO_ROUNDS.map(([round,label])=>({round, label,
+      fixtures: fx.filter(f=>f.round===round).sort((a,b)=>a.slot-b.slot)})).filter(r=>r.fixtures.length);
+  }
   function renderSchedule(){
     const host = document.getElementById('schedList'); if (!host) return;
-    const groupAll = allMatches();
-    // every fixture: group games plus the full knockout calendar, in kickoff order
-    const items = groupAll.map(mm=>({k:mm.kickoff_utc, obj:mm, html:()=>matchCard(mm,true)}))
-      .concat((DATA.ko_schedule||[]).map(fix=>({k:fix.kickoff_utc, obj:fix, html:()=>schedKoCard(fix)})))
-      .sort((a,b)=> a.k<b.k?-1:a.k>b.k?1:0);
+    const items = scheduleUnits().map(u => ({obj:u.obj, html: u.kind==='k' ? ()=>schedKoCard(u.obj) : ()=>matchCard(u.obj,true)}));
     const dayCount = {};
     items.forEach(it => { const k = localDay(it.obj); dayCount[k] = (dayCount[k]||0)+1; });
-    // prediction accuracy across every played fixture: group games and knockout ties alike
+    // prediction accuracy across every played fixture: group games and knockout ties alike. The
+    // third-place play-off counts toward "played" (it is a real match) but has no pick to grade.
     let played = 0, against = 0, exact = 0;
     items.forEach(it => {
       const fix = it.obj;
-      if (fix.slot != null) {                                  // knockout fixture
+      if (fix.round === 'third') {
+        const [h,a] = sfLosers(); if (h && a && actualFor({home:h, away:a, date:fix.date})) played++;
+      } else if (fix.slot != null) {                           // knockout tie
         const tie = (MODELS[CUR].knockout||{})[fix.slot]; if (!tie) return;
         const a = koActual(tie); if (!a) return;
         played++; const t = predTier({modal:tie.modal, p_home:tie.p_a, p_draw:tie.p_draw, p_away:tie.p_b}, {hs:a.hs, as:a.as});
         if (t==='miss') against++; else if (t==='exact') exact++;
-      } else {
+      } else {                                                 // group game
         const a = actualFor(fix); if (!a) return;
         played++; const t = predTier(fix, a); if (t==='miss') against++; else if (t==='exact') exact++;
       }

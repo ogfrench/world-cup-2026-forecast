@@ -339,5 +339,16 @@
   "venue": "New York/New Jersey (East Rutherford)",
   "home_desc": "W101",
   "away_desc": "W102"
+ },
+ {
+  "slot": 104,
+  "round": "third",
+  "date": "2026-07-18",
+  "local_time": "17:00",
+  "tz": "UTC-4",
+  "kickoff_utc": "2026-07-18T21:00Z",
+  "venue": "Miami (Miami Gardens)",
+  "home_desc": "L101",
+  "away_desc": "L102"
  }
 ]
