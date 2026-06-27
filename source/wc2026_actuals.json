@@ -435,6 +435,13 @@
  },
  {
   "group": "L",
+  "home": "Croatia",
+  "away": "Ghana",
+  "hs": 2,
+  "as": 1
+ },
+ {
+  "group": "L",
   "home": "England",
   "away": "Croatia",
   "hs": 4,
@@ -460,5 +467,12 @@
   "away": "Croatia",
   "hs": 0,
   "as": 1
+ },
+ {
+  "group": "L",
+  "home": "Panama",
+  "away": "England",
+  "hs": 0,
+  "as": 2
  }
 ]

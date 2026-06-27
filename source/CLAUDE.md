@@ -138,12 +138,21 @@ club-match validation figures are still hardcoded in the copy and must be refres
 
 The bracket fills in incrementally as groups finish, not all-at-once. `actual_bracket` settles each
 group that has all six games played and emits an R32 tie the moment both its feeders are known: the
-eight ties with no third-placed team unlock as their two groups complete, and the eight third-fed ties
-once the set of eight best thirds is known. A third's slot is combination-dependent for ten groups but
-fixed for K (slot 80) and L (slot 87), so a K/L third is placed early once `_third_qualified` shows it
-has clinched a top-8 finish (`C + R <= 7`: settled thirds above it plus one per unsettled group, worst
-case). `make_data` emits the per-model `knockout` section via `ko_predictions`; `renderKnockout` shows a
-"N of 16 set" note while the R32 is partial.
+eight ties with no third-placed team unlock as their two groups complete, and a third-fed tie unlocks
+as soon as its third's slot is pinned down. A third's Annex C slot depends on which eight of the twelve
+groups supply a qualifying third, so `_resolve_thirds` places a third early only when its slot is the
+same across every still-possible set of eight. It forces in the thirds that have clinched a top-8 finish
+(`_third_qualified`: `ahead + remaining <= 7`, settled thirds above it plus one per unsettled group,
+worst case), enumerates the ways the remaining qualifying spots can be filled from the open groups, and
+emits any slot that lands on the same already-known group in all of them. Enumerating the open groups is
+a slight superset of the genuinely reachable sets (it ignores the fixed ordering among settled
+non-clinched thirds), so the test is conservative, never wrong: a slot locked under the superset is
+locked under the reachable subset too. This subsumes the old K/L special case (their slots happen to be
+combination-invariant) and generalizes it: at the back end of the group stage, with only a group or two
+left, several winner-vs-third ties (e.g. a clinched group winner against a clinched third whose slot no
+longer moves) lock a full matchday before the stage ends, instead of waiting for all twelve. `make_data`
+emits the per-model `knockout` section via `ko_predictions`; `renderKnockout` shows a "N of 16 set" note
+while the R32 is partial.
 
 The whole bracket is built under both Elo tails (`_bracket_core(..., elo_sign=+1/-1)`) and only slots
 that agree are emitted. This is the defer guard: a boundary that only the Elo tail would decide (a dead
