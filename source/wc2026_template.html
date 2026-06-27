@@ -1504,10 +1504,13 @@
     const t = btn.dataset.t;
     document.getElementById(t).classList.add('on');
     if (t === 'schedule' || t === 'knockout') { scrollToCurrentMatch(t); return; }
-    // Restore this tab's remembered position (0 the first time). Deferred a frame so the section swap
-    // and the browser's scroll-clamp have settled before we set it.
+    // Restore this tab's remembered position (0 the first time), animating the move when it actually
+    // changes. Deferred a frame so the section swap and the browser's scroll-clamp settle first; the
+    // smooth/instant choice is then made against the settled position (instant for a no-op or reduced
+    // motion, so it never animates when nothing moves).
     const y = tabScroll[t] || 0;
-    requestAnimationFrame(()=>window.scrollTo({top:y, behavior:'auto'}));
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    requestAnimationFrame(()=>window.scrollTo({top:y, behavior:(!reduce && Math.abs(window.scrollY - y) > 2) ? 'smooth' : 'auto'}));
   }));
   // in-prose links that jump to another tab
   // Title Odds tab: Live vs Day 0 (frozen pre-tournament) view
