@@ -177,6 +177,17 @@ class TestParseFinals(unittest.TestCase):
         self.assertEqual(ko, [])
         self.assertIn('unrecognised', err.getvalue())
 
+    def test_format_drift_guard_flags_unparsed_played_lines(self):
+        # the loose detector counts played-looking KO lines; if the strict parser (parse_finals) matches
+        # none while this finds some, the feed format drifted and the refresh Action should warn.
+        played = '  (73) 12:00 UTC-7  South Africa 1-2 Canada   @ Los Angeles\n'
+        unplayed = '  (76) 12:00 UTC-5  Japan v Croatia   @ Houston\n'
+        drifted = '  (73) South Africa - Canada 1-2  @ Los Angeles\n'   # score not in "Home H-A Away" shape
+        self.assertEqual(fa.played_finals_lines(played), 1)
+        self.assertEqual(fa.played_finals_lines(unplayed), 0)           # " v " has no H-A score
+        self.assertEqual(fa.played_finals_lines(drifted), 1)            # looks played...
+        self.assertEqual(fa.parse_finals(drifted, self.CANON), [])      # ...but strict parser misses it -> guard fires
+
     def test_merge_prefers_finals_winner_over_group_route(self):
         # the group-feed route leaves a draw winner unknown; the finals feed carries the shootout winner
         grp = [{'home': 'Germany', 'away': 'Paraguay', 'hs': 1, 'as': 1, 'winner': None}]
