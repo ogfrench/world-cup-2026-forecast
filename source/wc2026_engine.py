@@ -1,5 +1,5 @@
 """
-World Cup 2026 prediction engine -- HYBRID model + per-tournament form noise.
+World Cup 2026 prediction engine -- five rating models on a shared fixed-strength Monte Carlo.
 
 Match model (validated out-of-sample, see val_hybrid.py):
     lambda = 0.5 * DixonColes + 0.5 * Elo     (blend weight chosen by held-out log-loss)
@@ -9,13 +9,16 @@ Match model (validated out-of-sample, see val_hybrid.py):
   - Elo: official eloratings.net ratings -> goal supremacy via a slope fit to results.
   Pure DC OOS log-loss 0.856, pure Elo 0.846, hybrid 0.841 (beats both).
 
-Tournament variance: each simulated tournament draws a per-team form offset f_t ~ N(0, sigma)
-in goal-supremacy units, held fixed across that team's whole run. This models unmodeled
-in-tournament variance (injury/form/red cards) that a fixed-strength sim ignores and that
-otherwise makes favourites overconfident. sigma is a judgment value, NOT fit to Opta.
+Variance: this is a FIXED-STRENGTH simulation. Team ratings do not vary between simulated
+tournaments, so the only randomness is goal-level (Poisson) variance. There is deliberately NO
+per-team rating/form uncertainty. That is the single biggest reason the results-based models lean
+top-heavy (they crowd probability onto favourites): a fixed-strength sim cannot see in-tournament
+swings (injury, form, a red card). See REPORT.md; adding rating uncertainty would widen the title
+race and is the most worthwhile future change. (An earlier docstring claimed a per-team form-noise
+offset; that was never implemented, so this note was corrected to match the code.)
 
-The per-match prediction tables use the full Dixon-Coles distribution; the Monte Carlo
-samples goals as Poisson with form noise (the rho correction is negligible for who-advances).
+The per-match prediction tables use the full Dixon-Coles distribution; the Monte Carlo samples
+goals as Poisson (the rho correction is negligible for who-advances).
 
 Run directly for an engine smoke test that prints the title odds:
     python3 wc2026_engine.py [n_sims]

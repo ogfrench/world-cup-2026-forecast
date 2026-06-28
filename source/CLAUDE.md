@@ -99,7 +99,27 @@ Data not shipped (live in `/home/claude` during development):
    suites: `python -m unittest discover -s source -p 'test_*.py'` and `node test_app.js`.
 
 The autonomous refresh (`.github/workflows/refresh.yml`) runs steps 1 to 4 on a windowed cron, but only
-when `wc2026_actuals.json` actually changes, and commits the result so Netlify redeploys.
+when `wc2026_actuals.json` actually changes, and commits the result so Netlify redeploys. It rebuilds on
+the latest `main` and retries on a push race, so a concurrent merge cannot leave it half-applied.
+
+## Recutting the v1.0 release (do it the hardened way)
+
+The release is recut with a one-shot `.github/workflows/release.yml` that publishes `v1.0` at the
+current `main`, then deletes itself. Use the HARDENED recipe: delete any existing `v1.0` release AND any
+stray same-name draft by id via the API, recreate the tag explicitly (`git tag -f` + push), then
+`gh release create v1.0 --verify-tag` (non-draft). Do NOT use the old "`gh release delete v1.0
+--cleanup-tag` then `gh release create`" form: it races (the tag deletion is still propagating when
+create runs) and silently produces an UNTAGGED DRAFT while leaving `v1.0` 404ing. That happened once and
+is the reason for `--verify-tag`.
+
+## Live knockout results: confirm the feed format when the R32 plays
+
+`fetch_actuals.parse_finals` and the browser `parseFinals` read `cup_finals.txt` and parse openfootball's
+`(NN) Home H-A [a.e.t. (...),] [P1-P2 pen.] Away` line, including the shootout winner. This is built to
+the 2022 convention; nothing has played for 2026 yet, so the FIRST real round-of-32 result is the first
+live test. Check it then. The front end degrades safely (a predicted matchup that did not happen shows no
+result; a drawn tie with no shootout line yet shows no winner), but a format mismatch would mean KO
+results silently do not appear until the parser is updated.
 
 To re-derive parameters: `python3 fit_dc.py` then `python3 build_params.py` (needs `results.csv`).
 
