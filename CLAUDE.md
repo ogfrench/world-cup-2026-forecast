@@ -104,26 +104,3 @@ every push to `main`.
 ## Local preview
 
 Open `index.html` directly in a browser, or serve the folder: `python -m http.server 8000`.
-
-## Where it is going
-
-Keep the scope narrow. This is a simple, elegant forecast viewer, the same tournament seen five
-ways, not a prediction game like Scorito. No user picks, no scorelines to fill in, no points, no
-leaderboard.
-
-Shipped (issue #1):
-- Matches sorted by date: a Schedule tab (all fixtures by date) and date-ordered fixtures under
-  each group card. Home/away corrected from the official 2026 fixture list.
-- Live actual results fetched in the browser and overlaid on the predictions. Each played match
-  shows the model's predicted score colour-coded against the result (dark green exact, green right
-  result, red wrong).
-- Groups show the live table set against the model's predicted finishing position, with an arrow
-  for who is beating or missing the forecast. Match predictions collapse behind a toggle.
-- Title Race and Knockout Odds merged into one Title & Knockout tab; the page is titled
-  "World Cup 2026 Forecast".
-- Model switcher pinned with the tabs in a sticky bar: pills on desktop, a dropdown on mobile.
-  Tab switches no longer force a scroll to the top.
-
-Still cut: the full user-prediction game (Scorito-style picks, scoring, leaderboard). Backlog: a
-full knockout bracket diff, which only becomes meaningful once the round-of-32 is set. Do not
-overkill it.
