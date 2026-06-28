@@ -169,10 +169,12 @@ rate and add it on top; if still level, it is penalties. The headline is the mos
 across those draws, which is decisive for a favorite (Germany v Paraguay 1-0, France 2-0), because a
 90-minute draw is only about one run in four while the favorite's win is spread across many scorelines.
 (The earlier `argmax(M)` was wrong: it headlined the single biggest 90-minute cell, which is the draw.)
-The draw possibility is surfaced honestly, not faked into the headline: `p_pens` is the share of draws
-that reach a shootout (about 6 to 16 percent per tie, the LEAST likely of the three macro-outcomes),
-shown on the detail line as "N% to penalties". `p_a`/`p_draw`/`p_b` are the over-90 split and `adv_a`
-the advance odds (win in 90 or extra time, or take the shootout), all read from the same simulation.
+The extra-time and shootout possibilities are surfaced honestly on each prediction, not faked into the
+headline: `koCard` shows "120' X% &middot; pens Y%" where X is `p_draw` (the chance of reaching extra
+time, i.e. level after 90) and Y is `p_pens` (still level after extra time). Both are minority outcomes
+(extra time ~10 to 26 percent, pens ~4 to 13 percent), so they are shown as probabilities, never as a
+claim the tie WILL go the distance. `p_a`/`p_draw`/`p_b` are the over-90 split and `adv_a` the advance
+odds (win in 90 or extra time, or take the shootout), all read from the same simulation.
 The group cards still show the analytic 90-minute modal (`match_report`, `argmax(M)`).
 
 The bracket has the same live state as Schedule and Groups, reusing `matchState`/`liveBadge`/`actualFor`.
