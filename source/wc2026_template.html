@@ -1003,17 +1003,16 @@
                      : "Looks finished, but the result is not in our feed yet. Tap to check the score on Google.";
     return `<a class="livelink ${live?'live':'await'}" href="${liveSearch(mm)}" target="_blank" rel="noopener" data-tip="${tip}"><span class="livedot"></span>${label}<span class="livearrow">&#8599;</span></a>`;
   };
-  // one shared match card, used by both the Groups tab and the Schedule so they look identical.
-  // schedule mode swaps the date caption for kickoff time, group, and venue.
+  // one shared match card, used by both the Groups tab and the Schedule, identical in both. The schedule
+  // flag is currently unused (the caption no longer differs), kept for call-site symmetry.
   function matchCard(mm, schedule){
     const tot = mm.p_home+mm.p_draw+mm.p_away;
     const alts = mm.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
     const a = actualFor(mm);
     const srch = `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="${a?'Find this match and result on Google':'Search this match on Google'}" data-tip="${a?'Search this match and result on Google':'Search this match on Google'}">&#8599;</a>`;
-    const cap = schedule
-      ? `<span class="capgrp"><span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}</span><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span></span><span class="capgrp capend"><span class="capven" data-tip="${mm.venue}">${venueName(mm.venue)}</span>${srch}</span>`
-      : `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}</span>`
-        + `<span class="capgrp capend">${mm.venue ? `<span class="capven" data-tip="${mm.venue}">${venueName(mm.venue)}</span>` : ''}${srch}</span>`;
+    // identical caption in both tabs: date, time and the group tag on the left, venue and arrow on the right
+    const cap = `<span class="capgrp"><span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}</span><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span></span>`
+      + `<span class="capgrp capend">${mm.venue ? `<span class="capven" data-tip="${mm.venue}">${venueName(mm.venue)}</span>` : ''}${srch}</span>`;
     let chip, clab, predRow = '';
     if (a) {
       const tier = predTier(mm,a);
