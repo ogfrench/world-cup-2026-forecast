@@ -148,18 +148,18 @@ def main():
         sys.stderr.write('warning: finals feed fetch failed (%s); knockout results skipped\n' % ex)
         ko_txt = ''
     ko = merge_ko(ko_grp, parse_finals(ko_txt, canon))
-    # Durable guard against a silent cup_finals.txt format change: if the feed clearly has played
-    # knockout lines (a "(NN) ... score ... @" with a real H-A) but parse_finals returned none, the
-    # line format has probably drifted from what KRE expects. Warn loudly so the refresh Action shows
-    # it, instead of quietly shipping an empty bracket. (Unproven until the first R32 result lands.)
-    played_ko = played_finals_lines(ko_txt)
-    if played_ko and not ko:
-        sys.stderr.write('::warning::cup_finals.txt has %d played-looking knockout line(s) but '
-                         'parse_finals matched none; the feed format may have changed (update KRE).\n'
-                         % played_ko)
     json.dump(rows, open(os.path.join(HERE, 'wc2026_actuals.json'), 'w'), indent=1)
     json.dump(ko, open(os.path.join(HERE, 'wc2026_ko_actuals.json'), 'w'), indent=1)
     print('wrote %d group games and %d knockout games' % (len(rows), len(ko)))
+    # Durable, NOTIFYING guard against a silent cup_finals.txt format change: if the feed clearly has
+    # played knockout lines (a "(NN) ... H-A ... @") but parse_finals matched none, the line format has
+    # probably drifted from what KRE expects. Exit non-zero so the refresh Action FAILS (a warning would
+    # only sit in the logs; a failed scheduled run emails the repo owner), instead of quietly shipping
+    # an empty bracket. Data parsed so far is already written above. Only fires on real drift.
+    played_ko = played_finals_lines(ko_txt)
+    if played_ko and not ko:
+        sys.exit('::error::cup_finals.txt has %d played-looking knockout line(s) but parse_finals '
+                 'matched none; the feed format likely changed (update KRE / parse_finals).' % played_ko)
 
 if __name__ == '__main__':
     main()

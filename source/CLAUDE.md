@@ -117,9 +117,12 @@ is the reason for `--verify-tag`.
 `fetch_actuals.parse_finals` and the browser `parseFinals` read `cup_finals.txt` and parse openfootball's
 `(NN) Home H-A [a.e.t. (...),] [P1-P2 pen.] Away` line, including the shootout winner. This is built to
 the 2022 convention; nothing has played for 2026 yet, so the FIRST real round-of-32 result is the first
-live test. Check it then. The front end degrades safely (a predicted matchup that did not happen shows no
-result; a drawn tie with no shootout line yet shows no winner), but a format mismatch would mean KO
-results silently do not appear until the parser is updated.
+live test. The front end degrades safely (a predicted matchup that did not happen shows no result; a
+drawn tie with no shootout line yet shows no winner). To stop a format drift from being SILENT,
+`fetch_actuals` fails non-zero (`played_finals_lines()` finds played-looking lines but `parse_finals`
+matched none), so the scheduled refresh Action fails and emails the repo owner instead of quietly
+shipping an empty bracket. If that fires: compare a real `cup_finals.txt` played line against `KRE` and
+update `parse_finals` (Python) and `parseFinals` (template) to match.
 
 To re-derive parameters: `python3 fit_dc.py` then `python3 build_params.py` (needs `results.csv`).
 
