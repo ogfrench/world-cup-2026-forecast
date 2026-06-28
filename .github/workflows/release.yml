@@ -1,0 +1,79 @@
+name: Release (one-shot)
+
+# One-shot: remakes the v1.0 release at the current main, replacing any existing v1.0
+# release and tag. Run it once from the Actions tab (or via dispatch), then it deletes itself.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Remake the v1.0 release at the current commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > /tmp/notes.md <<'NOTES'
+          A from-scratch Monte Carlo forecast of the 2026 World Cup, live at https://wc2026forecast.xyz.
+
+          One self-contained `index.html`, no backend and no dependencies. It plays the full 48-team
+          tournament (104 matches, the eight best third-placed teams, the official FIFA Annex C round of
+          32, and the bracket through the final with extra time and penalties) 50,000 times, five
+          different ways, then overlays real results as they come in.
+
+          ## Five models, one engine
+          Every model shares the same tournament engine and differs only in how it rates a single match.
+          - Pure Elo: results only, like a chess rating.
+          - Pure Goals: Dixon-Coles, fit on internationals since 2010.
+          - Hybrid: the average of the two, best on out-of-sample tests.
+          - Hybrid + Market: the Hybrid blended halfway to the bookmaker-implied ratings.
+          - Pure Market: the bookmakers' ratings run through the bracket, the default and recommended view.
+
+          ## What it shows
+          - Title Odds: each team's chance of winning plus a reach-round matrix, against Opta and the
+            bookmakers as outside comparisons, with a Day 0 ghost tick and a Live / Day 0 toggle once games are played.
+          - Schedule: every fixture by local kickoff, the predicted score against the real result,
+            color-coded on the score shown, with an In play / Awaiting result flag that stays up until the
+            feed posts the score. Opening the tab jumps to the match in focus right now.
+          - Groups & Scores: the live table against the predicted finish, with movement arrows, and how many
+            finished groups the model called in full (the whole finishing order, against its Day 0 prediction).
+          - Knockout Phase: the bracket fills in match by match as each group finishes, every tie carrying
+            its real date, time and venue, an in-play / awaiting badge, live reach-round odds, and the real
+            score as it lands.
+          - Top Scorers: the bookmakers' Golden Boot pick next to a live leaderboard parsed from the feed.
+          - Method & Caveats: the models, the validation, and the honest weaknesses, with a panel for the
+            selected model.
+
+          ## Live and self-updating
+          - Real results overlay in the browser from the public openfootball feed (no key, no backend) on
+            one adaptive heartbeat that also drives the live scorer leaderboard. This layer is deterministic
+            and never changes the odds.
+          - A scheduled GitHub Action re-runs the conditional 50,000-sim and redeploys whenever a new result
+            lands, gated by the test suite before it commits. This is what re-conditions the odds.
+          - Both stop a week after the final (the sundown cutoff).
+
+          ## Honest by design
+          Built and validated entirely from public data. A transparent baseline, not a sure thing; nothing
+          in it has been tested against a real World Cup. Not betting advice.
+          NOTES
+          gh release delete v1.0 --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+          gh release create v1.0 --repo "$GITHUB_REPOSITORY" \
+            --title "World Cup 2026 Forecast v1.0" \
+            --target "$GITHUB_SHA" \
+            --notes-file /tmp/notes.md
+          echo "Published v1.0 at $GITHUB_SHA"
+
+      - name: Remove this one-shot workflow
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/release.yml
+          # [skip actions] (not [skip ci]) so this cleanup skips GitHub CI but never trips Netlify's skip.
+          git commit -m "Remove the one-shot release workflow (v1.0 republished) [skip actions]"
+          git push
