@@ -1012,7 +1012,8 @@
     const a = actualFor(mm);
     const cap = schedule
       ? `<span class="captime">${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span><span class="capgrp"><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span><span class="capven" data-tip="${mm.venue}">${venueName(mm.venue)}</span></span>`
-      : fmtDay(localDay(mm));
+      : `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span>`
+        + (mm.venue ? `<span class="capgrp"><span class="capven" data-tip="${mm.venue}">${venueName(mm.venue)}</span></span>` : '');
     let chip, clab, predRow = '';
     if (a) {
       const tier = predTier(mm,a);
