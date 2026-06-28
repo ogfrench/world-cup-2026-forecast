@@ -4,6 +4,11 @@ name: Refresh forecast
 # updated forecast so Netlify redeploys. No backend: a windowed cron polls the public
 # openfootball feed. The expensive sim runs only when wc2026_actuals.json actually
 # changes (a new played game), so an unchanged feed is a near-free no-op.
+#
+# Race safety: the artifacts (index.html, wc2026_results.json) are regenerated on top of
+# the very latest main every attempt, so a commit that lands during the multi-minute sim
+# can never leave them conflicted. If the push is rejected because main moved again, the
+# loop rebuilds on the new tip and retries instead of failing.
 
 on:
   schedule:
@@ -23,6 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0            # full history so we can reset onto the latest origin/main
 
       - name: Sundown check (stop a week after the final)
         id: sundown
@@ -39,51 +46,58 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Pull the latest played results from the feed
-        if: steps.sundown.outputs.go == 'true'
-        run: python source/fetch_actuals.py
-
-      - name: Stop if no new results
-        id: changed
+      - name: Refresh on the latest main, retrying if main moves during the sim
         if: steps.sundown.outputs.go == 'true'
         run: |
-          if git diff --quiet -- source/wc2026_actuals.json source/wc2026_ko_actuals.json; then
-            echo "go=false" >> "$GITHUB_OUTPUT"
-            echo "No new played results since the last run; skipping the re-simulation."
-          else
-            echo "go=true" >> "$GITHUB_OUTPUT"
-            echo "New results detected:"; git --no-pager diff --stat -- source/wc2026_actuals.json source/wc2026_ko_actuals.json
-          fi
-
-      - name: Re-simulate (50k), conditioned on the played games
-        if: steps.changed.outputs.go == 'true'
-        run: |
+          set -euo pipefail
           python -m pip install --quiet "numpy>=2,<3"
-          python source/make_data.py 50000
-          python source/merge_schedule.py
-          python source/build_app.py
-
-      - name: Validate the build (gates the commit)
-        if: steps.changed.outputs.go == 'true'
-        run: |
-          python source/build_app.py --check
-          node source/check_app.js
-          python -m unittest discover -s source -p 'test_*.py'
-          node source/test_app.js
-
-      - name: Commit and push the refreshed forecast
-        if: steps.changed.outputs.go == 'true'
-        run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add source/wc2026_actuals.json source/wc2026_ko_actuals.json source/wc2026_results.json index.html
-          if git diff --cached --quiet; then
-            echo "Nothing to commit."
-          else
+
+          for attempt in 1 2 3; do
+            echo "::group::Attempt $attempt"
+
+            # Always build on the very latest main, so the regenerated artifacts are a pure
+            # function of (latest source + latest actuals) and cannot conflict on push.
+            git fetch origin main
+            git reset --hard origin/main
+
+            python source/fetch_actuals.py
+            if git diff --quiet -- source/wc2026_actuals.json source/wc2026_ko_actuals.json; then
+              echo "No new played results since main; nothing to do."
+              exit 0
+            fi
+            echo "New results detected:"
+            git --no-pager diff --stat -- source/wc2026_actuals.json source/wc2026_ko_actuals.json
+
+            python source/make_data.py 50000
+            python source/merge_schedule.py
+            python source/build_app.py
+
+            # Gate the commit on the full suite.
+            python source/build_app.py --check
+            node source/check_app.js
+            python -m unittest discover -s source -p 'test_*.py'
+            node source/test_app.js
+
+            git add source/wc2026_actuals.json source/wc2026_ko_actuals.json source/wc2026_results.json index.html
+            if git diff --cached --quiet; then
+              echo "Nothing to commit."
+              exit 0
+            fi
             # [skip actions] (not [skip ci]) so GitHub Actions CI is skipped but Netlify still deploys.
             # Netlify treats [skip ci] / [ci skip] / [skip netlify] as "skip this build", which would
             # leave the live odds frozen while the repo refreshes. [skip actions] only GitHub honours.
             git commit -m "Refresh live forecast from played results [skip actions]"
-            git pull --rebase origin main   # avoid a non-fast-forward abort if main moved during the re-sim
-            git push
-          fi
+
+            if git push origin HEAD:main; then
+              echo "Pushed on attempt $attempt."
+              exit 0
+            fi
+            echo "Push rejected (main moved during the run); rebuilding on the new tip."
+            echo "::endgroup::"
+            sleep $((attempt * 5))
+          done
+
+          echo "::error::Refresh could not push after 3 attempts (main kept moving)."
+          exit 1
