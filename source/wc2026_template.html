@@ -1247,6 +1247,9 @@
     // groups: predicted group-winner odds + live actual table + collapsible match predictions
     const grid = document.getElementById('groupGrid');
     const openG = new Set([...grid.querySelectorAll('details.matches[open]')].map(d=>d.dataset.g));
+    // the eight best third-placed teams advance too; mark them green like the top two. Same ranking
+    // the bracket and the thirds table use (points, GD, goals, then Elo), top 8 of the twelve.
+    const qualThirds = new Set(thirdsRanking().slice(0, 8).map(x => x.team));
     grid.innerHTML = Object.keys(G).map(g=>{
       const st = groupStandings(g);
       const done = st.anyPlayed && G[g].every(t=>st.tbl[t].P===3);   // all six group games played
@@ -1272,11 +1275,17 @@
                : ' Right on it so far.');
           const move = d>0 ? ` <span class="gmove up" aria-label="up ${d}">${d}</span>`
                      : d<0 ? ` <span class="gmove down" aria-label="down ${-d}">${-d}</span>` : '';
-          const posTip = done
+          const adv = st.pos[t] <= 2 || qualThirds.has(t);            // top two, or a best third
+          const thirdNote = st.pos[t] === 3
+            ? (qualThirds.has(t) ? ` ${done ? 'Through' : 'In'} as one of the eight best third-placed teams.`
+                                 : ` ${done ? 'Missed' : 'Outside'} the best-eight third-placed cut.`)
+            : '';
+          const posTip = (done
             ? `Finished <b>${ord(st.pos[t])}</b> in Group ${g}. Top two and the best third-placed teams advance.`
-            : `Currently <b>${ord(st.pos[t])}</b> in Group ${g} on results. Top two and the best third-placed teams advance.`;
+            : `Currently <b>${ord(st.pos[t])}</b> in Group ${g} on results. Top two and the best third-placed teams advance.`)
+            + thirdNote;
           return `<div class="grow">
-            <div class="tn"><span class="livepos${st.pos[t]<=2?' qual':''}" data-tip="${posTip}">${st.pos[t]}</span>${t} <i>Elo ${T[t].elo}</i></div>
+            <div class="tn"><span class="livepos${adv?' qual':''}" data-tip="${posTip}">${st.pos[t]}</span>${t} <i>Elo ${T[t].elo}</i></div>
             <div class="gp" data-tip="${done?'Final points.':'Points so far.'}">${r.pts}<small>pts</small></div>
             <div class="gsub"><span>P${r.P} · GD ${r.gd>=0?'+':''}${r.gd}</span><span class="gpred" data-tip="${predTip}${movePhrase}">predicted ${ord(pr)}${move}</span></div>
           </div>`;
