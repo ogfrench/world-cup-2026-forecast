@@ -556,7 +556,7 @@
   <!-- KNOCKOUT PHASE (placeholder, built once the round of 32 is set) -->
   <section id="knockout" role="tabpanel" aria-labelledby="tab-knockout" tabindex="0">
     <h2 class="sec-h">Knockout bracket</h2>
-    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. It fills in match by match as each group finishes and the bracket is set. Predicted scores are the most likely final result from simulating the tie (90 minutes, plus extra time when level, then penalties if still level), so they are usually decisive; each prediction also shows the chance it reaches extra time ("120'") and the smaller chance it goes to penalties.</p>
+    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. It fills in match by match as each group finishes and the bracket is set. Predicted scores are the most likely final result from simulating the tie (90 minutes, plus extra time when level, then penalties if still level), so they are usually decisive; each prediction also shows the chance it goes to overtime and the smaller chance it goes to penalties.</p>
     <div class="scoreboard" id="koScore"></div>
     <div id="koBracket"></div>
   </section>
@@ -895,7 +895,7 @@
     if(a){
       const tier = predTier({modal:t.modal, p_home:t.p_a, p_draw:t.p_draw, p_away:t.p_b}, {hs:a.hs, as:a.as});
       chip = `<div class="sc ft" data-tip="The real result over 120 minutes (regulation and extra time). A shootout decides who advances but does not change this score.">${a.hs}-${a.as}</div>`;
-      clab = a.aet ? "result &middot; 120'" : 'result';   // mark a tie that actually went to extra time / penalties
+      clab = a.aet ? 'result &middot; overtime' : 'result';   // mark a tie that actually went to extra time / penalties
       predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${t.modal[0]}-${t.modal[1]}</div><div class="sclab">predicted · ${advanceLabel(a)}</div></div>`;
     } else {
       chip = `<div class="sc" data-tip="The most likely final scoreline from simulating the tie: 90 minutes, plus extra time added on if level. It is usually decisive, because a 90-minute draw is only about one run in four. Trust the advance odds more than this exact number.">${t.modal[0]}-${t.modal[1]}</div>`;
@@ -905,7 +905,7 @@
     // on a prediction (not yet played), surface the extra-time and penalty chances honestly: most ties
     // are decided in 90, so these are minority outcomes shown as probabilities, not a claim it WILL go
     // the distance. p_draw is the chance of reaching extra time (level after 90); p_pens the shootout.
-    const ko120 = (!a && t.p_pens!=null) ? ` &middot; <span class="pens" data-tip="Chance the tie reaches extra time (level after 90 minutes), and the smaller chance it is still level after extra time and decided on penalties. The predicted score is the single most likely result, usually inside 90.">120' ${fmt(t.p_draw)}% &middot; pens ${fmt(t.p_pens)}%</span>` : '';
+    const ko120 = (!a && t.p_pens!=null) ? ` &middot; <span class="pens" data-tip="Chance the tie goes to overtime (extra time, level after 90 minutes), and the smaller chance it is still level after overtime and decided on penalties. The predicted score is the single most likely result, usually inside 90.">overtime ${fmt(t.p_draw)}% &middot; pens ${fmt(t.p_pens)}%</span>` : '';
     return `<div class="m" data-ko="${t.kickoff_utc||''}">
       <div class="mcap">${cap}${srch}</div>
       <div class="top"><div class="ta">${t.a}</div>${chip}<div class="tb">${t.b}</div><div class="sclab clab">${clab}</div></div>
