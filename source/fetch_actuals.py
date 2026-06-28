@@ -65,17 +65,20 @@ def parse_finals(txt, canon):
             sys.stderr.write('warning: unrecognised team in finals feed, skipped: %r vs %r\n' % (h, a))
             continue
         pens = m.group(5) is not None
+        pk = [int(m.group(5)), int(m.group(6))] if pens else None   # shootout score, home-away as the feed gives it
         if hs > ag:
             winner = h
         elif ag > hs:
             winner = a
         elif pens:                                     # level, decided on penalties
-            ph, pa = int(m.group(5)), int(m.group(6))
-            winner = h if ph > pa else a if pa > ph else None
+            winner = h if pk[0] > pk[1] else a if pk[1] > pk[0] else None
         else:
             winner = None                              # drawn, no shootout line yet
         aet = pens or ('a.e.t' in ln.lower())          # went to extra time (then maybe penalties)
-        out.append({'home': h, 'away': a, 'hs': hs, 'as': ag, 'winner': winner, 'aet': aet})
+        rec = {'home': h, 'away': a, 'hs': hs, 'as': ag, 'winner': winner, 'aet': aet}
+        if pk:
+            rec['pens'] = pk                           # carried so the app can show "won on penalties (5-4)"
+        out.append(rec)
     return out
 
 def parse(txt):

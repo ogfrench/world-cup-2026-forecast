@@ -243,7 +243,7 @@
   .m:first-of-type{border-top:none}
   /* names sit in row 1 justified to the card edges with the score centred between them; label drops to row 2 */
   .m .top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:8px;row-gap:2px}
-  .m .top .clab{grid-column:2;justify-self:center}
+  .m .top .clab{grid-column:1 / -1;justify-self:center}   /* the result/predicted label spans the full row so a long "advanced on penalties (5-4)" fits */
   .m .ta{font-weight:600;font-size:13px;text-align:left}    /* names justified to the card edges, score centred between */
   .m .tb{font-weight:600;font-size:13px;text-align:right}
   .m .sc{font-family:'Anton';font-size:18px;letter-spacing:.05em;color:var(--txt);
@@ -790,10 +790,11 @@
     (txt||'').split('\n').forEach(ln => {
       const m = ln.match(KRE); if(!m) return;
       const h = actNm(m[1]), hs = +m[2], as = +m[3], a = actNm(m[6]), pens = m[4]!=null;
+      const pk = pens ? [+m[4], +m[5]] : null;          // the shootout score, home-away as the feed gives it
       let winner = hs>as ? h : as>hs ? a : null;
-      if (winner===null && pens) { const ph=+m[4], pa=+m[5]; winner = ph>pa ? h : pa>ph ? a : null; }
+      if (winner===null && pk) winner = pk[0]>pk[1] ? h : pk[1]>pk[0] ? a : null;
       const aet = pens || /a\.e\.t/i.test(ln);          // went to extra time (then maybe penalties)
-      out[koPairKey(h,a)] = {home:h, away:a, hs, as, winner, aet};
+      out[koPairKey(h,a)] = {home:h, away:a, hs, as, winner, aet, pens:pk};
     });
     return out;
   }
@@ -870,11 +871,11 @@
   // browser feed (keyed by the tie's date), with the advancer derived from a decisive score. A draw
   // goes to a shootout the feed score cannot read, so the winner is left unknown in that case.
   function koActual(t){
-    if (t.played) return {hs:t.played.hs, as:t.played.as_, winner:t.played.winner, aet:t.played.aet};
+    if (t.played) return {hs:t.played.hs, as:t.played.as_, winner:t.played.winner, aet:t.played.aet, pens:t.played.pens};
     const k = KO_ACT[koPairKey(t.a, t.b)];               // live finals feed, with the shootout winner
     if (k) {
       const hs = k.home===t.a ? k.hs : k.as, as = k.home===t.a ? k.as : k.hs;  // orient to this tie's a/b
-      return {hs, as, winner: k.winner, aet: k.aet};
+      return {hs, as, winner: k.winner, aet: k.aet, pens: k.pens};   // shootout score shown winner-first, no orient needed
     }
     if (!t.date) return null;
     const a = actualFor({home:t.a, away:t.b, date:t.date});
@@ -897,8 +898,8 @@
     if(a){
       const tier = predTier({modal:t.modal, p_home:t.p_a, p_draw:t.p_draw, p_away:t.p_b}, {hs:a.hs, as:a.as});
       chip = `<div class="sc ft" data-tip="The real result over 120 minutes (regulation and extra time). A shootout decides who advances but does not change this score.">${a.hs}-${a.as}</div>`;
-      clab = a.aet ? 'result &middot; overtime' : 'result';   // mark a tie that actually went to extra time / penalties
-      predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${t.modal[0]}-${t.modal[1]}</div><div class="sclab">predicted · ${advanceLabel(a)}</div></div>`;
+      clab = `result &middot; ${advanceLabel(a)}`;   // who advanced and how (in 90, in overtime, or on penalties)
+      predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${t.modal[0]}-${t.modal[1]}</div><div class="sclab">predicted</div></div>`;
     } else {
       chip = `<div class="sc" data-tip="The most likely final scoreline from simulating the tie: 90 minutes, plus extra time added on if level. It is usually decisive, because a 90-minute draw is only about one run in four. Trust the advance odds more than this exact number.">${t.modal[0]}-${t.modal[1]}</div>`;
       clab = 'predicted';
@@ -1476,8 +1477,15 @@
   // the two beaten semi-finalists (the third-place play-off teams), once both semis are decided
   function sfLosers(){ return [koSide('L101'), koSide('L102')]; }
   // how a played knockout tie was decided: a draw after 120 minutes with an advancer means penalties
+  // who advanced and how: in 90, in overtime (extra time), or on penalties (with the winner-first shootout
+  // score when the feed carries it). A level 120-minute score with a winner can only be a shootout.
   function advanceLabel(a){
-    return a.winner ? `${a.winner} ${a.hs===a.as ? 'won on penalties' : 'advanced'}` : 'to a shootout';
+    if (!a.winner) return 'to a shootout';
+    if (a.hs === a.as){
+      const ps = a.pens ? ` (${Math.max(a.pens[0],a.pens[1])}-${Math.min(a.pens[0],a.pens[1])})` : '';
+      return `${a.winner} advanced on penalties${ps}`;
+    }
+    return `${a.winner} advanced${a.aet ? ' in overtime' : ''}`;
   }
   // one knockout fixture for a list (Schedule or the bracket). A resolved tie shows its full prediction
   // card; the third-place play-off shows the two beaten semi-finalists and the real score but no pick
