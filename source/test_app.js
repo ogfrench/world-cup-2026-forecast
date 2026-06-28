@@ -52,6 +52,10 @@ const snippet = [
   pull(/const actOutcome = [^\n]*/, 'actOutcome'),
   pull(/const predTier = \(mm,a\) =>[\s\S]*?'miss'\);/, 'predTier'),
   'let ACTUALS = {};',                                            // the live feed cache koActual reads
+  'let KO_ACT = {};',                                             // the live finals feed koActual reads
+  pull(/const koPairKey = [^\n]*/, 'koPairKey'),
+  pull(/const KRE = [^\n]*/, 'KRE'),
+  pull(/function parseFinals\(txt\)\{[\s\S]*?\n  \}/, 'parseFinals'),
   pull(/function actualFor\(mm\)\{[\s\S]*?\n  \}/, 'actualFor'),
   pull(/function koActual\(t\)\{[\s\S]*?\n  \}/, 'koActual'),
   pull(/const byKO = [^\n]*/, 'byKO'),
@@ -73,7 +77,7 @@ const snippet = [
   pull(/function koRounds\(\)\{[\s\S]*?\n  \}/, 'koRounds'),
   pull(/function matchSearch\(mm, a\)\{[\s\S]*?\n  \}/, 'matchSearch'),
   pull(/const liveSearch = [^\n]*/, 'liveSearch'),
-  'this.predTier = predTier; this.setActuals = o => { ACTUALS = o; };',
+  'this.predTier = predTier; this.setActuals = o => { ACTUALS = o; }; this.setKoAct = o => { KO_ACT = o; }; this.parseFinals = parseFinals;',
   'this.esc = esc; this.scRow = scRow; this.groupStandings = groupStandings; this.matchSearch = matchSearch; this.liveSearch = liveSearch;',
   'this.predRankOf = predRankOf; this.fullStandingCalled = fullStandingCalled; this.thirdsRanking = thirdsRanking; this.koDesc = koDesc;',
   'this.scheduleUnits = scheduleUnits; this.koRounds = koRounds; this.parseActuals = parseActuals;',
@@ -82,7 +86,7 @@ const snippet = [
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, koSide, koLabel, advanceLabel, scheduleUnits, koRounds, matchSearch, liveSearch } = sandbox;
+const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, koSide, koLabel, advanceLabel, scheduleUnits, koRounds, matchSearch, liveSearch, parseFinals } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -192,6 +196,21 @@ eq(koActual(koTie({ a: 'Spain', b: 'Portugal', date: '2026-07-04', round: 'qf' }
    { hs: 2, as: 0, winner: 'Spain' }, 'a later-round tie overlays the real result just like the round of 32');
 eq(koActual(koTie({ a: 'Spain', b: 'Uruguay', date: '2026-07-04', round: 'qf' })), null,
    'a tie whose predicted opponent never advanced shows no result, never a wrong one');
+
+// ---- finals feed: parseFinals reads the 120-minute score and the shootout winner; koActual prefers it ----
+const fin = parseFinals(
+  '  (84) 12:00 UTC-7  Spain 1-2 Austria   @ Los Angeles   ## 1H / 2J\n' +
+  '  (74) 16:30 UTC-4  Germany 1-1 a.e.t. (1-1, 1-1), 4-2 pen. Paraguay  @ Boston\n' +
+  '  (76) 12:00 UTC-5  Japan v Croatia   @ Houston   ## unplayed\n');
+eq(Object.keys(fin).length, 2, 'parseFinals reads the two played ties and skips the unplayed "v" line');
+sandbox.setKoAct(fin);
+eq(koActual(koTie({ a: 'Germany', b: 'Paraguay' })), { hs: 1, as: 1, winner: 'Germany' },
+   'a level finals result carries the shootout winner from the pen. line, no date needed');
+eq(koActual(koTie({ a: 'Spain', b: 'Austria' })), { hs: 1, as: 2, winner: 'Austria' },
+   'a decisive finals result overlays, the higher score advances');
+eq(koActual(koTie({ a: 'Austria', b: 'Spain' })), { hs: 2, as: 1, winner: 'Austria' },
+   'the finals result orients to the tie order, the winner stays correct');
+sandbox.setKoAct({});
 
 // ---- scheduleAnchor: the Schedule jumps to the match in focus, by time (not by day) ----
 // x 6pm, y 10pm, z midnight. The anchor follows the clock so you land on the live game.
