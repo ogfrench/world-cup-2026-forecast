@@ -241,11 +241,11 @@
   details.matches[open] .chev{transform:rotate(-135deg)}
   .m{padding:9px 15px;border-top:1px solid var(--line);position:relative;text-align:center}
   .m:first-of-type{border-top:none}
-  /* names sit in row 1 hugging the score (team names pulled toward the centred number); label drops to row 2 */
+  /* names sit in row 1 justified to the card edges with the score centred between them; label drops to row 2 */
   .m .top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:8px;row-gap:2px}
   .m .top .clab{grid-column:2;justify-self:center}
-  .m .ta{font-weight:600;font-size:13px;text-align:right}
-  .m .tb{font-weight:600;font-size:13px;text-align:left}
+  .m .ta{font-weight:600;font-size:13px;text-align:left}    /* names justified to the card edges, score centred between */
+  .m .tb{font-weight:600;font-size:13px;text-align:right}
   .m .sc{font-family:'Anton';font-size:18px;letter-spacing:.05em;color:var(--txt);
          background:var(--bg2);border:1px solid var(--line2);border-radius:7px;
          display:inline-flex;align-items:center;justify-content:center;min-width:50px;height:30px;padding:0 9px;line-height:1}
