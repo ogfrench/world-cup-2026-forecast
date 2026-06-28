@@ -147,10 +147,12 @@ class TestParseFinals(unittest.TestCase):
         r = self._one('  (73) 12:00 UTC-7  South Africa 1-2 Canada   @ Los Angeles   ## 2A / 2B\n')
         self.assertEqual((r['home'], r['hs'], r['as'], r['away'], r['winner']),
                          ('South Africa', 1, 2, 'Canada', 'Canada'))
+        self.assertFalse(r['aet'])                                             # decided in 90
 
     def test_penalty_winner_home(self):
         r = self._one('  (74) 16:30 UTC-4  Germany 1-1 a.e.t. (1-1, 1-1), 4-2 pen. Paraguay  @ Boston\n')
         self.assertEqual((r['hs'], r['as'], r['winner']), (1, 1, 'Germany'))   # score level, pens 4-2
+        self.assertTrue(r['aet'])                                              # went to extra time + pens
 
     def test_penalty_winner_away(self):
         r = self._one('  (75) 19:00 UTC-6  Morocco 0-0 a.e.t. (0-0, 0-0), 3-5 pen. Spain  @ Monterrey\n')
@@ -159,6 +161,7 @@ class TestParseFinals(unittest.TestCase):
     def test_extra_time_decider_no_shootout(self):
         r = self._one('  (76) 12:00 UTC-5  Japan 2-1 a.e.t. (1-1, 2-1) Croatia  @ Houston\n')
         self.assertEqual((r['hs'], r['as'], r['winner']), (2, 1, 'Japan'))     # decided in extra time
+        self.assertTrue(r['aet'])                                              # a.e.t., no shootout
 
     def test_unplayed_tie_is_skipped(self):
         self.assertEqual(fa.parse_finals('  (76) 12:00 UTC-5  Japan v Croatia   @ Houston\n', self.CANON), [])

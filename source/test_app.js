@@ -198,18 +198,27 @@ eq(koActual(koTie({ a: 'Spain', b: 'Uruguay', date: '2026-07-04', round: 'qf' })
    'a tie whose predicted opponent never advanced shows no result, never a wrong one');
 
 // ---- finals feed: parseFinals reads the 120-minute score and the shootout winner; koActual prefers it ----
+const koPairKey = (a, b) => [a, b].slice().sort().join('|');
 const fin = parseFinals(
   '  (84) 12:00 UTC-7  Spain 1-2 Austria   @ Los Angeles   ## 1H / 2J\n' +
   '  (74) 16:30 UTC-4  Germany 1-1 a.e.t. (1-1, 1-1), 4-2 pen. Paraguay  @ Boston\n' +
   '  (76) 12:00 UTC-5  Japan v Croatia   @ Houston   ## unplayed\n');
 eq(Object.keys(fin).length, 2, 'parseFinals reads the two played ties and skips the unplayed "v" line');
+eq(fin[koPairKey('Germany', 'Paraguay')].aet, true, 'a tie with a penalty line is flagged as gone to extra time');
+eq(fin[koPairKey('Spain', 'Austria')].aet, false, 'a tie decided in 90 is not flagged for extra time');
 sandbox.setKoAct(fin);
-eq(koActual(koTie({ a: 'Germany', b: 'Paraguay' })), { hs: 1, as: 1, winner: 'Germany' },
-   'a level finals result carries the shootout winner from the pen. line, no date needed');
-eq(koActual(koTie({ a: 'Spain', b: 'Austria' })), { hs: 1, as: 2, winner: 'Austria' },
-   'a decisive finals result overlays, the higher score advances');
-eq(koActual(koTie({ a: 'Austria', b: 'Spain' })), { hs: 2, as: 1, winner: 'Austria' },
+eq(koActual(koTie({ a: 'Germany', b: 'Paraguay' })), { hs: 1, as: 1, winner: 'Germany', aet: true },
+   'a level finals result carries the shootout winner from the pen. line and the extra-time flag');
+eq(koActual(koTie({ a: 'Spain', b: 'Austria' })), { hs: 1, as: 2, winner: 'Austria', aet: false },
+   'a decisive finals result overlays, the higher score advances, no extra time');
+eq(koActual(koTie({ a: 'Austria', b: 'Spain' })), { hs: 2, as: 1, winner: 'Austria', aet: false },
    'the finals result orients to the tie order, the winner stays correct');
+// a tie decided in extra time (no shootout) is still flagged 120 minutes
+const finAet = parseFinals('  (76) 12:00 UTC-5  Japan 2-1 a.e.t. (1-1, 2-1) Croatia  @ Houston\n');
+eq(finAet[koPairKey('Japan', 'Croatia')].aet, true, 'an extra-time decider (no pens) is flagged as gone to extra time');
+sandbox.setKoAct(finAet);
+eq(koActual(koTie({ a: 'Japan', b: 'Croatia' })), { hs: 2, as: 1, winner: 'Japan', aet: true },
+   'an extra-time decider overlays with the winner and the extra-time flag');
 sandbox.setKoAct({});
 
 // ---- scheduleAnchor: the Schedule jumps to the match in focus, by time (not by day) ----
