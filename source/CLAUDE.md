@@ -159,10 +159,16 @@ that agree are emitted. This is the defer guard: a boundary that only the Elo ta
 tie FIFA would settle on fair play / ranking / lots, which we have no data for) is left pending rather
 than guessed. It resolves once the official bracket is published.
 
-`koCard` is 120-minute correct: the score shown and graded is the regulation-plus-extra-time result,
-and penalties never count toward it (a 1-1 that goes to a shootout stays 1-1; the shootout only decides
-who advances, carried separately as `played.winner`). The 90-minute Poisson is only for the group cards;
-`ko_report` handles extra time and the shootout for KO ties.
+`koCard` is 120-minute correct on both sides. The real score shown and graded is the
+regulation-plus-extra-time result, and penalties never count toward it (a 1-1 that goes to a shootout
+stays 1-1; the shootout only decides who advances, carried separately as `played.winner`). The
+predicted scoreline is over the same horizon: `ko_report` builds the full-match distribution `F` (the
+90-minute matrix `M`, with its drawn diagonal carried into extra time via the ET matrix) and takes its
+mode, so a clear favorite is not headlined with a phantom draw (Germany v Paraguay: 90-minute mode 1-1,
+full-match mode 1-0). A level result can still be the mode when a shootout, not the scoreline, would
+settle it. The W/D/L split (`p_a`/`p_draw`/`p_b`) stays the 90-minute regulation result, which is what
+the advance odds are built from (`adv_a = p_a + p_draw * (et_a + et_d * shootout)`). The 90-minute
+Poisson modal is only for the group cards.
 
 The bracket has the same live state as Schedule and Groups, reusing `matchState`/`liveBadge`/`actualFor`.
 `koActual(t)` resolves a tie's real result, preferring the server-conditioned `played`, else the live
