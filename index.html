@@ -890,7 +890,7 @@
     // caption: kickoff date/time, the round (when asked, i.e. in the Schedule), and venue once the tie
     // is scheduled, else the model's headline pick
     const cap = t.kickoff_utc
-      ? `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span>`
+      ? `<span class="captime">${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span>`
         + ((roundChip || t.venue) ? `<span class="capgrp">${roundChip ? roundPill(roundChip) : ''}${t.venue ? `<span class="capven" data-tip="${t.venue}">${venueName(t.venue)}</span>` : ''}</span>` : '')
       : `<span class="capven">${fav} favored &middot; ${fmt(favAdv)}% to advance</span>`;
     const srch = `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="${a?'Find this match and result on Google':'Search this match on Google'}" data-tip="${a?'Search this match and result on Google':'Search this match on Google'}">&#8599;</a>`;
@@ -1487,7 +1487,7 @@
   // tab passes false because its round/day headers already say which round it is.
   function schedKoCard(fix, sched){
     const pill = sched ? roundPill(fix.round) : '';
-    const time = mm => `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span>`;
+    const time = mm => `<span class="captime">${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span>`;
     if (fix.round === 'third') {
       const [h,a] = sfLosers();
       const mm = {home:h, away:a, date:fix.date, kickoff_utc:fix.kickoff_utc, venue:fix.venue};
