@@ -159,16 +159,21 @@ that agree are emitted. This is the defer guard: a boundary that only the Elo ta
 tie FIFA would settle on fair play / ranking / lots, which we have no data for) is left pending rather
 than guessed. It resolves once the official bracket is published.
 
-`koCard` is 120-minute correct on both sides. The real score shown and graded is the
-regulation-plus-extra-time result, and penalties never count toward it (a 1-1 that goes to a shootout
-stays 1-1; the shootout only decides who advances, carried separately as `played.winner`). The
-predicted scoreline is over the same horizon: `ko_report` builds the full-match distribution `F` (the
-90-minute matrix `M`, with its drawn diagonal carried into extra time via the ET matrix) and takes its
-mode, so a clear favorite is not headlined with a phantom draw (Germany v Paraguay: 90-minute mode 1-1,
-full-match mode 1-0). A level result can still be the mode when a shootout, not the scoreline, would
-settle it. The W/D/L split (`p_a`/`p_draw`/`p_b`) stays the 90-minute regulation result, which is what
-the advance odds are built from (`adv_a = p_a + p_draw * (et_a + et_d * shootout)`). The 90-minute
-Poisson modal is only for the group cards.
+The real score shown and graded is the regulation-plus-extra-time result, and penalties never count
+toward it (a 1-1 that goes to a shootout stays 1-1; the shootout only decides who advances, carried
+separately as `played.winner`). The predicted scoreline follows the single most likely PATH the tie
+takes, the same primitive as a group match plus the knockout continuation: `ko_report` takes the most
+likely 90-minute scoreline (`argmax(M)`); if it is level, it adds the most likely extra-time result
+(`argmax` of the third-rate ET matrix) on top of that draw; if it is STILL level, the tie is predicted
+to go to penalties and `pens` is set. So a dominant team is predicted to win in regulation (France 2-0)
+and a tight tie is predicted level and to a shootout (Germany v Paraguay 1-1, pens), which is how a
+knockout actually runs and is consistent with the group cards (a draw is a legal headline). `koCard`
+shows a muted `pens` tag on the predicted score for the level ties. Honest caveat: `pens` marks the
+most likely path, not a high probability of a shootout (aggregate chance of reaching penalties is only
+~13%), so the card hedges with "trust the advance odds more than this exact number" and the advance bar
+carries the real signal. The W/D/L split (`p_a`/`p_draw`/`p_b`) stays the 90-minute regulation result,
+which is what the advance odds are built from (`adv_a = p_a + p_draw * (et_a + et_d * shootout)`). The
+90-minute Poisson modal is also what the group cards show.
 
 The bracket has the same live state as Schedule and Groups, reusing `matchState`/`liveBadge`/`actualFor`.
 `koActual(t)` resolves a tie's real result, preferring the server-conditioned `played`, else the live

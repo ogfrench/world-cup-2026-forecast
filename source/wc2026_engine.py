@@ -445,31 +445,31 @@ def _resolve_feeder(ref, settled, thirds):
     return settled[key]['W' if kind == 'W' else 'R'] if key in settled else None
 
 def ko_report(a, b):
-    """Neutral-venue knockout prediction: modal scoreline over the full match (regulation, plus extra
-    time whenever regulation is level), win/draw/loss over 90, and the probability each side ADVANCES
-    (90 minutes, then extra time, then a shootout)."""
+    """Neutral-venue knockout prediction: the single most likely scoreline (90 minutes, played on into
+    extra time if level, with `pens` set when it is still level after that and goes to a shootout),
+    win/draw/loss over 90, and the probability each side ADVANCES (90, then extra time, then a shootout)."""
     M = dc_matrix(a, b, False, False)
     p_a = float(np.tril(M, -1).sum()); p_d = float(np.trace(M)); p_b = float(np.triu(M, 1).sum())
     la, lb = lambdas(a, b, False, False)
     et = np.outer(_pois(la / 3.0), _pois(lb / 3.0))      # extra time at a third of the rates
-    # Predicted scoreline over the same horizon we grade the real result on: the end of extra time,
-    # before any shootout. A knockout match cannot stop level, so a drawn regulation score does not
-    # stand: its probability is carried into extra time (M's diagonal convolved with the ET matrix),
-    # which moves a clear favorite's most likely scoreline off a phantom draw and onto a win. Even ties
-    # can still be modal here (a level result that a shootout, not the scoreline, resolves).
-    F = M.copy(); diag = np.diag(M).copy(); np.fill_diagonal(F, 0.0)
-    for d in range(NCOL):
-        if diag[d] > 0:
-            F[d:, d:] += diag[d] * et[:NCOL - d, :NCOL - d]
-    F /= F.sum()
-    mh, ma = divmod(int(np.argmax(F)), NCOL)
-    order = np.argsort(F, axis=None)[::-1][:4]
-    tops = [(int(s // NCOL), int(s % NCOL), round(float(F.ravel()[s]) * 100, 1)) for s in order]
+    # Predict the single most likely way the tie actually plays out, the same primitive as a group
+    # match: the most likely 90-minute scoreline. A knockout tie cannot stop level, so if that score is
+    # a draw, play the most likely extra-time result on top of it; if it is STILL level after that, the
+    # tie is settled on penalties. One coherent path: the scoreline and whether it goes to a shootout
+    # both fall out of it. Most ties end decided; only the close ones come back level and go to pens.
+    mh, ma = divmod(int(np.argmax(M)), NCOL)
+    pens = False
+    if mh == ma:                                         # level at 90: play the extra-time continuation
+        eh, ea = divmod(int(np.argmax(et)), et.shape[1])
+        mh, ma = mh + eh, ma + ea
+        pens = (mh == ma)                                # still level after extra time -> shootout
+    order = np.argsort(M, axis=None)[::-1][:4]
+    tops = [(int(s // NCOL), int(s % NCOL), round(float(M.ravel()[s]) * 100, 1)) for s in order]
     et_a = float(np.tril(et, -1).sum()); et_d = float(np.trace(et))
     sh_a = min(0.60, max(0.40, 0.5 + SHOOTOUT_COEF * (ELO[a] - ELO[b])))
     adv_a = p_a + p_d * (et_a + et_d * sh_a)
     return dict(a=a, b=b, p_a=round(p_a * 100, 1), p_draw=round(p_d * 100, 1), p_b=round(p_b * 100, 1),
-                modal=[int(mh), int(ma)], top_scores=tops,
+                modal=[int(mh), int(ma)], pens=pens, top_scores=tops,
                 adv_a=round(adv_a * 100, 1), adv_b=round((1 - adv_a) * 100, 1),
                 elo_a=ELO[a], elo_b=ELO[b])
 

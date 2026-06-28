@@ -373,7 +373,7 @@
   .m .mcap .msrch:hover,.m .mcap .msrch:focus-visible{color:var(--lime);border-color:var(--faint);background:var(--surface)}
   .m .sc.ft{color:var(--txt);border-color:var(--line2);background:var(--surface2)}
   .m .sclab{font-family:'DM Mono';font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
-  .ko120{font-family:'DM Mono';font-size:.52em;font-weight:600;vertical-align:super;color:var(--muted);margin-left:3px;letter-spacing:.04em;cursor:help}  /* KO score is over 120 min (incl. extra time) */
+  .m .sc .pens{font-family:'DM Mono';font-size:.4em;font-weight:600;vertical-align:middle;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;cursor:help}  /* tie the model expects level -> shootout */
   .m.kofix .top .tbd{color:var(--muted)}                                  /* knockout slot not yet filled */
   .m.kofix .sc.tbd{font-family:'DM Mono';font-size:11px;background:none;border-style:dashed;border-color:var(--line);color:var(--faint);min-width:34px}
   .m .predline{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:9px}
@@ -556,7 +556,7 @@
   <!-- KNOCKOUT PHASE (placeholder, built once the round of 32 is set) -->
   <section id="knockout" role="tabpanel" aria-labelledby="tab-knockout" tabindex="0">
     <h2 class="sec-h">Knockout bracket</h2>
-    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. It fills in match by match as each group finishes and the bracket is set.</p>
+    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. It fills in match by match as each group finishes and the bracket is set. Predicted scores follow the single most likely path: the 90-minute result, into extra time if level, to penalties if still level.</p>
     <div class="scoreboard" id="koScore"></div>
     <div id="koBracket"></div>
   </section>
@@ -869,16 +869,16 @@
       : `<span class="capven">${fav} favored &middot; ${fmt(favAdv)}% to advance</span>`;
     const srch = a ? `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="Find this match and result on Google" data-tip="Search this match and result on Google">&#8599;</a>` : '';
     let chip, clab, predRow='';
-    // KO scores are over the full match (extra time when regulation is level), the horizon the real
-    // result is graded on, so the favourite's pick is a win, not a phantom draw. Flag it subtly.
-    const et120 = `<sup class="ko120" data-tip="Most likely scoreline through extra time, before any shootout. A level result in regulation is played on, so a clear favourite's pick is a win, not a draw.">120'</sup>`;
+    // The predicted score is the single most likely path: the 90-minute result, played on into extra
+    // time if level, to penalties if still level. A "pens" tag marks the ties the model expects level.
+    const pens = t.pens ? ` <span class="pens" data-tip="Most likely still level after extra time, so settled by a penalty shootout. The advance odds say who is favoured to win it.">pens</span>` : '';
     if(a){
       const tier = predTier({modal:t.modal, p_home:t.p_a, p_draw:t.p_draw, p_away:t.p_b}, {hs:a.hs, as:a.as});
       chip = `<div class="sc ft" data-tip="The real result over 120 minutes (regulation and extra time). A shootout decides who advances but does not change this score.">${a.hs}-${a.as}</div>`;
       clab = 'result';
-      predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${t.modal[0]}-${t.modal[1]}${et120}</div><div class="sclab">predicted · ${advanceLabel(a)}</div></div>`;
+      predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${t.modal[0]}-${t.modal[1]}</div><div class="sclab">predicted · ${advanceLabel(a)}</div></div>`;
     } else {
-      chip = `<div class="sc" data-tip="The model's most likely scoreline through 120 minutes (regulation and extra time). Trust the advance odds more than this exact number.">${t.modal[0]}-${t.modal[1]}${et120}</div>`;
+      chip = `<div class="sc" data-tip="The model's single most likely outcome: the most likely 90-minute score, played on into extra time if level (then penalties if still level). Trust the advance odds more than this exact number.">${t.modal[0]}-${t.modal[1]}${pens}</div>`;
       clab = 'predicted';
       if(t.kickoff_utc && matchPending(mm)) predRow = `<div class="predline">${liveBadge(mm)}</div>`;  // in-play / awaiting badge
     }
