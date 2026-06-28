@@ -63,6 +63,7 @@ ELO = {name: e for teams in GROUPS.values() for name, e in teams}
 TEAM_GROUP = {name: g for g, teams in GROUPS.items() for name, _ in teams}
 TEAMS = list(ELO); TEAM_IDX = {t: i for i, t in enumerate(TEAMS)}
 SHOOTOUT_COEF = 0.0005
+KO_SIM_N = 100000; KO_SEED = 8675309     # knockout scoreline simulation: draws, fixed seed (reproducible)
 MAXG = 10; NCOL = MAXG + 1
 
 # de-vigged market title odds (June 2026); top 8 firm, tail approximate.
@@ -445,34 +446,30 @@ def _resolve_feeder(ref, settled, thirds):
     return settled[key]['W' if kind == 'W' else 'R'] if key in settled else None
 
 def ko_report(a, b):
-    """Neutral-venue knockout prediction: the most likely final scoreline from simulating how the tie
-    plays out (90 minutes, plus extra time added on top whenever 90 is level), win/draw/loss over 90,
-    the probability each side ADVANCES (90, then extra time, then a shootout), and p_pens, the chance
-    it is still level after 120 and decided by a shootout."""
-    M = dc_matrix(a, b, False, False)
-    p_a = float(np.tril(M, -1).sum()); p_d = float(np.trace(M)); p_b = float(np.triu(M, 1).sum())
+    """Neutral-venue knockout prediction. The scoreline is the most common result of SIMULATING the tie
+    exactly how it is played: 90 minutes like a group game, then 30 minutes of extra time if it is level,
+    then penalties if it is still level. Also returns win/draw/loss over 90, the probability each side
+    advances, and p_pens, the share of simulations that go to a shootout."""
     la, lb = lambdas(a, b, False, False)
-    et = np.outer(_pois(la / 3.0), _pois(lb / 3.0))      # extra time at a third of the rates
-    # Final-scoreline distribution, exactly the staged process: play 90 minutes (M); a decisive 90 is
-    # the result, a level 90 plays on and the extra-time score (et) is ADDED on top of the draw. This is
-    # the analytic form of "simulate 90, and on a draw simulate 30 more and add it." Its mode is the most
-    # common final score (decisive for a favorite, because a 90-minute draw is only ~1 run in 4, while a
-    # win is spread across scorelines), NOT the single biggest 90-minute cell (which is the draw). The
-    # diagonal that survives is the chance the tie is still level after 120 and goes to penalties.
-    F = M.copy(); diag = np.diag(M).copy(); np.fill_diagonal(F, 0.0)
-    for d in range(NCOL):
-        if diag[d] > 0:
-            F[d:, d:] += diag[d] * et[:NCOL - d, :NCOL - d]
-    F /= F.sum()
-    mh, ma = divmod(int(np.argmax(F)), NCOL)
-    p_pens = float(np.trace(F))                          # final still level -> shootout
-    order = np.argsort(F, axis=None)[::-1][:4]
-    tops = [(int(s // NCOL), int(s % NCOL), round(float(F.ravel()[s]) * 100, 1)) for s in order]
-    et_a = float(np.tril(et, -1).sum()); et_d = float(np.trace(et))
-    sh_a = min(0.60, max(0.40, 0.5 + SHOOTOUT_COEF * (ELO[a] - ELO[b])))
-    adv_a = p_a + p_d * (et_a + et_d * sh_a)
+    rng = np.random.default_rng(KO_SEED); n = KO_SIM_N
+    # 1. play 90 minutes (same Poisson goals as a group match)
+    h = rng.poisson(la, n); ag = rng.poisson(lb, n)
+    level = h == ag
+    # 2. if level after 90, play 30 minutes of extra time (a third of the rate) and add it on top
+    eh = rng.poisson(la / 3.0, n); ea = rng.poisson(lb / 3.0, n)
+    H = np.where(level, h + eh, h); A = np.where(level, ag + ea, ag)
+    # 3. if still level after extra time, it is settled on penalties (the score stays as it is)
+    pens = H == A
+    W = 64                                                # encode each scoreline H-A as one integer
+    codes, cnt = np.unique(H * W + A, return_counts=True)
+    top = np.argsort(cnt)[::-1][:4]
+    tops = [[int(codes[i] // W), int(codes[i] % W), round(float(cnt[i]) / n * 100, 1)] for i in top]
+    mh, ma = tops[0][0], tops[0][1]
+    p_a = float((h > ag).mean()); p_d = float(level.mean()); p_b = float((ag > h).mean())   # over 90
+    sh_a = min(0.60, max(0.40, 0.5 + SHOOTOUT_COEF * (ELO[a] - ELO[b])))                    # shootout edge
+    adv_a = float((H > A).mean() + pens.mean() * sh_a)    # win in 90 or extra time, or take the shootout
     return dict(a=a, b=b, p_a=round(p_a * 100, 1), p_draw=round(p_d * 100, 1), p_b=round(p_b * 100, 1),
-                modal=[int(mh), int(ma)], top_scores=tops, p_pens=round(p_pens * 100, 1),
+                modal=[mh, ma], top_scores=tops, p_pens=round(float(pens.mean()) * 100, 1),
                 adv_a=round(adv_a * 100, 1), adv_b=round((1 - adv_a) * 100, 1),
                 elo_a=ELO[a], elo_b=ELO[b])
 

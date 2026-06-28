@@ -162,20 +162,18 @@ than guessed. It resolves once the official bracket is published.
 
 The real score shown and graded is the regulation-plus-extra-time result, and penalties never count
 toward it (a 1-1 that goes to a shootout stays 1-1; the shootout only decides who advances, carried
-separately as `played.winner`). The predicted scoreline is the mode of the SIMULATED final
-distribution, the staged process written analytically: `ko_report` builds `F` from the 90-minute matrix
-`M` by keeping every decisive 90-minute cell and convolving the drawn diagonal with the third-rate
-extra-time matrix (a level 90 plays on and the extra-time score is added on top), then takes
-`argmax(F)`. This is "simulate 90, and on a draw simulate 30 more and add it," so the headline is the
-most COMMON final score, which is decisive for a favorite (Germany v Paraguay 1-0, France 2-0). The
-earlier `argmax(M)` was wrong: it headlined the single biggest 90-minute cell, which is the draw, even
-though a 90-minute draw is only about one run in four and the favorite wins the other scorelines. The
-draw possibility is surfaced honestly instead of faked into the headline: `p_pens = trace(F)` is the
-chance the tie is level after 120 and goes to a shootout (about 6 to 16 percent per tie, the LEAST
-likely of the three macro-outcomes), shown on the detail line as "N% to penalties". The W/D/L split
-(`p_a`/`p_draw`/`p_b`) stays the 90-minute regulation result,
-which is what the advance odds are built from (`adv_a = p_a + p_draw * (et_a + et_d * shootout)`). The
-90-minute Poisson modal is also what the group cards show.
+separately as `played.winner`). The predicted scoreline is the most common result of a literal
+SIMULATION of how the tie is played, `ko_report` running `KO_SIM_N` draws at a fixed seed: sample 90
+minutes (Poisson, same as a group match); if level, sample 30 minutes of extra time at a third of the
+rate and add it on top; if still level, it is penalties. The headline is the most COMMON final score
+across those draws, which is decisive for a favorite (Germany v Paraguay 1-0, France 2-0), because a
+90-minute draw is only about one run in four while the favorite's win is spread across many scorelines.
+(The earlier `argmax(M)` was wrong: it headlined the single biggest 90-minute cell, which is the draw.)
+The draw possibility is surfaced honestly, not faked into the headline: `p_pens` is the share of draws
+that reach a shootout (about 6 to 16 percent per tie, the LEAST likely of the three macro-outcomes),
+shown on the detail line as "N% to penalties". `p_a`/`p_draw`/`p_b` are the over-90 split and `adv_a`
+the advance odds (win in 90 or extra time, or take the shootout), all read from the same simulation.
+The group cards still show the analytic 90-minute modal (`match_report`, `argmax(M)`).
 
 The bracket has the same live state as Schedule and Groups, reusing `matchState`/`liveBadge`/`actualFor`.
 Knockout RESULTS come from a separate feed, `cup_finals.txt` (the group feed `cup.txt` is group-only).
