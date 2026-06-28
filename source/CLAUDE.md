@@ -31,8 +31,9 @@ Build artifacts and source:
   `index.html`. `build_app.py --check` verifies the two are in sync (CI runs this).
 - `make_data.py`: the regeneration entry point. Runs the engine unconditioned (Day 0) and conditioned
   (live) from one shared calibration, validates, and writes both JSON files (default 50,000 sims).
-- `fetch_actuals.py`: refreshes `wc2026_actuals.json` from the openfootball feed (engine names, official
-  home/away), splitting any knockout ties into `wc2026_ko_actuals.json`.
+- `fetch_actuals.py`: refreshes `wc2026_actuals.json` (group results, engine names, official home/away)
+  from `cup.txt`, and `wc2026_ko_actuals.json` (knockout results with the shootout winner) from
+  `cup_finals.txt` via `parse_finals`.
 - `merge_schedule.py`: folds the schedule into the results JSON (annotates date/venue, reorients
   home/away to the official side). Idempotent, no re-simulation.
 - `wc2026_engine.py`: the simulation engine. All five models, market calibration, Annex C, KO logic.
@@ -177,9 +178,13 @@ which is what the advance odds are built from (`adv_a = p_a + p_draw * (et_a + e
 90-minute Poisson modal is also what the group cards show.
 
 The bracket has the same live state as Schedule and Groups, reusing `matchState`/`liveBadge`/`actualFor`.
-`koActual(t)` resolves a tie's real result, preferring the server-conditioned `played`, else the live
-browser feed keyed by the tie's `date` (the advancer derived from a decisive score; a draw is a shootout
-the feed score cannot read, so the winner is left unknown). KO scheduling is keyed by bracket slot (the
+Knockout RESULTS come from a separate feed, `cup_finals.txt` (the group feed `cup.txt` is group-only).
+Both sides read it: `fetch_actuals.parse_finals` (server) and `parseFinals` (browser) parse the match
+lines `(NN) ... Home H-A [a.e.t. (...),] [P1-P2 pen.] Away`, taking the 120-minute score and, on a
+draw, the shootout winner from the `P1-P2 pen.` note (openfootball's convention, verified against 2022).
+`koActual(t)` resolves a tie's result preferring the server-conditioned `played`, then the live finals
+feed (`KO_ACT`, keyed by team pair, oriented to the tie's a/b), then a decisive group-feed score; a
+drawn score with no shootout line yet leaves the winner unknown. KO scheduling is keyed by bracket slot (the
 teams are unknown until the groups finish): `wc2026_ko_schedule.json` carries date/kickoff/venue per slot
 from the official openfootball calendar, and `merge_schedule.py` attaches it onto each emitted tie.
 `test_pipeline.py` guards that every slot's bracket descriptors match the engine (`R32_SYMBOLIC` and the
@@ -190,8 +195,10 @@ and the bracket with the two beaten semi-finalists and the real score but no mod
 guard skips it. The Schedule and the Knockout tab both render the whole calendar from `ko_schedule` via
 `scheduleUnits()` / `koRounds()` (pure, unit-tested), so all 104 fixtures appear before the teams are known.
 A tie with a `kickoff_utc` shows the in-play/awaiting badge and folds into the live heartbeat via
-`koTies()`. The one thing only confirmable once the R32 actually plays is the live feed's KO line format;
-the front end degrades safely if a predicted matchup did not happen (no result shown, never a wrong one).
+`koTies()`. The `cup_finals.txt` played-line and `pen.` formats are built to openfootball's 2022
+convention and should be confirmed against the live feed when the R32 actually plays (28 Jun on); the
+front end degrades safely if a predicted matchup did not happen (no result shown, never a wrong one)
+and if a drawn tie has no shootout line yet (winner shown as undecided until it appears).
 
 The per-team Netherlands and France timeline tabs were removed: prediction-only surface (a generic
 first-goal-minute curve, a derived half-time) with no live state, not worth the maintenance. The app

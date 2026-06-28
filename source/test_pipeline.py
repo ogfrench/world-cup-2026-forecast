@@ -133,6 +133,56 @@ class TestSplitGames(unittest.TestCase):
         self.assertEqual([(r['group'], r['home']) for r in rows], [('A', 'Mexico'), ('D', 'Australia')])
 
 
+class TestParseFinals(unittest.TestCase):
+    """fetch_actuals.parse_finals: read played knockout results (with the shootout winner) from the
+    finals feed. The 120-minute score stands; a 'P1-P2 pen.' line decides a draw."""
+
+    CANON = {'Germany', 'Paraguay', 'South Africa', 'Canada', 'Morocco', 'Spain', 'Japan', 'Croatia'}
+
+    def _one(self, line):
+        ko = fa.parse_finals(line, self.CANON)
+        return ko[0] if ko else None
+
+    def test_decisive_result_winner_from_score(self):
+        r = self._one('  (73) 12:00 UTC-7  South Africa 1-2 Canada   @ Los Angeles   ## 2A / 2B\n')
+        self.assertEqual((r['home'], r['hs'], r['as'], r['away'], r['winner']),
+                         ('South Africa', 1, 2, 'Canada', 'Canada'))
+
+    def test_penalty_winner_home(self):
+        r = self._one('  (74) 16:30 UTC-4  Germany 1-1 a.e.t. (1-1, 1-1), 4-2 pen. Paraguay  @ Boston\n')
+        self.assertEqual((r['hs'], r['as'], r['winner']), (1, 1, 'Germany'))   # score level, pens 4-2
+
+    def test_penalty_winner_away(self):
+        r = self._one('  (75) 19:00 UTC-6  Morocco 0-0 a.e.t. (0-0, 0-0), 3-5 pen. Spain  @ Monterrey\n')
+        self.assertEqual((r['hs'], r['as'], r['winner']), (0, 0, 'Spain'))
+
+    def test_extra_time_decider_no_shootout(self):
+        r = self._one('  (76) 12:00 UTC-5  Japan 2-1 a.e.t. (1-1, 2-1) Croatia  @ Houston\n')
+        self.assertEqual((r['hs'], r['as'], r['winner']), (2, 1, 'Japan'))     # decided in extra time
+
+    def test_unplayed_tie_is_skipped(self):
+        self.assertEqual(fa.parse_finals('  (76) 12:00 UTC-5  Japan v Croatia   @ Houston\n', self.CANON), [])
+
+    def test_draw_without_shootout_line_has_no_winner(self):
+        r = self._one('  (74) 16:30 UTC-4  Germany 1-1 Paraguay  @ Boston\n')
+        self.assertIsNone(r['winner'])
+
+    def test_unrecognised_team_skipped(self):
+        err = io.StringIO()
+        with redirect_stderr(err):
+            ko = fa.parse_finals('  (73) 12:00 UTC-7  Atlantis 1-0 Canada   @ X\n', self.CANON)
+        self.assertEqual(ko, [])
+        self.assertIn('unrecognised', err.getvalue())
+
+    def test_merge_prefers_finals_winner_over_group_route(self):
+        # the group-feed route leaves a draw winner unknown; the finals feed carries the shootout winner
+        grp = [{'home': 'Germany', 'away': 'Paraguay', 'hs': 1, 'as': 1, 'winner': None}]
+        fin = [{'home': 'Germany', 'away': 'Paraguay', 'hs': 1, 'as': 1, 'winner': 'Germany'}]
+        merged = fa.merge_ko(grp, fin)
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0]['winner'], 'Germany')
+
+
 class TestFeedSampleEndToEnd(unittest.TestCase):
     """End to end: the representative sample feed (source/test_feed_sample.txt) through the whole
     parse + orient + split path. Shares the fixture with test_app.js so both sides stay honest."""

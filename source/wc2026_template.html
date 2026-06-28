@@ -771,12 +771,29 @@
   // as the embedded schedule so team names line up. Swap ACT_SRC + parseActuals
   // for any JSON feed (e.g. TheSportsDB) without touching the render code.
   const ACT_SRC = 'https://raw.githubusercontent.com/openfootball/worldcup/master/2026--usa/cup.txt';
+  // knockout results live in a separate file, keyed by match number; a "P1-P2 pen." note carries the
+  // shootout winner a level score cannot. Optional: if it 404s or is empty, the bracket just waits.
+  const ACT_SRC_KO = 'https://raw.githubusercontent.com/openfootball/worldcup/master/2026--usa/cup_finals.txt';
   // sundown: a week after the 19 Jul final (26 Jul), stop polling the feed for good. The last
   // cached results still render; the page just stops querying a tournament that is over.
   const SUNDOWN = Date.parse('2026-07-26T00:00:00Z');
   const ACT_NAME = {'Czech Republic':'Czechia','Bosnia & Herzegovina':'Bosnia-Herzegovina','Bosnia and Herzegovina':'Bosnia-Herzegovina','Turkey':'Turkiye','Türkiye':'Turkiye','Curaçao':'Curacao',"Côte d'Ivoire":'Ivory Coast','Korea Republic':'South Korea','IR Iran':'Iran','Cabo Verde':'Cape Verde','Congo DR':'DR Congo'};
   const ACT_MON = {May:5,June:6,July:7};
-  let ACTUALS = {}, ACT_SYNC = 0, ACT_STATE = 'init', ACT_TIMER = null, ACT_SIG = '', LAST_FETCH = 0, LIVE_SIG = '';
+  let ACTUALS = {}, KO_ACT = {}, ACT_SYNC = 0, ACT_STATE = 'init', ACT_TIMER = null, ACT_SIG = '', LAST_FETCH = 0, LIVE_SIG = '';
+  const koPairKey = (a,b) => [a,b].slice().sort().join('|');
+  // a played knockout line: "(74) 16:30 UTC-4  Germany 1-1 a.e.t. (1-1, 1-1), 4-2 pen. Paraguay  @ ..."
+  const KRE = /^\s*\(\d+\)\s+\d{1,2}:\d{2}\s+UTC[+-]\d+\s+(.+?)\s+(\d+)-(\d+)(?:\s+a\.e\.t\.?)?(?:\s*\([0-9,\s-]+\))?(?:\s*,?\s*(\d+)-(\d+)\s+pen\.?)?\s+(.+?)\s+@\s/;
+  function parseFinals(txt){
+    const out = {};
+    (txt||'').split('\n').forEach(ln => {
+      const m = ln.match(KRE); if(!m) return;
+      const h = actNm(m[1]), hs = +m[2], as = +m[3], a = actNm(m[6]);
+      let winner = hs>as ? h : as>hs ? a : null;
+      if (winner===null && m[4]!=null) { const ph=+m[4], pa=+m[5]; winner = ph>pa ? h : pa>ph ? a : null; }
+      out[koPairKey(h,a)] = {home:h, away:a, hs, as, winner};
+    });
+    return out;
+  }
   const actNm = s => { s = s.trim(); return ACT_NAME[s] || s; };
   const actKey = (d,a,b) => d + '|' + [a,b].slice().sort().join('|');
   function parseActuals(txt){
@@ -851,6 +868,11 @@
   // goes to a shootout the feed score cannot read, so the winner is left unknown in that case.
   function koActual(t){
     if (t.played) return {hs:t.played.hs, as:t.played.as_, winner:t.played.winner};
+    const k = KO_ACT[koPairKey(t.a, t.b)];               // live finals feed, with the shootout winner
+    if (k) {
+      const hs = k.home===t.a ? k.hs : k.as, as = k.home===t.a ? k.as : k.hs;  // orient to this tie's a/b
+      return {hs, as, winner: k.winner};
+    }
     if (!t.date) return null;
     const a = actualFor({home:t.a, away:t.b, date:t.date});
     if (!a) return null;
@@ -1030,14 +1052,17 @@
     liveUnits().forEach(m => { if (matchPending(m)) on.push(m.kickoff_utc+'|'+(matchLive(m)?'L':'D')); });
     return on.sort().join(',');
   }
-  function fetchFeed(){                                 // the one network call; repaints only on a real change
+  function fetchFeed(){                                 // the one network beat: group feed + finals feed
     LAST_FETCH = Date.now();
-    return fetch(ACT_SRC, {cache:'no-store', signal: AbortSignal.timeout?.(15e3)})   // bail on a stalled connection, like the Python fetcher's timeout
-      .then(r => { if (!r.ok) throw 0; return r.text(); })
-      .then(txt => {
-        const parsed = parseActuals(txt), sig = JSON.stringify(parsed);
-        ACTUALS = parsed; SC_LIVE = parseScorers(txt); ACT_SYNC = Date.now(); ACT_STATE = 'live';
-        try { localStorage.setItem('wc2026_actuals', JSON.stringify({t:ACT_SYNC, data:parsed, scorers:SC_LIVE})); } catch(e){}
+    const opt = {cache:'no-store', signal: AbortSignal.timeout?.(15e3)};   // bail on a stalled connection
+    const grp = fetch(ACT_SRC, opt).then(r => { if (!r.ok) throw 0; return r.text(); });
+    const fin = fetch(ACT_SRC_KO, opt).then(r => r.ok ? r.text() : '').catch(() => '');  // finals optional
+    return Promise.all([grp, fin])
+      .then(([txt, koTxt]) => {
+        const parsed = parseActuals(txt), ko = parseFinals(koTxt);
+        const sig = JSON.stringify(parsed) + '|' + JSON.stringify(ko);
+        ACTUALS = parsed; KO_ACT = ko; SC_LIVE = parseScorers(txt); ACT_SYNC = Date.now(); ACT_STATE = 'live';
+        try { localStorage.setItem('wc2026_actuals', JSON.stringify({t:ACT_SYNC, data:parsed, ko, scorers:SC_LIVE})); } catch(e){}
         if (sig !== ACT_SIG) { ACT_SIG = sig; LIVE_SIG = badgeSig(); paintLive(); }   // a result changed: full repaint
         else renderSchedule();                                                        // else just refresh the synced-time line
       })
@@ -1054,7 +1079,8 @@
   function startLive(){                                 // hydrate cached results instantly, then start the heartbeat
     try { const c = JSON.parse(localStorage.getItem('wc2026_actuals')||'null');
           if (c && c.data) { ACTUALS = c.data; ACT_SYNC = c.t||0; ACT_STATE = 'cache';
-                             if (c.scorers) SC_LIVE = c.scorers; ACT_SIG = JSON.stringify(c.data); } } catch(e){}
+                             if (c.scorers) SC_LIVE = c.scorers; if (c.ko) KO_ACT = c.ko;
+                             ACT_SIG = JSON.stringify(c.data) + '|' + JSON.stringify(c.ko||{}); } } catch(e){}
     LIVE_SIG = badgeSig(); paintLive(); pulse();
   }
   document.addEventListener('visibilitychange', () => {
