@@ -395,6 +395,46 @@ class TestBracket(unittest.TestCase):
 
 
 @unittest.skipUnless(HAVE_NUMPY, "engine requires numpy")
+class TestKoReport(unittest.TestCase):
+    """The knockout predicted scoreline is over the full match (regulation plus extra time when level),
+    the same horizon the real result is graded on, so a clear favorite is not headlined with a draw."""
+
+    @classmethod
+    def setUpClass(cls):
+        import wc2026_engine as e
+        cls.e = e
+
+    def _strong_weak(self):
+        elo = self.e.ELO
+        return max(elo, key=elo.get), min(elo, key=elo.get)
+
+    def test_top_scores_sum_is_a_distribution(self):
+        rep = self.e.ko_report(*self._strong_weak())
+        # the four most likely scorelines are descending probabilities, each a sensible percentage
+        ps = [s[2] for s in rep['top_scores']]
+        self.assertEqual(ps, sorted(ps, reverse=True))
+        self.assertTrue(0 < ps[0] <= 100)
+
+    def test_clear_favorite_is_not_predicted_to_draw(self):
+        strong, weak = self._strong_weak()
+        rep = self.e.ko_report(strong, weak)
+        self.assertNotEqual(rep['modal'][0], rep['modal'][1],
+                            "a lopsided tie should not have a drawn modal scoreline over 120")
+        self.assertGreater(rep['modal'][0], rep['modal'][1])      # the favorite is ahead
+        self.assertGreater(rep['adv_a'], 50)
+
+    def test_extra_time_shifts_a_drawn_regulation_modal(self):
+        # Germany v Paraguay: regulation mode is a draw, the full-match mode is a Germany win.
+        import numpy as np, wc2026_engine as e
+        M = e.dc_matrix('Germany', 'Paraguay', False, False)
+        reg = divmod(int(np.argmax(M)), e.NCOL)
+        full = tuple(e.ko_report('Germany', 'Paraguay')['modal'])
+        self.assertEqual(reg[0], reg[1])                          # 90-minute mode is level
+        self.assertNotEqual(full[0], full[1])                     # full-match mode is decisive
+        self.assertGreater(full[0], full[1])
+
+
+@unittest.skipUnless(HAVE_NUMPY, "engine requires numpy")
 class TestKoScheduleAlignment(unittest.TestCase):
     """The KO calendar's bracket descriptors must match the engine, so a tie can never be stamped
     with the wrong date or venue."""

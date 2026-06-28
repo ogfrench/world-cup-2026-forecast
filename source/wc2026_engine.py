@@ -445,15 +445,26 @@ def _resolve_feeder(ref, settled, thirds):
     return settled[key]['W' if kind == 'W' else 'R'] if key in settled else None
 
 def ko_report(a, b):
-    """Neutral-venue knockout prediction: modal regulation scoreline, win/draw/loss over 90,
-    and the probability each side ADVANCES (90 minutes, then extra time, then a shootout)."""
+    """Neutral-venue knockout prediction: modal scoreline over the full match (regulation, plus extra
+    time whenever regulation is level), win/draw/loss over 90, and the probability each side ADVANCES
+    (90 minutes, then extra time, then a shootout)."""
     M = dc_matrix(a, b, False, False)
     p_a = float(np.tril(M, -1).sum()); p_d = float(np.trace(M)); p_b = float(np.triu(M, 1).sum())
-    mh, ma = divmod(int(np.argmax(M)), NCOL)
-    order = np.argsort(M, axis=None)[::-1][:4]
-    tops = [(int(s // NCOL), int(s % NCOL), round(float(M.ravel()[s]) * 100, 1)) for s in order]
     la, lb = lambdas(a, b, False, False)
     et = np.outer(_pois(la / 3.0), _pois(lb / 3.0))      # extra time at a third of the rates
+    # Predicted scoreline over the same horizon we grade the real result on: the end of extra time,
+    # before any shootout. A knockout match cannot stop level, so a drawn regulation score does not
+    # stand: its probability is carried into extra time (M's diagonal convolved with the ET matrix),
+    # which moves a clear favorite's most likely scoreline off a phantom draw and onto a win. Even ties
+    # can still be modal here (a level result that a shootout, not the scoreline, resolves).
+    F = M.copy(); diag = np.diag(M).copy(); np.fill_diagonal(F, 0.0)
+    for d in range(NCOL):
+        if diag[d] > 0:
+            F[d:, d:] += diag[d] * et[:NCOL - d, :NCOL - d]
+    F /= F.sum()
+    mh, ma = divmod(int(np.argmax(F)), NCOL)
+    order = np.argsort(F, axis=None)[::-1][:4]
+    tops = [(int(s // NCOL), int(s % NCOL), round(float(F.ravel()[s]) * 100, 1)) for s in order]
     et_a = float(np.tril(et, -1).sum()); et_d = float(np.trace(et))
     sh_a = min(0.60, max(0.40, 0.5 + SHOOTOUT_COEF * (ELO[a] - ELO[b])))
     adv_a = p_a + p_d * (et_a + et_d * sh_a)
