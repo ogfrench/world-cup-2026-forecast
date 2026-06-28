@@ -46,9 +46,9 @@ KRE = re.compile(
 
 def parse_finals(txt, canon):
     """Parse played knockout results from the finals feed into
-    [{home, away, hs, as, winner}] (120-minute score; winner from the score, or the shootout on a
-    draw, or None if a draw has no shootout line yet). Names mapped to engine names; unknown names
-    skipped. Pure, so it is unit-tested."""
+    [{home, away, hs, as, winner, aet}] (120-minute score; winner from the score, or the shootout on a
+    draw, or None if a draw has no shootout line yet; aet True if the tie went to extra time, i.e. the
+    line is marked a.e.t. or has a penalty shootout). Names mapped to engine names; unknown skipped."""
     out = []
     for ln in txt.splitlines():
         m = KRE.match(ln)
@@ -58,16 +58,18 @@ def parse_finals(txt, canon):
         if h not in canon or a not in canon:
             sys.stderr.write('warning: unrecognised team in finals feed, skipped: %r vs %r\n' % (h, a))
             continue
+        pens = m.group(5) is not None
         if hs > ag:
             winner = h
         elif ag > hs:
             winner = a
-        elif m.group(5) is not None:                   # level, decided on penalties
+        elif pens:                                     # level, decided on penalties
             ph, pa = int(m.group(5)), int(m.group(6))
             winner = h if ph > pa else a if pa > ph else None
         else:
             winner = None                              # drawn, no shootout line yet
-        out.append({'home': h, 'away': a, 'hs': hs, 'as': ag, 'winner': winner})
+        aet = pens or ('a.e.t' in ln.lower())          # went to extra time (then maybe penalties)
+        out.append({'home': h, 'away': a, 'hs': hs, 'as': ag, 'winner': winner, 'aet': aet})
     return out
 
 def parse(txt):

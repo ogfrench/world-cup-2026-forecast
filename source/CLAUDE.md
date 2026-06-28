@@ -182,7 +182,10 @@ lines `(NN) ... Home H-A [a.e.t. (...),] [P1-P2 pen.] Away`, taking the 120-minu
 draw, the shootout winner from the `P1-P2 pen.` note (openfootball's convention, verified against 2022).
 `koActual(t)` resolves a tie's result preferring the server-conditioned `played`, then the live finals
 feed (`KO_ACT`, keyed by team pair, oriented to the tie's a/b), then a decisive group-feed score; a
-drawn score with no shootout line yet leaves the winner unknown. KO scheduling is keyed by bracket slot (the
+drawn score with no shootout line yet leaves the winner unknown. A played tie that actually went the
+distance carries an `aet` flag (the line was `a.e.t.` or had a shootout); `koCard` marks it "result
+&middot; 120'" so a real extra-time/penalty tie is visible, while the predicted score has no such tag
+(the headline is the most common single result, usually decided inside 90). KO scheduling is keyed by bracket slot (the
 teams are unknown until the groups finish): `wc2026_ko_schedule.json` carries date/kickoff/venue per slot
 from the official openfootball calendar, and `merge_schedule.py` attaches it onto each emitted tie.
 `test_pipeline.py` guards that every slot's bracket descriptors match the engine (`R32_SYMBOLIC` and the

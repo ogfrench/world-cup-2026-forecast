@@ -494,7 +494,7 @@ def _bracket_core(group_actuals, ko_played, elo_sign):
         e = bracket.get(slot)
         if e and frozenset((e['a'], e['b'])) in played:
             pl = played[frozenset((e['a'], e['b']))]
-            e['played'] = dict(hs=pl['hs'], as_=pl['as'], winner=pl['winner'])
+            e['played'] = dict(hs=pl['hs'], as_=pl['as'], winner=pl['winner'], aet=pl.get('aet', False))
     for slot in list(bracket):
         fill(slot)
     def won(slot):

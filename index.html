@@ -787,10 +787,11 @@
     const out = {};
     (txt||'').split('\n').forEach(ln => {
       const m = ln.match(KRE); if(!m) return;
-      const h = actNm(m[1]), hs = +m[2], as = +m[3], a = actNm(m[6]);
+      const h = actNm(m[1]), hs = +m[2], as = +m[3], a = actNm(m[6]), pens = m[4]!=null;
       let winner = hs>as ? h : as>hs ? a : null;
-      if (winner===null && m[4]!=null) { const ph=+m[4], pa=+m[5]; winner = ph>pa ? h : pa>ph ? a : null; }
-      out[koPairKey(h,a)] = {home:h, away:a, hs, as, winner};
+      if (winner===null && pens) { const ph=+m[4], pa=+m[5]; winner = ph>pa ? h : pa>ph ? a : null; }
+      const aet = pens || /a\.e\.t/i.test(ln);          // went to extra time (then maybe penalties)
+      out[koPairKey(h,a)] = {home:h, away:a, hs, as, winner, aet};
     });
     return out;
   }
@@ -867,11 +868,11 @@
   // browser feed (keyed by the tie's date), with the advancer derived from a decisive score. A draw
   // goes to a shootout the feed score cannot read, so the winner is left unknown in that case.
   function koActual(t){
-    if (t.played) return {hs:t.played.hs, as:t.played.as_, winner:t.played.winner};
+    if (t.played) return {hs:t.played.hs, as:t.played.as_, winner:t.played.winner, aet:t.played.aet};
     const k = KO_ACT[koPairKey(t.a, t.b)];               // live finals feed, with the shootout winner
     if (k) {
       const hs = k.home===t.a ? k.hs : k.as, as = k.home===t.a ? k.as : k.hs;  // orient to this tie's a/b
-      return {hs, as, winner: k.winner};
+      return {hs, as, winner: k.winner, aet: k.aet};
     }
     if (!t.date) return null;
     const a = actualFor({home:t.a, away:t.b, date:t.date});
@@ -894,7 +895,7 @@
     if(a){
       const tier = predTier({modal:t.modal, p_home:t.p_a, p_draw:t.p_draw, p_away:t.p_b}, {hs:a.hs, as:a.as});
       chip = `<div class="sc ft" data-tip="The real result over 120 minutes (regulation and extra time). A shootout decides who advances but does not change this score.">${a.hs}-${a.as}</div>`;
-      clab = 'result';
+      clab = a.aet ? "result &middot; 120'" : 'result';   // mark a tie that actually went to extra time / penalties
       predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${t.modal[0]}-${t.modal[1]}</div><div class="sclab">predicted · ${advanceLabel(a)}</div></div>`;
     } else {
       chip = `<div class="sc" data-tip="The most likely final scoreline from simulating the tie: 90 minutes, plus extra time added on if level. It is usually decisive, because a 90-minute draw is only about one run in four. Trust the advance odds more than this exact number.">${t.modal[0]}-${t.modal[1]}</div>`;
