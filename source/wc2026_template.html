@@ -373,7 +373,7 @@
   .m .mcap .msrch:hover,.m .mcap .msrch:focus-visible{color:var(--lime);border-color:var(--faint);background:var(--surface)}
   .m .sc.ft{color:var(--txt);border-color:var(--line2);background:var(--surface2)}
   .m .sclab{font-family:'DM Mono';font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
-  .m .ko120{position:absolute;top:8px;right:13px;font-family:'DM Mono';font-size:9px;font-weight:600;letter-spacing:.06em;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 5px;cursor:help}  /* tie the model expects to go the distance: extra time, then penalties */
+  .m .det .pens{color:var(--muted);cursor:help}                          /* standing chance the tie goes to a shootout */
   .m.kofix .top .tbd{color:var(--muted)}                                  /* knockout slot not yet filled */
   .m.kofix .sc.tbd{font-family:'DM Mono';font-size:11px;background:none;border-style:dashed;border-color:var(--line);color:var(--faint);min-width:34px}
   .m .predline{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:9px}
@@ -556,7 +556,7 @@
   <!-- KNOCKOUT PHASE (placeholder, built once the round of 32 is set) -->
   <section id="knockout" role="tabpanel" aria-labelledby="tab-knockout" tabindex="0">
     <h2 class="sec-h">Knockout bracket</h2>
-    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. It fills in match by match as each group finishes and the bracket is set. Predicted scores follow the single most likely path: the 90-minute result, into extra time if level, to penalties if still level.</p>
+    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. It fills in match by match as each group finishes and the bracket is set. Predicted scores are the most likely final result from simulating the tie (90 minutes, plus extra time when level), so they are usually decisive; the chance it instead stays level and goes to penalties is shown alongside.</p>
     <div class="scoreboard" id="koScore"></div>
     <div id="koBracket"></div>
   </section>
@@ -875,19 +875,17 @@
       clab = 'result';
       predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${t.modal[0]}-${t.modal[1]}</div><div class="sclab">predicted · ${advanceLabel(a)}</div></div>`;
     } else {
-      chip = `<div class="sc" data-tip="The model's single most likely outcome: the most likely 90-minute score, played on into extra time if level (then penalties if still level). Trust the advance odds more than this exact number.">${t.modal[0]}-${t.modal[1]}</div>`;
+      chip = `<div class="sc" data-tip="The most likely final scoreline from simulating the tie: 90 minutes, plus extra time added on if level. It is usually decisive, because a 90-minute draw is only about one run in four. Trust the advance odds more than this exact number.">${t.modal[0]}-${t.modal[1]}</div>`;
       clab = 'predicted';
       if(t.kickoff_utc && matchPending(mm)) predRow = `<div class="predline">${liveBadge(mm)}</div>`;  // in-play / awaiting badge
     }
-    // Top-right marker for a tie the model expects to go the distance (level after 90 -> extra time,
-    // then penalties). Only on the prediction, before a real result lands.
-    const ko120 = (!a && t.pens) ? `<div class="ko120" data-tip="The model expects this level after 90 minutes: extra time, then a penalty shootout. The advance odds say who is favoured to win it.">120'</div>` : '';
+    const pens = t.p_pens!=null ? ` &middot; <span class="pens" data-tip="Chance the tie is still level after extra time and is settled by a penalty shootout. A draw stays possible even when the most likely scoreline is decisive; this is how likely it is.">${fmt(t.p_pens)}% to penalties</span>` : '';
     return `<div class="m" data-ko="${t.kickoff_utc||''}">
-      ${ko120}<div class="mcap">${cap}${srch}</div>
+      <div class="mcap">${cap}${srch}</div>
       <div class="top"><div class="ta">${t.a}</div>${chip}<div class="tb">${t.b}</div><div class="sclab clab">${clab}</div></div>
       ${predRow}
       <div class="wdl" data-tip="Chance each side advances, after extra time and any shootout."><i class="w" style="width:${t.adv_a}%"></i><i class="l" style="width:${t.adv_b}%"></i></div>
-      <div class="det"><span>${t.a} <b>${fmt(t.adv_a)}%</b> &middot; ${t.b} <b>${fmt(t.adv_b)}%</b></span><span class="alts">also: <span>${alts}</span></span></div>
+      <div class="det"><span>${t.a} <b>${fmt(t.adv_a)}%</b> &middot; ${t.b} <b>${fmt(t.adv_b)}%</b>${pens}</span><span class="alts">also: <span>${alts}</span></span></div>
     </div>`;
   }
   function renderKnockout(){
