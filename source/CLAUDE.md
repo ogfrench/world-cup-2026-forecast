@@ -168,7 +168,8 @@ likely 90-minute scoreline (`argmax(M)`); if it is level, it adds the most likel
 to go to penalties and `pens` is set. So a dominant team is predicted to win in regulation (France 2-0)
 and a tight tie is predicted level and to a shootout (Germany v Paraguay 1-1, pens), which is how a
 knockout actually runs and is consistent with the group cards (a draw is a legal headline). `koCard`
-shows a muted `pens` tag on the predicted score for the level ties. Honest caveat: `pens` marks the
+shows a `120'` badge in the card's top-right on the ties the model expects to go the distance (level
+after 90, so extra time then penalties), shown on the prediction only. Honest caveat: `pens` marks the
 most likely path, not a high probability of a shootout (aggregate chance of reaching penalties is only
 ~13%), so the card hedges with "trust the advance odds more than this exact number" and the advance bar
 carries the real signal. The W/D/L split (`p_a`/`p_draw`/`p_b`) stays the 90-minute regulation result,
