@@ -377,7 +377,7 @@
   .m .mcap .msrch:hover,.m .mcap .msrch:focus-visible{color:var(--lime);border-color:var(--faint);background:var(--surface)}
   .m .sc.ft{color:var(--txt);border-color:var(--line2);background:var(--surface2)}
   .m .sclab{font-family:'DM Mono';font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
-  .m .koline{color:var(--muted);cursor:help}   /* overtime / penalties: justified to the card edges, below the bar */
+  .m .koline{color:var(--muted);cursor:help;text-align:center}   /* overtime · penalties: one centred line below the bar */
   .m.kofix .top .tbd{color:var(--muted)}                                  /* knockout slot not yet filled */
   .m.kofix .sc.tbd{font-family:'DM Mono';font-size:11px;background:none;border-style:dashed;border-color:var(--line);color:var(--faint);min-width:34px}
   .m .predline{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:9px}
@@ -908,7 +908,7 @@
     // are decided in 90, so these are minority outcomes shown as probabilities, not a claim it WILL go
     // the distance. p_draw is the chance of reaching extra time (level after 90); p_pens the shootout.
     const koTip = "Chance the tie goes to overtime (extra time, level after 90 minutes), and the smaller chance it is still level after overtime and decided on penalties. The predicted score is the single most likely result, usually inside 90.";
-    const ko120 = (!a && t.p_pens!=null) ? `<div class="dl koline" data-tip="${koTip}"><span>overtime ${fmt(t.p_draw)}%</span><span>penalties ${fmt(t.p_pens)}%</span></div>` : '';
+    const ko120 = (!a && t.p_pens!=null) ? `<div class="koline" data-tip="${koTip}">overtime ${fmt(t.p_draw)}% &middot; penalties ${fmt(t.p_pens)}%</div>` : '';
     return `<div class="m" data-ko="${t.kickoff_utc||''}">
       <div class="mcap">${cap}</div>
       <div class="top"><div class="ta">${t.a}</div>${chip}<div class="tb">${t.b}</div><div class="sclab clab">${clab}</div></div>
@@ -1483,7 +1483,8 @@
   // one knockout fixture for a list (Schedule or the bracket). A resolved tie shows its full prediction
   // card; the third-place play-off shows the two beaten semi-finalists and the real score but no pick
   // (the engine does not simulate it); any other unresolved tie shows its bracket slots.
-  // sched only affects the slot label under the score; the round tag shows in the caption either way.
+  // Renders the same in both views (the round tag is always in the caption), so the sched flag is
+  // currently unused, kept for call-site symmetry with matchCard.
   function schedKoCard(fix, sched){
     const pill = roundPill(fix.round);   // the round tag shows on every knockout card, in both views
     const time = mm => `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}</span>`;
@@ -1496,7 +1497,7 @@
         : `<div class="sc tbd" data-tip="The two beaten semi-finalists. No model pick: the engine does not simulate the third-place play-off.">v</div>`;
       return `<div class="m kofix" data-ko="${fix.kickoff_utc}">
         <div class="mcap"><span class="capgrp">${time(mm)}${pill}</span><span class="capgrp capend"><span class="capven" data-tip="${fix.venue}">${venueName(fix.venue)}</span></span></div>
-        <div class="top"><div class="ta${h?'':' tbd'}">${h||'Beaten semi-finalist'}</div>${chip}<div class="tb${a?'':' tbd'}">${a||'Beaten semi-finalist'}</div><div class="sclab clab">${sched?'':'Third place'}</div></div>
+        <div class="top"><div class="ta${h?'':' tbd'}">${h||'Beaten semi-finalist'}</div>${chip}<div class="tb${a?'':' tbd'}">${a||'Beaten semi-finalist'}</div><div class="sclab clab"></div></div>
       </div>`;
     }
     const tie = (MODELS[CUR].knockout||{})[fix.slot];
@@ -1507,7 +1508,7 @@
     const mm = {kickoff_utc:fix.kickoff_utc, venue:fix.venue};
     return `<div class="m kofix" data-ko="${fix.kickoff_utc}">
       <div class="mcap"><span class="capgrp">${time(mm)}${pill}</span><span class="capgrp capend"><span class="capven" data-tip="${fix.venue}">${venueName(fix.venue)}</span></span></div>
-      <div class="top"><div class="ta${h?'':' tbd'}">${koLabel(fix.home_desc)}</div><div class="sc tbd" data-tip="The teams are set once the groups (or the previous round) finish.">v</div><div class="tb${a?'':' tbd'}">${koLabel(fix.away_desc)}</div><div class="sclab clab">${sched?'':ROUND_LABEL[fix.round]||''}</div></div>
+      <div class="top"><div class="ta${h?'':' tbd'}">${koLabel(fix.home_desc)}</div><div class="sc tbd" data-tip="The teams are set once the groups (or the previous round) finish.">v</div><div class="tb${a?'':' tbd'}">${koLabel(fix.away_desc)}</div><div class="sclab clab"></div></div>
     </div>`;
   }
   // every fixture in kickoff order: group games plus the full knockout calendar (pure; unit-tested)
