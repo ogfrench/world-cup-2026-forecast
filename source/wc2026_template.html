@@ -239,20 +239,20 @@
   details.matches .chev{flex:none;width:7px;height:7px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;
        transform:rotate(45deg);transition:transform .2s}
   details.matches[open] .chev{transform:rotate(-135deg)}
-  .m{padding:9px 15px;border-top:1px solid var(--line);position:relative}
+  .m{padding:9px 15px;border-top:1px solid var(--line);position:relative;text-align:center}
   .m:first-of-type{border-top:none}
-  /* names sit in row 1 with the score, so they centre on the number; the label drops to row 2 */
+  /* names sit in row 1 hugging the score (team names pulled toward the centred number); label drops to row 2 */
   .m .top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:8px;row-gap:2px}
   .m .top .clab{grid-column:2;justify-self:center}
-  .m .ta{font-weight:600;font-size:13px}
-  .m .tb{font-weight:600;font-size:13px;text-align:right}
+  .m .ta{font-weight:600;font-size:13px;text-align:right}
+  .m .tb{font-weight:600;font-size:13px;text-align:left}
   .m .sc{font-family:'Anton';font-size:18px;letter-spacing:.05em;color:var(--txt);
          background:var(--bg2);border:1px solid var(--line2);border-radius:7px;
          display:inline-flex;align-items:center;justify-content:center;min-width:50px;height:30px;padding:0 9px;line-height:1}
   .wdl{display:flex;height:5px;border-radius:3px;overflow:hidden;margin:8px 0 5px;background:var(--surface2)}
   .wdl i{height:100%}
   .wdl .w{background:var(--win)} .wdl .d{background:var(--draw)} .wdl .l{background:var(--loss)}
-  .m .det{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 12px;font-family:'DM Mono';font-size:10px;color:var(--faint)}
+  .m .det{display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'DM Mono';font-size:10px;color:var(--faint)}
   .m .det .alts span{color:var(--muted)}
 
   /* ---------- method ---------- */
@@ -362,18 +362,18 @@
   .ppred.result{background:var(--win);color:#08140d}
   .ppred.miss{background:var(--loss);color:#1c0b09}
   .m .mcap{font-family:'DM Mono';font-size:10px;color:var(--faint);letter-spacing:.04em;margin-bottom:8px;
-           display:flex;align-items:center;gap:7px;flex-wrap:nowrap}
+           display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap}
   .m .mcap .gpill{flex:none;font-family:'DM Mono';font-size:9px;color:var(--bg);background:var(--faint);border-radius:3px;padding:1px 5px;letter-spacing:0}
   .m .mcap .captime{flex:none;color:var(--muted)}
   .m .mcap .captz{color:var(--faint);font-size:9px}
-  .m .mcap .capven{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .m .mcap .msrch{flex:none;margin-left:auto;display:inline-flex;align-items:center;justify-content:center;
+  .m .mcap .capven{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .m .mcap .msrch{position:absolute;top:9px;right:13px;display:inline-flex;align-items:center;justify-content:center;
        width:21px;height:21px;border:1px solid var(--line2);border-radius:6px;color:var(--faint);
        text-decoration:none;font-size:12px;line-height:1;transition:.12s}
   .m .mcap .msrch:hover,.m .mcap .msrch:focus-visible{color:var(--lime);border-color:var(--faint);background:var(--surface)}
   .m .sc.ft{color:var(--txt);border-color:var(--line2);background:var(--surface2)}
   .m .sclab{font-family:'DM Mono';font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
-  .m .det .koline{flex:0 0 100%;margin-top:2px;color:var(--muted);cursor:help}   /* overtime/pens on their own line */
+  .m .det .koline{color:var(--muted);cursor:help}   /* overtime/pens: its own centred line in the .det column */
   .m.kofix .top .tbd{color:var(--muted)}                                  /* knockout slot not yet filled */
   .m.kofix .sc.tbd{font-family:'DM Mono';font-size:11px;background:none;border-style:dashed;border-color:var(--line);color:var(--faint);min-width:34px}
   .m .predline{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:9px}
