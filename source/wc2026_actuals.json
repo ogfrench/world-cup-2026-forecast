@@ -414,6 +414,20 @@
  },
  {
   "group": "K",
+  "home": "Colombia",
+  "away": "Portugal",
+  "hs": 0,
+  "as": 0
+ },
+ {
+  "group": "K",
+  "home": "DR Congo",
+  "away": "Uzbekistan",
+  "hs": 3,
+  "as": 1
+ },
+ {
+  "group": "K",
   "home": "Portugal",
   "away": "DR Congo",
   "hs": 1,
