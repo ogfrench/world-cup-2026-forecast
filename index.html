@@ -556,7 +556,7 @@
   <!-- KNOCKOUT PHASE (placeholder, built once the round of 32 is set) -->
   <section id="knockout" role="tabpanel" aria-labelledby="tab-knockout" tabindex="0">
     <h2 class="sec-h">Knockout bracket</h2>
-    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. It fills in match by match as each group finishes and the bracket is set. Predicted scores are the most likely final result from simulating the tie (90 minutes, plus extra time when level), so they are usually decisive; the chance it instead stays level and goes to penalties is shown alongside.</p>
+    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. It fills in match by match as each group finishes and the bracket is set. Predicted scores are the most likely final result from simulating the tie (90 minutes, plus extra time when level, then penalties if still level), so they are usually decisive; each prediction also shows the chance it reaches extra time ("120'") and the smaller chance it goes to penalties.</p>
     <div class="scoreboard" id="koScore"></div>
     <div id="koBracket"></div>
   </section>
@@ -902,13 +902,16 @@
       clab = 'predicted';
       if(t.kickoff_utc && matchPending(mm)) predRow = `<div class="predline">${liveBadge(mm)}</div>`;  // in-play / awaiting badge
     }
-    const pens = t.p_pens!=null ? ` &middot; <span class="pens" data-tip="Chance the tie is still level after extra time and is settled by a penalty shootout. A draw stays possible even when the most likely scoreline is decisive; this is how likely it is.">${fmt(t.p_pens)}% to penalties</span>` : '';
+    // on a prediction (not yet played), surface the extra-time and penalty chances honestly: most ties
+    // are decided in 90, so these are minority outcomes shown as probabilities, not a claim it WILL go
+    // the distance. p_draw is the chance of reaching extra time (level after 90); p_pens the shootout.
+    const ko120 = (!a && t.p_pens!=null) ? ` &middot; <span class="pens" data-tip="Chance the tie reaches extra time (level after 90 minutes), and the smaller chance it is still level after extra time and decided on penalties. The predicted score is the single most likely result, usually inside 90.">120' ${fmt(t.p_draw)}% &middot; pens ${fmt(t.p_pens)}%</span>` : '';
     return `<div class="m" data-ko="${t.kickoff_utc||''}">
       <div class="mcap">${cap}${srch}</div>
       <div class="top"><div class="ta">${t.a}</div>${chip}<div class="tb">${t.b}</div><div class="sclab clab">${clab}</div></div>
       ${predRow}
       <div class="wdl" data-tip="Chance each side advances, after extra time and any shootout."><i class="w" style="width:${t.adv_a}%"></i><i class="l" style="width:${t.adv_b}%"></i></div>
-      <div class="det"><span>${t.a} <b>${fmt(t.adv_a)}%</b> &middot; ${t.b} <b>${fmt(t.adv_b)}%</b>${pens}</span><span class="alts">also: <span>${alts}</span></span></div>
+      <div class="det"><span>${t.a} <b>${fmt(t.adv_a)}%</b> &middot; ${t.b} <b>${fmt(t.adv_b)}%</b>${ko120}</span><span class="alts">also: <span>${alts}</span></span></div>
     </div>`;
   }
   function renderKnockout(){
