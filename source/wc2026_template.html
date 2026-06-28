@@ -373,7 +373,7 @@
   .m .mcap .msrch:hover,.m .mcap .msrch:focus-visible{color:var(--lime);border-color:var(--faint);background:var(--surface)}
   .m .sc.ft{color:var(--txt);border-color:var(--line2);background:var(--surface2)}
   .m .sclab{font-family:'DM Mono';font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
-  .m .det .pens{color:var(--muted);cursor:help}                          /* standing chance the tie goes to a shootout */
+  .m .det .koline{flex:0 0 100%;margin-top:2px;color:var(--muted);cursor:help}   /* overtime/pens on their own line */
   .m.kofix .top .tbd{color:var(--muted)}                                  /* knockout slot not yet filled */
   .m.kofix .sc.tbd{font-family:'DM Mono';font-size:11px;background:none;border-style:dashed;border-color:var(--line);color:var(--faint);min-width:34px}
   .m .predline{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:9px}
@@ -905,13 +905,13 @@
     // on a prediction (not yet played), surface the extra-time and penalty chances honestly: most ties
     // are decided in 90, so these are minority outcomes shown as probabilities, not a claim it WILL go
     // the distance. p_draw is the chance of reaching extra time (level after 90); p_pens the shootout.
-    const ko120 = (!a && t.p_pens!=null) ? ` &middot; <span class="pens" data-tip="Chance the tie goes to overtime (extra time, level after 90 minutes), and the smaller chance it is still level after overtime and decided on penalties. The predicted score is the single most likely result, usually inside 90.">overtime ${fmt(t.p_draw)}% &middot; pens ${fmt(t.p_pens)}%</span>` : '';
+    const ko120 = (!a && t.p_pens!=null) ? `<div class="koline" data-tip="Chance the tie goes to overtime (extra time, level after 90 minutes), and the smaller chance it is still level after overtime and decided on penalties. The predicted score is the single most likely result, usually inside 90.">overtime ${fmt(t.p_draw)}% &middot; pens ${fmt(t.p_pens)}%</div>` : '';
     return `<div class="m" data-ko="${t.kickoff_utc||''}">
       <div class="mcap">${cap}${srch}</div>
       <div class="top"><div class="ta">${t.a}</div>${chip}<div class="tb">${t.b}</div><div class="sclab clab">${clab}</div></div>
       ${predRow}
       <div class="wdl" data-tip="Chance each side advances, after extra time and any shootout."><i class="w" style="width:${t.adv_a}%"></i><i class="l" style="width:${t.adv_b}%"></i></div>
-      <div class="det"><span>${t.a} <b>${fmt(t.adv_a)}%</b> &middot; ${t.b} <b>${fmt(t.adv_b)}%</b>${ko120}</span><span class="alts">also: <span>${alts}</span></span></div>
+      <div class="det"><span>${t.a} <b>${fmt(t.adv_a)}%</b> &middot; ${t.b} <b>${fmt(t.adv_b)}%</b></span><span class="alts">also: <span>${alts}</span></span>${ko120}</div>
     </div>`;
   }
   function renderKnockout(){
