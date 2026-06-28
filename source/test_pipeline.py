@@ -396,8 +396,9 @@ class TestBracket(unittest.TestCase):
 
 @unittest.skipUnless(HAVE_NUMPY, "engine requires numpy")
 class TestKoReport(unittest.TestCase):
-    """The knockout predicted scoreline follows the single most likely path: the 90-minute mode, then,
-    if level, the most likely extra-time result played on top of it, and `pens` when it stays level."""
+    """The knockout predicted scoreline is the mode of the simulated final distribution (90 minutes,
+    plus extra time added on when level), so a favorite is decisive, not headlined on the draw cell.
+    p_pens carries the chance it stays level and goes to a shootout."""
 
     @classmethod
     def setUpClass(cls):
@@ -415,32 +416,28 @@ class TestKoReport(unittest.TestCase):
         self.assertEqual(ps, sorted(ps, reverse=True))
         self.assertTrue(0 < ps[0] <= 100)
 
-    def test_dominant_favorite_wins_in_regulation(self):
-        # a lopsided tie is decided in 90: the predicted score is decisive and not flagged for a shootout
-        rep = self.e.ko_report(*self._strong_weak())
+    def test_favorite_is_predicted_to_win_not_draw(self):
+        # the most likely simulated final score is decisive on the favorite's side
+        strong, weak = self._strong_weak()
+        rep = self.e.ko_report(strong, weak)
         self.assertGreater(rep['modal'][0], rep['modal'][1])
-        self.assertFalse(rep['pens'])
         self.assertGreater(rep['adv_a'], 50)
 
-    def test_tight_tie_goes_to_penalties(self):
-        # Germany v Paraguay: level at 90, the most likely extra-time result keeps it level, so the
-        # prediction is a draw settled on penalties, with the favorite still ahead on the advance odds.
+    def test_tight_tie_still_predicts_a_winner(self):
+        # Germany v Paraguay: a 90-minute draw is the biggest single cell, but the simulated final is
+        # most often a Germany win, so the headline is decisive (not a phantom 1-1 to penalties).
         rep = self.e.ko_report('Germany', 'Paraguay')
-        self.assertEqual(rep['modal'][0], rep['modal'][1])       # predicted level
-        self.assertTrue(rep['pens'])                              # decided on penalties
-        self.assertGreater(rep['adv_a'], 50)                     # Germany still favored to advance
+        self.assertNotEqual(rep['modal'][0], rep['modal'][1])
+        self.assertGreater(rep['modal'][0], rep['modal'][1])
 
-    def test_pens_path_builds_on_the_90_minute_draw(self):
-        # the predicted score is the 90-minute mode plus the most likely extra-time result; when that
-        # extra-time result is goalless (the usual case) the final equals the 90-minute draw.
-        import numpy as np, wc2026_engine as e
-        a, b = 'Germany', 'Paraguay'
-        M = e.dc_matrix(a, b, False, False); reg = divmod(int(np.argmax(M)), e.NCOL)
-        la, lb = e.lambdas(a, b, False, False)
-        et = np.outer(e._pois(la / 3.0), e._pois(lb / 3.0)); etm = divmod(int(np.argmax(et)), et.shape[1])
-        rep = e.ko_report(a, b)
-        self.assertEqual(reg[0], reg[1])                          # 90-minute mode is level
-        self.assertEqual(rep['modal'], [reg[0] + etm[0], reg[1] + etm[1]])
+    def test_pens_probability_is_reported_and_modest(self):
+        # the shootout chance is surfaced separately, positive but well below the regulation draw rate
+        # (only the still-level-after-extra-time slice of it reaches penalties), never the headline
+        rep = self.e.ko_report('Germany', 'Paraguay')
+        self.assertIn('p_pens', rep)
+        self.assertGreater(rep['p_pens'], 0)
+        self.assertLess(rep['p_pens'], rep['p_draw'])
+        self.assertLess(rep['p_pens'], 50)
 
 
 @unittest.skipUnless(HAVE_NUMPY, "engine requires numpy")
