@@ -370,6 +370,7 @@
   .m .mcap .captime{flex:none;color:var(--muted)}
   .m .mcap .captz{color:var(--faint);font-size:9px}
   .m .mcap .capven{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .m .mcap .capgrp{display:inline-flex;align-items:center;gap:6px;min-width:0}   /* round/group tag and city hug each other */
   .m .mcap .msrch{flex:none;display:inline-flex;align-items:center;justify-content:center;
        width:21px;height:21px;border:1px solid var(--line2);border-radius:6px;color:var(--faint);
        text-decoration:none;font-size:12px;line-height:1;transition:.12s}
@@ -890,8 +891,7 @@
     // is scheduled, else the model's headline pick
     const cap = t.kickoff_utc
       ? `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span>`
-        + (roundChip ? roundPill(roundChip) : '')
-        + (t.venue ? `<span class="capven" data-tip="${t.venue}">${venueName(t.venue)}</span>` : '')
+        + ((roundChip || t.venue) ? `<span class="capgrp">${roundChip ? roundPill(roundChip) : ''}${t.venue ? `<span class="capven" data-tip="${t.venue}">${venueName(t.venue)}</span>` : ''}</span>` : '')
       : `<span class="capven">${fav} favored &middot; ${fmt(favAdv)}% to advance</span>`;
     const srch = `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="${a?'Find this match and result on Google':'Search this match on Google'}" data-tip="${a?'Search this match and result on Google':'Search this match on Google'}">&#8599;</a>`;
     let chip, clab, predRow='';
@@ -1011,7 +1011,7 @@
     const alts = mm.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
     const a = actualFor(mm);
     const cap = schedule
-      ? `<span class="captime">${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span><span class="capven" data-tip="${mm.venue}">${venueName(mm.venue)}</span>`
+      ? `<span class="captime">${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span><span class="capgrp"><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span><span class="capven" data-tip="${mm.venue}">${venueName(mm.venue)}</span></span>`
       : fmtDay(localDay(mm));
     let chip, clab, predRow = '';
     if (a) {
@@ -1496,7 +1496,7 @@
         ? `<div class="sc ft" data-tip="The third-place play-off result.">${res.hs}-${res.as}</div>`
         : `<div class="sc tbd" data-tip="The two beaten semi-finalists. No model pick: the engine does not simulate the third-place play-off.">v</div>`;
       return `<div class="m kofix" data-ko="${fix.kickoff_utc}">
-        <div class="mcap">${time(mm)}${pill}<span class="capven" data-tip="${fix.venue}">${venueName(fix.venue)}</span></div>
+        <div class="mcap">${time(mm)}<span class="capgrp">${pill}<span class="capven" data-tip="${fix.venue}">${venueName(fix.venue)}</span></span></div>
         <div class="top"><div class="ta${h?'':' tbd'}">${h||'Beaten semi-finalist'}</div>${chip}<div class="tb${a?'':' tbd'}">${a||'Beaten semi-finalist'}</div><div class="sclab clab">${sched?'':'Third place'}</div></div>
       </div>`;
     }
@@ -1507,7 +1507,7 @@
     const h = koSide(fix.home_desc), a = koSide(fix.away_desc);
     const mm = {kickoff_utc:fix.kickoff_utc, venue:fix.venue};
     return `<div class="m kofix" data-ko="${fix.kickoff_utc}">
-      <div class="mcap">${time(mm)}${pill}<span class="capven" data-tip="${fix.venue}">${venueName(fix.venue)}</span></div>
+      <div class="mcap">${time(mm)}<span class="capgrp">${pill}<span class="capven" data-tip="${fix.venue}">${venueName(fix.venue)}</span></span></div>
       <div class="top"><div class="ta${h?'':' tbd'}">${koLabel(fix.home_desc)}</div><div class="sc tbd" data-tip="The teams are set once the groups (or the previous round) finish.">v</div><div class="tb${a?'':' tbd'}">${koLabel(fix.away_desc)}</div><div class="sclab clab">${sched?'':ROUND_LABEL[fix.round]||''}</div></div>
     </div>`;
   }
