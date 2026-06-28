@@ -33,7 +33,7 @@ One model selected at a time, chosen from a dropdown that carries a one-line des
 - **Title Odds** - each team's chance of winning the tournament, plus how often it reaches each round, against Opta and the betting market as a sanity check. Once games are played the odds re-condition on the results, with a Day 0 marker on each bar showing the pre-tournament starting point and the move since; the reach-round table can flip to show the change since Day 0.
 - **Schedule** - every fixture by kickoff time, the model's predicted score, and the real result as it comes in, color-coded (dark green exact, green right result, red wrong).
 - **Groups & Scores** - the live group table against where the model predicted each team to finish, marking who is ahead of the forecast and who is behind. Expand a group for its match predictions and results.
-- **Knockout Phase** - a placeholder until the round-of-32 is set, then the predicted bracket against the real results, live: each tie shows an in-play/awaiting badge as it kicks off and the real score as it lands.
+- **Knockout Phase** - the predicted bracket against the real results, filling in match by match as each group finishes: a tie appears the moment both its teams are mathematically determined, then shows an in-play/awaiting badge as it kicks off and the real score as it lands.
 - **Top Scorers** - the betting market's pre-tournament Golden Boot pick next to a live leaderboard of who is actually scoring, parsed from the feed. The engine rates teams, not players, so the expected side is the market, not the simulation.
 - **Method & Caveats** - the write-up, the validation, and the honest weaknesses.
 
@@ -156,11 +156,10 @@ engines and social cards.
 
 Shipped: fixtures sorted by date with official home/away; live results overlaid with color-coded
 accuracy; a live group table against the predicted finish; conditional live title odds with a Day 0
-before/after; the autonomous refresh; and the Top Scorers tab.
-
-In progress: the predicted-vs-actual knockout bracket and its in-play badges are built and light up
-once the round of 32 is set (around June 28). The remaining bracket-data wiring is tracked in
-[issue #17](https://github.com/ogfrench/world-cup-2026-prediction/issues/17).
+before/after; the autonomous refresh; the Top Scorers tab; and the predicted-vs-actual knockout
+bracket, which fills in match by match as each group finishes (a tie locks the moment both its teams
+are mathematically determined, even before the group stage fully ends) and lights up each tie with an
+in-play/awaiting badge and the real score as it lands.
 
 ## License
 
