@@ -368,7 +368,6 @@
            display:flex;align-items:center;justify-content:space-between;gap:7px;flex-wrap:wrap}
   .m .mcap .gpill{flex:none;font-family:'DM Mono';font-size:9px;color:var(--bg);background:var(--faint);border-radius:3px;padding:1px 5px;letter-spacing:0}
   .m .mcap .captime{flex:none;color:var(--muted)}
-  .m .mcap .captz{color:var(--faint);font-size:9px}
   .m .mcap .capven{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .m .mcap .capgrp{display:inline-flex;align-items:center;gap:6px;min-width:0}   /* a hugging caption group: time+tag on the left, city+arrow pinned to the right end */
   .m .mcap .capgrp.capend{margin-left:auto}   /* the right-hand group, pinned to the very end even when wrapping */
@@ -378,7 +377,7 @@
   .m .mcap .msrch:hover,.m .mcap .msrch:focus-visible{color:var(--lime);border-color:var(--faint);background:var(--surface)}
   .m .sc.ft{color:var(--txt);border-color:var(--line2);background:var(--surface2)}
   .m .sclab{font-family:'DM Mono';font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
-  .m .koline{font-family:'DM Mono';font-size:10px;color:var(--muted);text-align:center;cursor:help}   /* overtime · pens: one centred line below the bar, under the advance odds */
+  .m .koline{color:var(--muted);cursor:help}   /* overtime / penalties: justified to the card edges, below the bar */
   .m.kofix .top .tbd{color:var(--muted)}                                  /* knockout slot not yet filled */
   .m.kofix .sc.tbd{font-family:'DM Mono';font-size:11px;background:none;border-style:dashed;border-color:var(--line);color:var(--faint);min-width:34px}
   .m .predline{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:9px}
@@ -647,8 +646,6 @@
   const localTime = mm => koLocal(mm).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
   const localDay = mm => { const d = koLocal(mm); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
   const venueName = v => (v||'').replace(/\s*\([^)]*\)\s*$/, '');   // drop the suburb in parentheses to keep the caption on one line
-  let TZ = '';
-  try { TZ = new Intl.DateTimeFormat(undefined,{timeZoneName:'short'}).formatToParts(new Date()).find(p=>p.type==='timeZoneName').value || ''; } catch(e){}
   const byKO = (a,b) => a.kickoff_utc < b.kickoff_utc ? -1 : (a.kickoff_utc > b.kickoff_utc ? 1 : 0);
   const scoreOutcome = s => s[0]>s[1] ? 'H' : (s[0]<s[1] ? 'A' : 'D');
   const actOutcome = a => a.hs>a.as ? 'H' : (a.hs<a.as ? 'A' : 'D');
@@ -891,7 +888,7 @@
     // caption: kickoff time and round tag on the left, venue and search arrow on the right once the tie
     // is scheduled, else the model's headline pick
     const srch = `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="${a?'Find this match and result on Google':'Search this match on Google'}" data-tip="${a?'Search this match and result on Google':'Search this match on Google'}">&#8599;</a>`;
-    const captime = `<span class="captime">${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span>`;
+    const captime = `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}</span>`;
     const cap = t.kickoff_utc
       ? `<span class="capgrp">${captime}${roundChip ? roundPill(roundChip) : ''}</span>`
         + `<span class="capgrp capend">${t.venue ? `<span class="capven" data-tip="${t.venue}">${venueName(t.venue)}</span>` : ''}${srch}</span>`
@@ -911,7 +908,7 @@
     // are decided in 90, so these are minority outcomes shown as probabilities, not a claim it WILL go
     // the distance. p_draw is the chance of reaching extra time (level after 90); p_pens the shootout.
     const koTip = "Chance the tie goes to overtime (extra time, level after 90 minutes), and the smaller chance it is still level after overtime and decided on penalties. The predicted score is the single most likely result, usually inside 90.";
-    const ko120 = (!a && t.p_pens!=null) ? `<div class="koline" data-tip="${koTip}">overtime ${fmt(t.p_draw)}% &middot; pens ${fmt(t.p_pens)}%</div>` : '';
+    const ko120 = (!a && t.p_pens!=null) ? `<div class="dl koline" data-tip="${koTip}"><span>overtime ${fmt(t.p_draw)}%</span><span>penalties ${fmt(t.p_pens)}%</span></div>` : '';
     return `<div class="m" data-ko="${t.kickoff_utc||''}">
       <div class="mcap">${cap}</div>
       <div class="top"><div class="ta">${t.a}</div>${chip}<div class="tb">${t.b}</div><div class="sclab clab">${clab}</div></div>
@@ -1014,8 +1011,8 @@
     const a = actualFor(mm);
     const srch = `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="${a?'Find this match and result on Google':'Search this match on Google'}" data-tip="${a?'Search this match and result on Google':'Search this match on Google'}">&#8599;</a>`;
     const cap = schedule
-      ? `<span class="capgrp"><span class="captime">${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span></span><span class="capgrp capend"><span class="capven" data-tip="${mm.venue}">${venueName(mm.venue)}</span>${srch}</span>`
-      : `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span>`
+      ? `<span class="capgrp"><span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}</span><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span></span><span class="capgrp capend"><span class="capven" data-tip="${mm.venue}">${venueName(mm.venue)}</span>${srch}</span>`
+      : `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}</span>`
         + `<span class="capgrp capend">${mm.venue ? `<span class="capven" data-tip="${mm.venue}">${venueName(mm.venue)}</span>` : ''}${srch}</span>`;
     let chip, clab, predRow = '';
     if (a) {
@@ -1489,7 +1486,7 @@
   // sched only affects the slot label under the score; the round tag shows in the caption either way.
   function schedKoCard(fix, sched){
     const pill = roundPill(fix.round);   // the round tag shows on every knockout card, in both views
-    const time = mm => `<span class="captime">${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span>`;
+    const time = mm => `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}</span>`;
     if (fix.round === 'third') {
       const [h,a] = sfLosers();
       const mm = {home:h, away:a, date:fix.date, kickoff_utc:fix.kickoff_utc, venue:fix.venue};
