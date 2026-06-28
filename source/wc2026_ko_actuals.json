@@ -1,1 +1,10 @@
-[]
+[
+ {
+  "home": "South Africa",
+  "away": "Canada",
+  "hs": 0,
+  "as": 1,
+  "winner": "Canada",
+  "aet": false
+ }
+]
