@@ -1561,7 +1561,10 @@
   function scrollToCurrentMatch(tab){
     const isKO = tab === 'knockout';
     const list = document.getElementById(isKO ? 'koBracket' : 'schedList'); if (!list) return;
-    const units = isKO ? koTies() : allMatches();
+    // Schedule anchors over its whole rendered list (group plus the knockout calendar), not just the
+    // group games: once the group stage is over they are all played, and anchoring on those alone would
+    // see "nothing pending" and never move to the upcoming knockout fixtures.
+    const units = isKO ? koTies() : scheduleUnits().map(u => u.obj);
     if (!units.length || units.every(m => actualFor(m))) return;   // nothing pending: leave the scroll be
     const target = scheduleAnchor(units, Date.now()); if (!target) return;
     const el = list.querySelector(`.m[data-ko="${target.kickoff_utc}"]`); if (!el) return;
