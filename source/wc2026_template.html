@@ -239,12 +239,12 @@
   details.matches .chev{flex:none;width:7px;height:7px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;
        transform:rotate(45deg);transition:transform .2s}
   details.matches[open] .chev{transform:rotate(-135deg)}
-  .m{padding:9px 15px;border-top:1px solid var(--line);position:relative}
+  .m{padding:9px 15px;border-top:1px solid var(--line);position:relative;text-align:center}
   .m:first-of-type{border-top:none}
-  /* names sit in row 1 with the score, so they centre on the number; the label drops to row 2 */
+  /* names sit in row 1 justified to the card edges with the score centred between them; label drops to row 2 */
   .m .top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:8px;row-gap:2px}
-  .m .top .clab{grid-column:2;justify-self:center}
-  .m .ta{font-weight:600;font-size:13px}
+  .m .top .clab{grid-column:1 / -1;justify-self:center}   /* the result/predicted label spans the full row so a long "advanced on penalties (5-4)" fits */
+  .m .ta{font-weight:600;font-size:13px;text-align:left}    /* names justified to the card edges, score centred between */
   .m .tb{font-weight:600;font-size:13px;text-align:right}
   .m .sc{font-family:'Anton';font-size:18px;letter-spacing:.05em;color:var(--txt);
          background:var(--bg2);border:1px solid var(--line2);border-radius:7px;
@@ -252,8 +252,11 @@
   .wdl{display:flex;height:5px;border-radius:3px;overflow:hidden;margin:8px 0 5px;background:var(--surface2)}
   .wdl i{height:100%}
   .wdl .w{background:var(--win)} .wdl .d{background:var(--draw)} .wdl .l{background:var(--loss)}
-  .m .det{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 12px;font-family:'DM Mono';font-size:10px;color:var(--faint)}
-  .m .det .alts span{color:var(--muted)}
+  .m .det{display:flex;flex-direction:column;gap:3px;font-family:'DM Mono';font-size:10px;color:var(--faint)}
+  .m .det .dl{display:flex;justify-content:space-between;gap:10px}   /* a stat row spread to the card edges, aligned under the team names */
+  /* the alternate-scoreline list: centred, sitting just under the predicted/result chip and above the bar */
+  .m .alts{font-family:'DM Mono';font-size:10px;color:var(--faint);text-align:center;margin:7px 0 1px}
+  .m .alts span{color:var(--muted)}
 
   /* ---------- method ---------- */
   .prose{max-width:760px}
@@ -362,18 +365,19 @@
   .ppred.result{background:var(--win);color:#08140d}
   .ppred.miss{background:var(--loss);color:#1c0b09}
   .m .mcap{font-family:'DM Mono';font-size:10px;color:var(--faint);letter-spacing:.04em;margin-bottom:8px;
-           display:flex;align-items:center;gap:7px;flex-wrap:nowrap}
+           display:flex;align-items:center;justify-content:space-between;gap:7px;flex-wrap:wrap}
   .m .mcap .gpill{flex:none;font-family:'DM Mono';font-size:9px;color:var(--bg);background:var(--faint);border-radius:3px;padding:1px 5px;letter-spacing:0}
   .m .mcap .captime{flex:none;color:var(--muted)}
-  .m .mcap .captz{color:var(--faint);font-size:9px}
-  .m .mcap .capven{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .m .mcap .msrch{flex:none;margin-left:auto;display:inline-flex;align-items:center;justify-content:center;
+  .m .mcap .capven{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .m .mcap .capgrp{display:inline-flex;align-items:center;gap:6px;min-width:0}   /* a hugging caption group: time+tag on the left, city+arrow pinned to the right end */
+  .m .mcap .capgrp.capend{margin-left:auto}   /* the right-hand group, pinned to the very end even when wrapping */
+  .m .mcap .msrch{flex:none;display:inline-flex;align-items:center;justify-content:center;
        width:21px;height:21px;border:1px solid var(--line2);border-radius:6px;color:var(--faint);
        text-decoration:none;font-size:12px;line-height:1;transition:.12s}
   .m .mcap .msrch:hover,.m .mcap .msrch:focus-visible{color:var(--lime);border-color:var(--faint);background:var(--surface)}
   .m .sc.ft{color:var(--txt);border-color:var(--line2);background:var(--surface2)}
   .m .sclab{font-family:'DM Mono';font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
-  .m .det .koline{flex:0 0 100%;margin-top:2px;color:var(--muted);cursor:help}   /* overtime/pens on their own line */
+  .m .koline{color:var(--muted);cursor:help;text-align:center}   /* extra time · penalties: one centred line below the bar */
   .m.kofix .top .tbd{color:var(--muted)}                                  /* knockout slot not yet filled */
   .m.kofix .sc.tbd{font-family:'DM Mono';font-size:11px;background:none;border-style:dashed;border-color:var(--line);color:var(--faint);min-width:34px}
   .m .predline{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:9px}
@@ -556,7 +560,7 @@
   <!-- KNOCKOUT PHASE (placeholder, built once the round of 32 is set) -->
   <section id="knockout" role="tabpanel" aria-labelledby="tab-knockout" tabindex="0">
     <h2 class="sec-h">Knockout bracket</h2>
-    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. It fills in match by match as each group finishes and the bracket is set. Predicted scores are the most likely final result from simulating the tie (90 minutes, plus extra time when level, then penalties if still level), so they are usually decisive; each prediction also shows the chance it goes to overtime and the smaller chance it goes to penalties.</p>
+    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. It fills in match by match as each group finishes and the bracket is set. Predicted scores are the most likely final result from simulating the tie (90 minutes, plus extra time when level, then penalties if still level), so they are usually decisive; each prediction also shows the chance it goes to extra time and the smaller chance it goes to penalties.</p>
     <div class="scoreboard" id="koScore"></div>
     <div id="koBracket"></div>
   </section>
@@ -642,8 +646,6 @@
   const localTime = mm => koLocal(mm).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
   const localDay = mm => { const d = koLocal(mm); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
   const venueName = v => (v||'').replace(/\s*\([^)]*\)\s*$/, '');   // drop the suburb in parentheses to keep the caption on one line
-  let TZ = '';
-  try { TZ = new Intl.DateTimeFormat(undefined,{timeZoneName:'short'}).formatToParts(new Date()).find(p=>p.type==='timeZoneName').value || ''; } catch(e){}
   const byKO = (a,b) => a.kickoff_utc < b.kickoff_utc ? -1 : (a.kickoff_utc > b.kickoff_utc ? 1 : 0);
   const scoreOutcome = s => s[0]>s[1] ? 'H' : (s[0]<s[1] ? 'A' : 'D');
   const actOutcome = a => a.hs>a.as ? 'H' : (a.hs<a.as ? 'A' : 'D');
@@ -788,10 +790,11 @@
     (txt||'').split('\n').forEach(ln => {
       const m = ln.match(KRE); if(!m) return;
       const h = actNm(m[1]), hs = +m[2], as = +m[3], a = actNm(m[6]), pens = m[4]!=null;
+      const pk = pens ? [+m[4], +m[5]] : null;          // the shootout score, home-away as the feed gives it
       let winner = hs>as ? h : as>hs ? a : null;
-      if (winner===null && pens) { const ph=+m[4], pa=+m[5]; winner = ph>pa ? h : pa>ph ? a : null; }
+      if (winner===null && pk) winner = pk[0]>pk[1] ? h : pk[1]>pk[0] ? a : null;
       const aet = pens || /a\.e\.t/i.test(ln);          // went to extra time (then maybe penalties)
-      out[koPairKey(h,a)] = {home:h, away:a, hs, as, winner, aet};
+      out[koPairKey(h,a)] = {home:h, away:a, hs, as, winner, aet, pens:pk};
     });
     return out;
   }
@@ -868,11 +871,11 @@
   // browser feed (keyed by the tie's date), with the advancer derived from a decisive score. A draw
   // goes to a shootout the feed score cannot read, so the winner is left unknown in that case.
   function koActual(t){
-    if (t.played) return {hs:t.played.hs, as:t.played.as_, winner:t.played.winner, aet:t.played.aet};
+    if (t.played) return {hs:t.played.hs, as:t.played.as_, winner:t.played.winner, aet:t.played.aet, pens:t.played.pens};
     const k = KO_ACT[koPairKey(t.a, t.b)];               // live finals feed, with the shootout winner
     if (k) {
       const hs = k.home===t.a ? k.hs : k.as, as = k.home===t.a ? k.as : k.hs;  // orient to this tie's a/b
-      return {hs, as, winner: k.winner, aet: k.aet};
+      return {hs, as, winner: k.winner, aet: k.aet, pens: k.pens};   // shootout score shown winner-first, no orient needed
     }
     if (!t.date) return null;
     const a = actualFor({home:t.a, away:t.b, date:t.date});
@@ -883,20 +886,20 @@
     const favA = t.adv_a>=t.adv_b, fav = favA?t.a:t.b, favAdv = Math.max(t.adv_a,t.adv_b);
     const alts = t.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
     const a = koActual(t), mm = {home:t.a, away:t.b, date:t.date, kickoff_utc:t.kickoff_utc, venue:t.venue};
-    // caption: kickoff date/time, the round (when asked, i.e. in the Schedule), and venue once the tie
+    // caption: kickoff time and round tag on the left, venue and search arrow on the right once the tie
     // is scheduled, else the model's headline pick
+    const srch = `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="${a?'Find this match and result on Google':'Search this match on Google'}" data-tip="${a?'Search this match and result on Google':'Search this match on Google'}">&#8599;</a>`;
+    const captime = `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}</span>`;
     const cap = t.kickoff_utc
-      ? `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span>`
-        + (roundChip ? roundPill(roundChip) : '')
-        + (t.venue ? `<span class="capven" data-tip="${t.venue}">${venueName(t.venue)}</span>` : '')
-      : `<span class="capven">${fav} favored &middot; ${fmt(favAdv)}% to advance</span>`;
-    const srch = a ? `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="Find this match and result on Google" data-tip="Search this match and result on Google">&#8599;</a>` : '';
+      ? `<span class="capgrp">${captime}${roundChip ? roundPill(roundChip) : ''}</span>`
+        + `<span class="capgrp capend">${t.venue ? `<span class="capven" data-tip="${t.venue}">${venueName(t.venue)}</span>` : ''}${srch}</span>`
+      : `<span class="capven">${fav} favored &middot; ${fmt(favAdv)}% to advance</span>${srch}`;
     let chip, clab, predRow='';
     if(a){
       const tier = predTier({modal:t.modal, p_home:t.p_a, p_draw:t.p_draw, p_away:t.p_b}, {hs:a.hs, as:a.as});
       chip = `<div class="sc ft" data-tip="The real result over 120 minutes (regulation and extra time). A shootout decides who advances but does not change this score.">${a.hs}-${a.as}</div>`;
-      clab = a.aet ? 'result &middot; overtime' : 'result';   // mark a tie that actually went to extra time / penalties
-      predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${t.modal[0]}-${t.modal[1]}</div><div class="sclab">predicted · ${advanceLabel(a)}</div></div>`;
+      clab = `result &middot; ${advanceLabel(a)}`;   // who advanced and how (in 90, in extra time, or on penalties)
+      predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${t.modal[0]}-${t.modal[1]}</div><div class="sclab">predicted</div></div>`;
     } else {
       chip = `<div class="sc" data-tip="The most likely final scoreline from simulating the tie: 90 minutes, plus extra time added on if level. It is usually decisive, because a 90-minute draw is only about one run in four. Trust the advance odds more than this exact number.">${t.modal[0]}-${t.modal[1]}</div>`;
       clab = 'predicted';
@@ -905,13 +908,15 @@
     // on a prediction (not yet played), surface the extra-time and penalty chances honestly: most ties
     // are decided in 90, so these are minority outcomes shown as probabilities, not a claim it WILL go
     // the distance. p_draw is the chance of reaching extra time (level after 90); p_pens the shootout.
-    const ko120 = (!a && t.p_pens!=null) ? `<div class="koline" data-tip="Chance the tie goes to overtime (extra time, level after 90 minutes), and the smaller chance it is still level after overtime and decided on penalties. The predicted score is the single most likely result, usually inside 90.">overtime ${fmt(t.p_draw)}% &middot; pens ${fmt(t.p_pens)}%</div>` : '';
+    const koTip = "Chance the tie goes to extra time (level after 90 minutes), and the smaller chance it is still level after extra time and decided on penalties. The predicted score is the single most likely result, usually inside 90.";
+    const ko120 = (!a && t.p_pens!=null) ? `<div class="koline" data-tip="${koTip}">extra time ${fmt(t.p_draw)}% &middot; penalties ${fmt(t.p_pens)}%</div>` : '';
     return `<div class="m" data-ko="${t.kickoff_utc||''}">
-      <div class="mcap">${cap}${srch}</div>
+      <div class="mcap">${cap}</div>
       <div class="top"><div class="ta">${t.a}</div>${chip}<div class="tb">${t.b}</div><div class="sclab clab">${clab}</div></div>
       ${predRow}
+      <div class="alts">also: <span>${alts}</span></div>
       <div class="wdl" data-tip="Chance each side advances, after extra time and any shootout."><i class="w" style="width:${t.adv_a}%"></i><i class="l" style="width:${t.adv_b}%"></i></div>
-      <div class="det"><span>${t.a} <b>${fmt(t.adv_a)}%</b> &middot; ${t.b} <b>${fmt(t.adv_b)}%</b></span><span class="alts">also: <span>${alts}</span></span>${ko120}</div>
+      <div class="det"><div class="dl"><span>${t.a} <b>${fmt(t.adv_a)}%</b></span><span>${t.b} <b>${fmt(t.adv_b)}%</b></span></div>${ko120}</div>
     </div>`;
   }
   function renderKnockout(){
@@ -999,15 +1004,16 @@
                      : "Looks finished, but the result is not in our feed yet. Tap to check the score on Google.";
     return `<a class="livelink ${live?'live':'await'}" href="${liveSearch(mm)}" target="_blank" rel="noopener" data-tip="${tip}"><span class="livedot"></span>${label}<span class="livearrow">&#8599;</span></a>`;
   };
-  // one shared match card, used by both the Groups tab and the Schedule so they look identical.
-  // schedule mode swaps the date caption for kickoff time, group, and venue.
+  // one shared match card, used by both the Groups tab and the Schedule, identical in both. The schedule
+  // flag is currently unused (the caption no longer differs), kept for call-site symmetry.
   function matchCard(mm, schedule){
     const tot = mm.p_home+mm.p_draw+mm.p_away;
     const alts = mm.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
     const a = actualFor(mm);
-    const cap = schedule
-      ? `<span class="captime">${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span><span class="capven" data-tip="${mm.venue}">${venueName(mm.venue)}</span>`
-      : fmtDay(localDay(mm));
+    const srch = `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="${a?'Find this match and result on Google':'Search this match on Google'}" data-tip="${a?'Search this match and result on Google':'Search this match on Google'}">&#8599;</a>`;
+    // identical caption in both tabs: date, time and the group tag on the left, venue and arrow on the right
+    const cap = `<span class="capgrp"><span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}</span><span class="gpill" data-tip="Group ${mm.group}">${mm.group}</span></span>`
+      + `<span class="capgrp capend">${mm.venue ? `<span class="capven" data-tip="${mm.venue}">${venueName(mm.venue)}</span>` : ''}${srch}</span>`;
     let chip, clab, predRow = '';
     if (a) {
       const tier = predTier(mm,a);
@@ -1019,13 +1025,13 @@
       clab = 'predicted';
       if (matchPending(mm)) predRow = `<div class="predline">${liveBadge(mm)}</div>`;
     }
-    const srch = a ? `<a class="msrch" href="${matchSearch(mm,a)}" target="_blank" rel="noopener" aria-label="Find this match and result on Google" data-tip="Search this match and result on Google">&#8599;</a>` : '';
     return `<div class="m" data-ko="${mm.kickoff_utc}">
-      <div class="mcap">${cap}${srch}</div>
+      <div class="mcap">${cap}</div>
       <div class="top"><div class="ta">${mm.home}</div>${chip}<div class="tb">${mm.away}</div><div class="sclab clab">${clab}</div></div>
       ${predRow}
+      <div class="alts">also: <span>${alts}</span></div>
       <div class="wdl"><i class="w" style="width:${mm.p_home/tot*100}%"></i><i class="d" style="width:${mm.p_draw/tot*100}%"></i><i class="l" style="width:${mm.p_away/tot*100}%"></i></div>
-      <div class="det"><span>W ${fmt(mm.p_home)}% · D ${fmt(mm.p_draw)}% · L ${fmt(mm.p_away)}%</span><span class="alts">also: <span>${alts}</span></span></div>
+      <div class="det"><div class="dl"><span>W ${fmt(mm.p_home)}%</span><span>D ${fmt(mm.p_draw)}%</span><span>L ${fmt(mm.p_away)}%</span></div></div>
     </div>`;
   }
   // ---- one live loop: a single heartbeat repaints time-derived badges and fetches the feed
@@ -1471,17 +1477,24 @@
   // the two beaten semi-finalists (the third-place play-off teams), once both semis are decided
   function sfLosers(){ return [koSide('L101'), koSide('L102')]; }
   // how a played knockout tie was decided: a draw after 120 minutes with an advancer means penalties
+  // who advanced and how: in 90, in extra time, or on penalties (with the winner-first shootout
+  // score when the feed carries it). A level 120-minute score with a winner can only be a shootout.
   function advanceLabel(a){
-    return a.winner ? `${a.winner} ${a.hs===a.as ? 'won on penalties' : 'advanced'}` : 'to a shootout';
+    if (!a.winner) return 'to a shootout';
+    if (a.hs === a.as){
+      const ps = a.pens ? ` (${Math.max(a.pens[0],a.pens[1])}-${Math.min(a.pens[0],a.pens[1])})` : '';
+      return `${a.winner} advanced on penalties${ps}`;
+    }
+    return `${a.winner} advanced${a.aet ? ' in extra time' : ''}`;
   }
   // one knockout fixture for a list (Schedule or the bracket). A resolved tie shows its full prediction
   // card; the third-place play-off shows the two beaten semi-finalists and the real score but no pick
   // (the engine does not simulate it); any other unresolved tie shows its bracket slots.
-  // sched=true adds a round chip to the caption (the Schedule has no per-round sections); the Knockout
-  // tab passes false because its round/day headers already say which round it is.
+  // Renders the same in both views (the round tag is always in the caption), so the sched flag is
+  // currently unused, kept for call-site symmetry with matchCard.
   function schedKoCard(fix, sched){
-    const pill = sched ? roundPill(fix.round) : '';
-    const time = mm => `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}${TZ?` <span class="captz">${TZ}</span>`:''}</span>`;
+    const pill = roundPill(fix.round);   // the round tag shows on every knockout card, in both views
+    const time = mm => `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}</span>`;
     if (fix.round === 'third') {
       const [h,a] = sfLosers();
       const mm = {home:h, away:a, date:fix.date, kickoff_utc:fix.kickoff_utc, venue:fix.venue};
@@ -1490,19 +1503,19 @@
         ? `<div class="sc ft" data-tip="The third-place play-off result.">${res.hs}-${res.as}</div>`
         : `<div class="sc tbd" data-tip="The two beaten semi-finalists. No model pick: the engine does not simulate the third-place play-off.">v</div>`;
       return `<div class="m kofix" data-ko="${fix.kickoff_utc}">
-        <div class="mcap">${time(mm)}${pill}<span class="capven" data-tip="${fix.venue}">${venueName(fix.venue)}</span></div>
-        <div class="top"><div class="ta${h?'':' tbd'}">${h||'Beaten semi-finalist'}</div>${chip}<div class="tb${a?'':' tbd'}">${a||'Beaten semi-finalist'}</div><div class="sclab clab">${sched?'':'Third place'}</div></div>
+        <div class="mcap"><span class="capgrp">${time(mm)}${pill}</span><span class="capgrp capend"><span class="capven" data-tip="${fix.venue}">${venueName(fix.venue)}</span></span></div>
+        <div class="top"><div class="ta${h?'':' tbd'}">${h||'Beaten semi-finalist'}</div>${chip}<div class="tb${a?'':' tbd'}">${a||'Beaten semi-finalist'}</div><div class="sclab clab"></div></div>
       </div>`;
     }
     const tie = (MODELS[CUR].knockout||{})[fix.slot];
-    if (tie) return koCard(tie, sched ? fix.round : null);
+    if (tie) return koCard(tie, fix.round);
     // half-known: fill either side we can already determine (a finished group's winner/runner-up, or a
     // played match's winner); the rest reads as the feeding matchup ("Winner of 1F/2C"), not a bare slot.
     const h = koSide(fix.home_desc), a = koSide(fix.away_desc);
     const mm = {kickoff_utc:fix.kickoff_utc, venue:fix.venue};
     return `<div class="m kofix" data-ko="${fix.kickoff_utc}">
-      <div class="mcap">${time(mm)}${pill}<span class="capven" data-tip="${fix.venue}">${venueName(fix.venue)}</span></div>
-      <div class="top"><div class="ta${h?'':' tbd'}">${koLabel(fix.home_desc)}</div><div class="sc tbd" data-tip="The teams are set once the groups (or the previous round) finish.">v</div><div class="tb${a?'':' tbd'}">${koLabel(fix.away_desc)}</div><div class="sclab clab">${sched?'':ROUND_LABEL[fix.round]||''}</div></div>
+      <div class="mcap"><span class="capgrp">${time(mm)}${pill}</span><span class="capgrp capend"><span class="capven" data-tip="${fix.venue}">${venueName(fix.venue)}</span></span></div>
+      <div class="top"><div class="ta${h?'':' tbd'}">${koLabel(fix.home_desc)}</div><div class="sc tbd" data-tip="The teams are set once the groups (or the previous round) finish.">v</div><div class="tb${a?'':' tbd'}">${koLabel(fix.away_desc)}</div><div class="sclab clab"></div></div>
     </div>`;
   }
   // every fixture in kickoff order: group games plus the full knockout calendar (pure; unit-tested)
