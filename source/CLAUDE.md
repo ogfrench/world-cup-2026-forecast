@@ -193,9 +193,9 @@ across those draws, which is decisive for a favorite (Germany v Paraguay 1-0, Fr
 90-minute draw is only about one run in four while the favorite's win is spread across many scorelines.
 (The earlier `argmax(M)` was wrong: it headlined the single biggest 90-minute cell, which is the draw.)
 The extra-time and shootout possibilities are surfaced honestly on each prediction, not faked into the
-headline: `koCard` shows "120' X% &middot; pens Y%" where X is `p_draw` (the chance of reaching extra
-time, i.e. level after 90) and Y is `p_pens` (still level after extra time). Both are minority outcomes
-(extra time ~10 to 26 percent, pens ~4 to 13 percent), so they are shown as probabilities, never as a
+headline: `koCard` shows "extra time X% &middot; penalties Y%" where X is `p_draw` (the chance of reaching
+extra time, i.e. level after 90) and Y is `p_pens` (still level after extra time). Both are minority outcomes
+(extra time ~10 to 26 percent, penalties ~4 to 13 percent), so they are shown as probabilities, never as a
 claim the tie WILL go the distance. `p_a`/`p_draw`/`p_b` are the over-90 split and `adv_a` the advance
 odds (win in 90 or extra time, or take the shootout), all read from the same simulation.
 The group cards still show the analytic 90-minute modal (`match_report`, `argmax(M)`).
@@ -207,10 +207,13 @@ lines `(NN) ... Home H-A [a.e.t. (...),] [P1-P2 pen.] Away`, taking the 120-minu
 draw, the shootout winner from the `P1-P2 pen.` note (openfootball's convention, verified against 2022).
 `koActual(t)` resolves a tie's result preferring the server-conditioned `played`, then the live finals
 feed (`KO_ACT`, keyed by team pair, oriented to the tie's a/b), then a decisive group-feed score; a
-drawn score with no shootout line yet leaves the winner unknown. A played tie that actually went the
-distance carries an `aet` flag (the line was `a.e.t.` or had a shootout); `koCard` marks it "result
-&middot; 120'" so a real extra-time/penalty tie is visible, while the predicted score has no such tag
-(the headline is the most common single result, usually decided inside 90). KO scheduling is keyed by bracket slot (the
+drawn score with no shootout line yet leaves the winner unknown. The shootout score is carried too
+(`parse_finals`/`parseFinals` capture the `P1-P2 pen.` numbers into `played.pens`/`pens`). A played tie
+carries an `aet` flag (the line was `a.e.t.` or had a shootout); `koCard`'s result label spells out how
+it was decided via `advanceLabel`: "result &middot; {winner} advanced", "... in extra time" (decisive
+after 120), or "... on penalties (5-4)" (level after 120, shootout score shown winner-first). The
+predicted chip's sub-label is just "predicted" (the headline score is the most common single result,
+usually decided inside 90). KO scheduling is keyed by bracket slot (the
 teams are unknown until the groups finish): `wc2026_ko_schedule.json` carries date/kickoff/venue per slot
 from the official openfootball calendar, and `merge_schedule.py` attaches it onto each emitted tie.
 `test_pipeline.py` guards that every slot's bracket descriptors match the engine (`R32_SYMBOLIC` and the
