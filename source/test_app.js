@@ -392,9 +392,9 @@ eq(koDesc('L101'), 'Loser M101', 'match-loser descriptor (third-place play-off)'
   eq(koLabel('1A'),'Winner A','an unfinished group slot still reads clearly');
 })();
 
-// ---- advanceLabel: how a knockout tie was decided (overtime and penalties called out by name) ----
+// ---- advanceLabel: how a knockout tie was decided (extra time and penalties called out by name) ----
 eq(advanceLabel({winner:'Canada',hs:1,as:0}),'Canada advanced','a decisive result in 90 just advances');
-eq(advanceLabel({winner:'Canada',hs:2,as:1,aet:true}),'Canada advanced in overtime','a decisive result after extra time says in overtime');
+eq(advanceLabel({winner:'Canada',hs:2,as:1,aet:true}),'Canada advanced in extra time','a decisive result after extra time says in extra time');
 eq(advanceLabel({winner:'Canada',hs:1,as:1,aet:true}),'Canada advanced on penalties','a level result after 120 min with an advancer is penalties');
 eq(advanceLabel({winner:'Canada',hs:1,as:1,aet:true,pens:[5,4]}),'Canada advanced on penalties (5-4)','the shootout score is shown when the feed carries it');
 eq(advanceLabel({winner:'Canada',hs:1,as:1,aet:true,pens:[4,5]}),'Canada advanced on penalties (5-4)','the shootout score reads winner-first regardless of feed order');
