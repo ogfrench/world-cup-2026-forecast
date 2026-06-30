@@ -20,6 +20,14 @@
   ]
  },
  {
+  "home": "Ivory Coast",
+  "away": "Norway",
+  "hs": 1,
+  "as": 2,
+  "winner": "Norway",
+  "aet": false
+ },
+ {
   "home": "Netherlands",
   "away": "Morocco",
   "hs": 1,
