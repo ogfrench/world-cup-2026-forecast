@@ -211,6 +211,8 @@ eq(fin[koPairKey('Spain', 'Austria')].pens, null, 'a tie with no shootout carrie
 sandbox.setKoAct(fin);
 eq(koActual(koTie({ a: 'Germany', b: 'Paraguay' })), { hs: 1, as: 1, winner: 'Germany', aet: true, pens: [4, 2] },
    'a level finals result carries the shootout winner and score from the pen. line and the extra-time flag');
+eq(koActual(koTie({ a: 'Paraguay', b: 'Germany' })), { hs: 1, as: 1, winner: 'Germany', aet: true, pens: [2, 4] },
+   'the shootout score orients to the tie order too (a/b reversed from the feed flips the pens)');
 eq(koActual(koTie({ a: 'Spain', b: 'Austria' })), { hs: 1, as: 2, winner: 'Austria', aet: false, pens: null },
    'a decisive finals result overlays, the higher score advances, no extra time');
 eq(koActual(koTie({ a: 'Austria', b: 'Spain' })), { hs: 2, as: 1, winner: 'Austria', aet: false, pens: null },
@@ -397,7 +399,7 @@ eq(advanceLabel({winner:'Canada',hs:1,as:0}),'Canada advanced','a decisive resul
 eq(advanceLabel({winner:'Canada',hs:2,as:1,aet:true}),'Canada advanced in extra time','a decisive result after extra time says in extra time');
 eq(advanceLabel({winner:'Canada',hs:1,as:1,aet:true}),'Canada advanced on penalties','a level result after 120 min with an advancer is penalties');
 eq(advanceLabel({winner:'Canada',hs:1,as:1,aet:true,pens:[5,4]}),'Canada advanced on penalties (5-4)','the shootout score is shown when the feed carries it');
-eq(advanceLabel({winner:'Canada',hs:1,as:1,aet:true,pens:[4,5]}),'Canada advanced on penalties (5-4)','the shootout score reads winner-first regardless of feed order');
+eq(advanceLabel({winner:'Morocco',hs:1,as:1,aet:true,pens:[2,3]}),'Morocco advanced on penalties (2-3)','the shootout score reads in home-away order (the away side can win it, here 2-3)');
 eq(advanceLabel({winner:null,hs:1,as:1}),'to a shootout','a draw with no advancer yet is pending the shootout');
 
 // ---- scheduleUnits / koRounds: the data behind the Schedule list and the bracket ----

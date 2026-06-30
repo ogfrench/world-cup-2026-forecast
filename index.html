@@ -875,7 +875,8 @@
     const k = KO_ACT[koPairKey(t.a, t.b)];               // live finals feed, with the shootout winner
     if (k) {
       const hs = k.home===t.a ? k.hs : k.as, as = k.home===t.a ? k.as : k.hs;  // orient to this tie's a/b
-      return {hs, as, winner: k.winner, aet: k.aet, pens: k.pens};   // shootout score shown winner-first, no orient needed
+      const pens = k.pens ? (k.home===t.a ? k.pens : [k.pens[1], k.pens[0]]) : null;  // pens follow the same a/b orientation
+      return {hs, as, winner: k.winner, aet: k.aet, pens};   // score and shootout shown in this tie's home-away order
     }
     if (!t.date) return null;
     const a = actualFor({home:t.a, away:t.b, date:t.date});
@@ -1482,7 +1483,7 @@
   function advanceLabel(a){
     if (!a.winner) return 'to a shootout';
     if (a.hs === a.as){
-      const ps = a.pens ? ` (${Math.max(a.pens[0],a.pens[1])}-${Math.min(a.pens[0],a.pens[1])})` : '';
+      const ps = a.pens ? ` (${a.pens[0]}-${a.pens[1]})` : '';   // home-away order, matching the score line
       return `${a.winner} advanced on penalties${ps}`;
     }
     return `${a.winner} advanced${a.aet ? ' in extra time' : ''}`;
