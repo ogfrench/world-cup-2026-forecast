@@ -211,7 +211,8 @@ drawn score with no shootout line yet leaves the winner unknown. The shootout sc
 (`parse_finals`/`parseFinals` capture the `P1-P2 pen.` numbers into `played.pens`/`pens`). A played tie
 carries an `aet` flag (the line was `a.e.t.` or had a shootout); `koCard`'s result label spells out how
 it was decided via `advanceLabel`: "result &middot; {winner} advanced", "... in extra time" (decisive
-after 120), or "... on penalties (5-4)" (level after 120, shootout score shown winner-first). The
+after 120), or "... on penalties (3-4)" (level after 120, shootout score shown in home-away order to
+match the score line, so the away side can hold the larger number). The
 predicted chip's sub-label is just "predicted" (the headline score is the most common single result,
 usually decided inside 90). KO scheduling is keyed by bracket slot (the
 teams are unknown until the groups finish): `wc2026_ko_schedule.json` carries date/kickoff/venue per slot
