@@ -578,7 +578,7 @@
   <!-- TOP SCORERS -->
   <section id="topscorers" role="tabpanel" aria-labelledby="tab-topscorers" tabindex="0">
     <h2 class="sec-h">Golden Boot</h2>
-    <p class="lead">The bookmakers' pre-tournament pick for the Golden Boot, next to who is actually scoring. The model rates teams, not players, so the expected side comes from the bookmakers, not the simulation, and it does not move once the tournament starts.</p>
+    <p class="lead">The bookmakers' pre-tournament pick for the Golden Boot, next to who is actually scoring. The model rates teams, not players, so the expected column comes from the bookmakers and stays put once the tournament starts.</p>
     <div class="scgrid">
       <div class="sccol exp">
         <div class="scol-h"><span>Expected</span><small>Day 0 market</small></div>
@@ -600,22 +600,22 @@
       <p>The first three use results only. <b>Pure Elo</b> treats a team like a chess rating, going on who has been beating whom. It is steady and hard to fool with one odd scoreline, it has no feel for how a team plays, and of the five it leans on the favorites most. <b>Pure Goals</b> learns each team's attack and defense from <b><span id="dcm1"></span> internationals</b> since 2010, where the home side scores about <b>1.31x</b> as often, so it works in scorelines rather than just winners. It also rewards a team for scoring heavily against weaker opponents, which lifts teams like Japan and Algeria. <b>Hybrid</b> averages the two, and each covers for the other's blind spot. On 1,230 internationals it had not seen, it does at least as well as either one alone, with the steadiest confidence of the three:</p>
       <table class="cal" id="ooTable"></table>
       <p>A forecast is measured three ways: how often it calls the result, how surprised it is once the games are in (log-loss), and whether its stated confidence holds up (calibration). Hybrid wins or ties on all three. It clearly beats the goals model and is just barely ahead of plain Elo, close enough that either could be best, so blending lands at least as good as the best single method and a little steadier. A more complicated model did not mean a more accurate one.</p>
-      <p>The last two bring in the bookmakers. <b>Hybrid + Market</b> reads the ratings the betting odds imply and meets Hybrid halfway, which pulls Argentina down a little and lifts France. <b>Pure Market</b> drops the model and runs the bookmakers' implied ratings through the same bracket, so their read covers every tie and round, not just the title. Across 5,327 club matches with real closing odds, the market came out ahead of a solid Elo model, and no blend beat it on its own, so the page opens on it. It is the bookmakers as they stood before kickoff, played forward, not a live feed of moving prices.</p>
+      <p>The last two bring in the bookmakers. <b>Hybrid + Market</b> reads the ratings the betting odds imply and meets Hybrid halfway, which pulls Argentina down a little and lifts France. <b>Pure Market</b> drops the model and runs the bookmakers' implied ratings through the same bracket, so their read covers every tie and round, not just the title. Across 5,327 club matches with real closing odds, the market came out ahead of a solid Elo model, and no blend beat it on its own, so the page opens on it. It is the bookmakers as they stood before kickoff, played forward and then held fixed.</p>
 
       <h3>Against Opta and the bookmakers</h3>
-      <p>None of these models was trained on Opta's numbers, so they make a fair outside check. The selected model's title odds, next to Opta's supercomputer and the bookmakers:</p>
+      <p>None of these models was trained on Opta's numbers, so they make a fair outside check. Here are the selected model's Day 0 (pre-tournament) title odds beside Opta's supercomputer and the bookmakers, all three at the same point before kickoff:</p>
       <table class="cal" id="calTable"></table>
       <div class="note" id="methodNote"></div>
       <p>The <b>Bookmakers</b> reference and <b>Pure Market</b> are not quite the same line, though they sit on top of each other on the title bar. The Bookmakers figure is the published title odds, champion only. Pure Market takes the ratings those odds imply and plays the tournament out 50,000 times, so it matches them on the title and also has a number for every round and match, which the raw odds do not.</p>
 
       <h3>Where it's weak</h3>
       <p><b>It backs the favorites too hard.</b> A fixed-strength simulation cannot see a tournament turn the way a real one does, an injury, a sudden run of great form, a red card at the wrong moment, so probability piles onto the big teams (Pure Elo most, Pure Market least). The head-to-heads still look right: Spain against Argentina is close to a coin flip.</p>
-      <p><b>The live odds follow results, not form.</b> Once a game is played the odds re-simulate with that score locked in, but the underlying ratings stay at their pre-tournament strength, frozen on 6 June. Winning by a little and winning by a lot move them the same amount, and injuries, current form, and a re-pricing market do not show up at all.</p>
-      <p><b>The validation is encouraging, not the last word.</b> The 1,230 test games are mostly one-sided qualifiers and friendlies that almost any model gets right, and there are very few of the tight knockout matches a World Cup turns on. The test grades match calls, not title odds, and those cannot be checked until the trophy is lifted.</p>
+      <p><b>The live odds only see the score.</b> Once a game is played the odds re-simulate with that score locked in, but the underlying ratings stay at their pre-tournament strength, frozen on 6 June. Winning by a little and winning by a lot move them the same amount, and injuries, current form, and a re-pricing market do not show up at all.</p>
+      <p><b>The validation only goes so far.</b> The 1,230 test games are mostly one-sided qualifiers and friendlies that almost any model gets right, with very few of the tight knockout matches a World Cup turns on. And the test grades individual match calls; the title odds themselves cannot be checked until the trophy is lifted.</p>
       <p><b>The single most likely score is shaky.</b> In an even game 1-1, 1-0 and 0-0 sit within a few percent of each other, so the headline score can flip on very little. The win, draw and loss split is firmer than the exact number. The model also draws a little less than real life, around 23 to 24 percent in the groups against a 26 to 28 percent norm.</p>
       <p><b>There is no top-scorer model.</b> The engine rates teams, not players. The <a class="xlink" href="#" data-go="topscorers">Top Scorers</a> tab puts the bookmakers' pre-tournament pick next to whoever is actually scoring.</p>
-      <p><b>It is a baseline, not a sure thing.</b> Built from public data and standard methods, it is good for the shape of a tournament and a feel for the odds, and not for staking anything you would miss.</p>
-      <p class="colophon">Five match models over a shared <b id="nsim3"></b>-tournament Monte Carlo with the official FIFA Annex C round of 32 (495 line-ups). Dixon-Coles fit by maximum likelihood on <span id="dcm2"></span> internationals (2010 to 2026), the hybrid weight chosen by out-of-sample log-loss, bookmaker margins stripped out and the Pure Market ratings calibrated to them. Opta and the bookmakers (Polymarket, Kalshi, FanDuel) are shown for comparison only. Not betting advice.</p>
+      <p><b>It is only a baseline.</b> Built from public data and standard methods, it is good for the shape of a tournament and a feel for the odds. Do not stake anything on it you would miss.</p>
+      <p class="colophon">Five match models over a shared <b id="nsim3"></b>-tournament Monte Carlo with the official FIFA Annex C round of 32 (495 line-ups). Dixon-Coles fit by maximum likelihood on <span id="dcm2"></span> internationals (2010 to 2026), the hybrid weight chosen by out-of-sample log-loss, bookmaker margins stripped out and the Pure Market ratings calibrated to them. Opta and the bookmakers (Polymarket, Kalshi, FanDuel) are shown for comparison only.</p>
     </div>
   </section>
 
@@ -1208,7 +1208,7 @@
           watch:'Built from results, it rates Argentina high and France below the bookmakers.'},
     market: {def:"The Hybrid nudged halfway toward the ratings the bookmakers' title odds imply.",
           trust:"A middle path: some of the market's wisdom without handing it the whole forecast.",
-          watch:'It lost out in testing, never quite the market and no longer the pure results read. Not the one to build around.'},
+          watch:'It lost out in testing, caught between the market and the pure results read without matching either. Not one to build around.'},
     market_pure: {def:"The bookmakers' own implied ratings, played all the way through the bracket.",
           trust:'The title call. The market beat a solid Elo model across 5,327 club matches of real odds (a proxy, since international odds were unavailable), the main reason to lean on it.',
           watch:'It is pinned to pre-tournament odds, not live match prices, so it is only ever as sharp as the bookmakers.'}
@@ -1398,11 +1398,14 @@
         </table></div>` : '';
     }
 
-    // calibration table (selected model vs Opta/market)
+    // calibration table (selected model vs Opta/market). Always the model's Day 0 (pre-tournament)
+    // odds: Opta and the bookmakers are pre-tournament figures we do not refresh, so a live model
+    // number (Germany/Netherlands at 0% once out) would be an unfair, mismatched-in-time comparison.
     const calTeams=['Spain','France','England','Argentina','Brazil','Portugal','Germany','Netherlands'];
+    const calVal = t => T[t].champ0 != null ? T[t].champ0 : T[t].champ;
     document.getElementById('calTable').innerHTML =
-      `<tr><th>Team</th><th>${LABELS[CUR]}</th><th>Opta</th><th>Bookmakers</th></tr>`+
-      calTeams.map(t=>`<tr><td>${t}</td><td style="color:var(--lime)">${fmt(T[t].champ)}%</td>`+
+      `<tr><th>Team</th><th>${LABELS[CUR]} &middot; Day 0</th><th>Opta</th><th>Bookmakers</th></tr>`+
+      calTeams.map(t=>`<tr><td>${t}</td><td style="color:var(--lime)">${fmt(calVal(t))}%</td>`+
         `<td style="color:var(--blue)">${OPTA[t]!=null?OPTA[t]+'%':'n/a'}</td>`+
         `<td style="color:var(--gold)">${MKT[t]!=null?MKT[t]+'%':'n/a'}</td></tr>`).join('');
 
@@ -1441,7 +1444,7 @@
       const vs = (od < 1 && -ud < 1)
         ? `On the title it barely leaves the bookmakers, by design.`
         : `Against the bookmakers it is most optimistic on <b>${over}</b> (${sgn(od)}) and most cautious on <b>${under}</b> (${sgn(ud)}).`;
-      noteEl.innerHTML = `${CHAR[CUR] || ''} ${vs} Across all five models <b>${fav}</b> ranges from ${fmt(lo)}% to ${fmt(hi)}% to win it, far wider than the match odds ever move: most of that gap is method, not fact.`;
+      noteEl.innerHTML = `${CHAR[CUR] || ''} ${vs} Across all five models <b>${fav}</b> ranges from ${fmt(lo)}% to ${fmt(hi)}% to win it, far wider than the match odds ever move, so most of that spread comes down to the choice of method more than the teams themselves.`;
     }
   }
 
