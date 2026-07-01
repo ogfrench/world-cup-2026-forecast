@@ -1143,7 +1143,7 @@
       ['Hybrid','0.8409','0.163','60%',true]
     ];
     document.getElementById('ooTable').innerHTML =
-      '<tr><th>Model · held-out 2025-26</th><th>Log-loss ↓</th><th>RPS ↓</th><th>Acc ↑</th></tr>'+
+      '<tr><th>Model · held-out 2025-26</th><th>Log-loss</th><th>RPS</th><th>Acc</th></tr>'+
       ooRows.map(r=>{const c=r[4]?' style="color:var(--lime)"':'';
         return `<tr${c}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`;}).join('');
   }
@@ -1158,7 +1158,7 @@
       ['Elo + Market','0.9702','0.196','54%',false]
     ];
     document.getElementById('clubTable').innerHTML =
-      '<tr><th>Model · club-odds proxy</th><th>Log-loss ↓</th><th>RPS ↓</th><th>Acc ↑</th></tr>'+
+      '<tr><th>Model · club-odds proxy</th><th>Log-loss</th><th>RPS</th><th>Acc</th></tr>'+
       clubRows.map(r=>{const c=r[4]?' style="color:var(--lime)"':'';
         return `<tr${c}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`;}).join('');
   }
