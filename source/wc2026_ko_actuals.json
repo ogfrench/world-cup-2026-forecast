@@ -8,6 +8,14 @@
   "aet": false
  },
  {
+  "home": "France",
+  "away": "Sweden",
+  "hs": 3,
+  "as": 0,
+  "winner": "France",
+  "aet": false
+ },
+ {
   "home": "Germany",
   "away": "Paraguay",
   "hs": 1,
