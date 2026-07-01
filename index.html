@@ -600,7 +600,10 @@
       <p>The first three use results only. <b>Pure Elo</b> treats a team like a chess rating, going on who has been beating whom. It is steady and hard to fool with one odd scoreline, it has no feel for how a team plays, and of the five it leans on the favorites most. <b>Pure Goals</b> learns each team's attack and defense from <b><span id="dcm1"></span> internationals</b> since 2010, where the home side scores about <b>1.31x</b> as often, so it works in scorelines rather than just winners. It also rewards a team for scoring heavily against weaker opponents, which lifts teams like Japan and Algeria. <b>Hybrid</b> averages the two, and each covers for the other's blind spot. On 1,230 internationals it had not seen, it does at least as well as either one alone, with the steadiest confidence of the three:</p>
       <table class="cal" id="ooTable"></table>
       <p>A forecast is measured three ways: how often it calls the result, how surprised it is once the games are in (log-loss), and whether its stated confidence holds up (calibration). Hybrid wins or ties on all three. It clearly beats the goals model and is just barely ahead of plain Elo, close enough that either could be best, so blending lands at least as good as the best single method and a little steadier. A more complicated model did not mean a more accurate one.</p>
-      <p>The last two bring in the bookmakers. <b>Hybrid + Market</b> reads the ratings the betting odds imply and meets Hybrid halfway, which pulls Argentina down a little and lifts France. <b>Pure Market</b> drops the model and runs the bookmakers' implied ratings through the same bracket, so their read covers every tie and round, not just the title. Across 5,327 club matches with real closing odds, the market came out ahead of a solid Elo model, and no blend beat it on its own, so the page opens on it. It is the bookmakers as they stood before kickoff, played forward and then held fixed.</p>
+      <p>The last two bring in the bookmakers. <b>Hybrid + Market</b> reads the ratings the betting odds imply and meets Hybrid halfway, which pulls Argentina down a little and lifts France. <b>Pure Market</b> drops the model and runs the bookmakers' implied ratings through the same bracket, so their read covers every tie and round, not just the title. It is the bookmakers as they stood before kickoff, played forward and then held fixed.</p>
+      <p>Those two are absent from the table above for a reason: they are built from the betting market, and there is no history of international match odds to hold out and score them on. The nearest test is club football, where every game is priced. Across 5,327 held-out club matches with real closing odds:</p>
+      <table class="cal" id="clubTable"></table>
+      <p>The market beat a competent Elo model on every measure, and blending the two improved on the model without catching the market, so the page opens on Pure Market. The one caveat: this was club football; the World Cup market is likely just as sharp, though that is not proven here.</p>
 
       <h3>Against Opta and the bookmakers</h3>
       <p>None of these models was trained on Opta's numbers, so they make a fair outside check. Here are the selected model's Day 0 (pre-tournament) title odds beside Opta's supercomputer and the bookmakers, all three at the same point before kickoff:</p>
@@ -1142,6 +1145,21 @@
     document.getElementById('ooTable').innerHTML =
       '<tr><th>Model · held-out 2025-26</th><th>Log-loss ↓</th><th>RPS ↓</th><th>Acc ↑</th></tr>'+
       ooRows.map(r=>{const c=r[4]?' style="color:var(--lime)"':'';
+        return `<tr${c}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`;}).join('');
+  }
+
+  if (document.getElementById('clubTable')) {
+    // MANUAL: the club-odds proxy (val_market.py), 5,327 held-out club matches with real closing odds.
+    // Same as ooTable: hand-pasted, not derived from the shipped data; re-paste if validation re-runs.
+    // Market is the winner and is highlighted, the point being that the market beats the Elo model.
+    const clubRows=[
+      ['Elo model','0.9808','0.199','53%',false],
+      ['Market','0.9660','0.194','54%',true],
+      ['Elo + Market','0.9702','0.196','54%',false]
+    ];
+    document.getElementById('clubTable').innerHTML =
+      '<tr><th>Model · club-odds proxy</th><th>Log-loss ↓</th><th>RPS ↓</th><th>Acc ↑</th></tr>'+
+      clubRows.map(r=>{const c=r[4]?' style="color:var(--lime)"':'';
         return `<tr${c}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`;}).join('');
   }
 
