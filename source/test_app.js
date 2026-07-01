@@ -158,6 +158,22 @@ eq(sc.length, 13, 'one row per real scorer, no phantom rows');
 // the feed ships CRLF; it must parse identically to LF
 const scCRLF = parseScorers(sample.replace(/\n/g, '\r\n'));
 eq(scCRLF.length, sc.length, 'CRLF line endings parse the same as LF');
+
+// knockout feed lines (a.e.t., a multi-part half-time in parens, and a "P-P pen." note) must parse
+// for scorers too, so knockout goals reach the Golden Boot board (SC_MLINE handles both feeds).
+const koSc = parseScorers(
+  "  (74) 16:30 UTC-4  Germany 1-1 a.e.t. (1-1, 0-1), 3-4 pen. Paraguay   @ Boston\n" +
+  "                    (Kai Havertz 54';\n" +
+  "                       Julio Enciso 42')\n" +
+  "  (76) 12:00 UTC-5  Brazil 2-1 (0-1) Japan   @ Houston\n" +
+  "                    (Casemiro 56' Gabriel Martinelli 90+5';\n" +
+  "                       Kaishu Sano 29')\n");
+const koFind = name => koSc.find(s => s.player === name);
+eq((koFind('Kai Havertz') || {}).team, 'Germany', 'a knockout line credits the home scorer past the a.e.t./pen. note');
+eq((koFind('Julio Enciso') || {}).team, 'Paraguay', 'the away knockout scorer (after the ;) gets the away team, not the "pen." text');
+eq((koFind('Gabriel Martinelli') || {}).team, 'Brazil', 'multiple home knockout scorers are all credited');
+eq((koFind('Kaishu Sano') || {}).team, 'Japan', 'a knockout line with one side scoring attributes to the right team');
+eq(koSc.length, 5, 'the knockout block yields exactly its five scorers, no phantom rows from the pen./a.e.t. tokens');
 eq((scCRLF.find(s => s.player === 'Kai Havertz') || {}).goals, 2, 'CRLF: the penalty is still credited');
 
 // ---- end to end: the whole sample feed through parseActuals ----
