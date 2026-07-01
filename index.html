@@ -516,8 +516,8 @@
     <div class="modelbar" id="modelbar"></div>
     <nav role="tablist" aria-label="Views">
       <button class="tab on" data-t="race" role="tab" id="tab-race" aria-controls="race" aria-selected="true">Title Odds</button>
-      <button class="tab" data-t="schedule" role="tab" id="tab-schedule" aria-controls="schedule" aria-selected="false">Schedule</button>
-      <button class="tab" data-t="groups" role="tab" id="tab-groups" aria-controls="groups" aria-selected="false">Groups &amp; Scores</button>
+      <button class="tab" data-t="schedule" role="tab" id="tab-schedule" aria-controls="schedule" aria-selected="false">All Games</button>
+      <button class="tab" data-t="groups" role="tab" id="tab-groups" aria-controls="groups" aria-selected="false">Group Phase</button>
       <button class="tab" data-t="knockout" role="tab" id="tab-knockout" aria-controls="knockout" aria-selected="false">Knockout Phase</button>
       <button class="tab" data-t="topscorers" role="tab" id="tab-topscorers" aria-controls="topscorers" aria-selected="false">Top Scorers</button>
       <button class="tab" data-t="method" role="tab" id="tab-method" aria-controls="method" aria-selected="false">Method &amp; Caveats</button>
@@ -629,6 +629,10 @@
   // the tournament is over once the final (slot 103) has a result, or we are past the sundown cutoff.
   // Used to stop the "Live ... so far" copy reading as ongoing after the World Cup has been decided.
   const tournamentOver = () => (MODELS[META.default_model]?.knockout?.['103']?.played != null) || Date.now() > SUNDOWN;
+  // games the forecast is conditioned on: the played group games plus the played knockout ties (the
+  // odds are re-run on both), so the count never reads "72 group games" while knockouts have swung it.
+  const koPlayedCount = () => Object.values(MODELS[META.default_model]?.knockout || {}).filter(t => t.played != null).length;
+  const totalPlayed = () => META.played + koPlayedCount();
   const LABELS = META.labels, n = META.n_sims;
   const dcm = (META.dc_matches!=null?META.dc_matches:15751).toLocaleString();   // Dixon-Coles fit size, read from the data so it never goes stale
   const fmt = x => (Math.round(x*10)/10).toFixed(1);
@@ -669,9 +673,10 @@
       if(tier==='miss') against++; else if(tier==='exact') exact++; });
     return {played, against, exact};
   }
-  function scoreboardHTML(s, lab, extra, scope){
+  function scoreboardHTML(s, lab, extra, scope, done){
     if(!s.played) return '';                 // nothing played yet: collapse (CSS :empty), no placeholder
     const sc = scope ? ' '+scope : '';
+    const doing = done ? `did${sc}` : `is doing${sc} so far`;   // past tense once this scope is complete
     const pct = Math.round((s.played-s.against)/s.played*100);
     let row = `<div class="sbstat"><div class="sbnum">${s.played-s.against}/${s.played}</div><div class="sbcap">called right &middot; ${pct}%</div></div>`
             + `<div class="sbstat"><div class="sbnum">${s.exact}</div><div class="sbcap">exact scores</div></div>`;
@@ -679,7 +684,7 @@
       const tip = extra.tip ? ` data-tip="${extra.tip}"` : '';
       row += `<div class="sbstat"${tip}><div class="sbnum">${extra.num}</div><div class="sbcap">${extra.cap}</div></div>`;
     }
-    return `<div class="sbnote"><span>How the <b>${lab}</b> model is doing${sc} so far.</span></div><div class="sbrow">${row}</div>`;
+    return `<div class="sbnote"><span>How the <b>${lab}</b> model ${doing}.</span></div><div class="sbrow">${row}</div>`;
   }
   // live group table from actual results, in FIFA 2026 order: points first, then head-to-head
   // (points, goal difference, goals for) among teams level on points, then overall goal difference,
@@ -817,7 +822,9 @@
                   ['Messi','Argentina','6%'],['Oyarzabal','Spain','5%'],['Yamal','Spain','5%'],
                   ['J. Álvarez','Argentina','3%']];
   let SC_LIVE = [];   // [{player, team, goals}] from the feed, own goals excluded
-  const SC_MLINE = /UTC[+-]\d+\s+(.+?)\s+(\d+)-(\d+)(?:\s+\([0-9-]+\))?\s+(.+?)\s+@\s+/;
+  // matches a played line in either feed: group (Home H-A (halftime)? Away) and knockout (Home H-A
+  // a.e.t.? (halftime, ...)? , P-P pen.? Away), so knockout goals count toward the scorer tally too.
+  const SC_MLINE = /UTC[+-]\d+\s+(.+?)\s+(\d+)-(\d+)(?:\s+a\.e\.t\.?)?(?:\s*\([0-9,\s-]+\))?(?:\s*,?\s*\d+-\d+\s+pen\.?)?\s+(.+?)\s+@\s+/;
   function parseScorers(txt){
     const tally = {}, lines = txt.split('\n');
     for (let i=0;i<lines.length;i++){
@@ -950,7 +957,7 @@
     if(sb) sb.innerHTML = scoreboardHTML({played,against,exact}, LABELS[CUR]||CUR,
       advTot ? {num:`${advRight}/${advTot}`, cap:'advancers called',
                 tip:'Knockout matches where the model favored the team that actually advanced.'} : null,
-      'on the knockout matches');
+      'on the knockout matches', tournamentOver());
   }
   function renderScorers(){
     const exp=document.getElementById('scExpected');
@@ -1072,7 +1079,7 @@
       .then(([txt, koTxt]) => {
         const parsed = parseActuals(txt), ko = parseFinals(koTxt);
         const sig = JSON.stringify(parsed) + '|' + JSON.stringify(ko);
-        ACTUALS = parsed; KO_ACT = ko; SC_LIVE = parseScorers(txt); ACT_SYNC = Date.now(); ACT_STATE = 'live';
+        ACTUALS = parsed; KO_ACT = ko; SC_LIVE = parseScorers(txt + '\n' + koTxt); ACT_SYNC = Date.now(); ACT_STATE = 'live';
         try { localStorage.setItem('wc2026_actuals', JSON.stringify({t:ACT_SYNC, data:parsed, ko, scorers:SC_LIVE})); } catch(e){}
         if (sig !== ACT_SIG) { ACT_SIG = sig; LIVE_SIG = badgeSig(); paintLive(); }   // a result changed: full repaint
         else renderSchedule();                                                        // else just refresh the synced-time line
@@ -1113,7 +1120,7 @@
     ['Simulations', n.toLocaleString()],
     ['Models', '5'],
     ['As of', 'Jun 6 2026'],
-    ...(META.live && META.played ? [[metaOver?'Final':'Live', metaOver?'tournament over':`${META.played} played`]] : [])
+    ...(META.live && META.played ? [[metaOver?'Final':'Live', metaOver?'tournament over':`${totalPlayed()} played`]] : [])
   ].map(([k,v])=>`<span class="chip" data-tip="${CHIP_TIP[k]||''}">${k} <b>${v}</b></span>`).join('');
   const n2=document.getElementById('nsim2'); if(n2) n2.textContent=n.toLocaleString();
   const n3=document.getElementById('nsim3'); if(n3) n3.textContent=n.toLocaleString();
@@ -1246,7 +1253,7 @@
           ? `<span class="ld" style="animation:none;background:var(--faint)"></span><span>The Day 0 forecast: the pre-tournament odds, before any games were played.</span>`
           : tournamentOver()
           ? `<span class="ld" style="animation:none;background:var(--faint)"></span><span>Final title odds, conditioned on every game played. The tournament is complete.</span>`
-          : `<span class="ld"></span><span>Live title odds, updated for the <b>${META.played} group ${META.played===1?'game':'games'}</b> played so far.</span>`;
+          : `<span class="ld"></span><span>Live title odds, updated for the <b>${totalPlayed()} game${totalPlayed()===1?'':'s'}</b> played so far.</span>`;
       } else tl.style.display='none';
     }
 
@@ -1359,7 +1366,8 @@
     const grpSb=document.getElementById('grpScore');
     if(grpSb) grpSb.innerHTML = scoreboardHTML(scoreOver(grpAll), LABELS[CUR]||CUR,
       gTot ? {num:`${gWin}/${gTot}`, cap:'standings called',
-              tip:'Finished groups where the model’s pre-tournament predicted finishing order matched the final table exactly, all four places, not just the winner.'} : null);
+              tip:'Finished groups where the model’s pre-tournament predicted finishing order matched the final table exactly, all four places, not just the winner.'} : null,
+      'in the group phase', gTot===Object.keys(G).length);   // past tense once all twelve groups have finished
 
     // best third-placed teams: the eight best of twelve reach the round of 32, so this is the cut
     // that fills the last bracket spots. Provisional until every group has finished.
@@ -1567,7 +1575,7 @@
     if (open) html += '</div>';
     host.innerHTML = html;
     const sb = document.getElementById('schedScore');
-    if (sb) sb.innerHTML = scoreboardHTML({played, against, exact}, LABELS[CUR] || CUR);
+    if (sb) sb.innerHTML = scoreboardHTML({played, against, exact}, LABELS[CUR] || CUR, null, 'across every game', tournamentOver());
     const pk = document.getElementById('predKey');
     if (pk) pk.innerHTML = played
       ? `<span><i class="k exact"></i>exact score</span><span><i class="k result"></i>right result</span><span><i class="k miss"></i>wrong result</span>`
