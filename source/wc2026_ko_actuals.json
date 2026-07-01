@@ -36,6 +36,14 @@
   "aet": false
  },
  {
+  "home": "Mexico",
+  "away": "Ecuador",
+  "hs": 2,
+  "as": 0,
+  "winner": "Mexico",
+  "aet": false
+ },
+ {
   "home": "Netherlands",
   "away": "Morocco",
   "hs": 1,
