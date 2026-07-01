@@ -81,11 +81,20 @@ jobs:
           git tag -f v1.0 "$GITHUB_SHA"
           git push -f origin "refs/tags/v1.0"
 
-          # 3. publish the release against that existing tag (--verify-tag: never a draft).
-          gh release create v1.0 --repo "$REPO" --verify-tag \
-            --title "World Cup 2026 Forecast v1.0" \
-            --notes-file /tmp/notes.md
-          echo "Published v1.0 at $GITHUB_SHA"
+          # 3. publish the release against that existing tag (--verify-tag: never a draft). The tag was
+          #    force-pushed a moment ago and GitHub's API can lag behind the git push, so --verify-tag
+          #    may 404 the tag on the first try; retry until the API sees it before giving up.
+          for attempt in 1 2 3 4 5 6; do
+            if gh release create v1.0 --repo "$REPO" --verify-tag \
+                 --title "World Cup 2026 Forecast v1.0" \
+                 --notes-file /tmp/notes.md; then
+              echo "Published v1.0 at $GITHUB_SHA"; exit 0
+            fi
+            echo "tag not visible to the API yet, retrying in 5s (attempt $attempt/6)"
+            sleep 5
+          done
+          echo "failed to publish v1.0 after retries" >&2
+          exit 1
 
       - name: Remove this one-shot workflow
         run: |
