@@ -551,7 +551,7 @@
   <!-- GROUPS -->
   <section id="groups" role="tabpanel" aria-labelledby="tab-groups" tabindex="0">
     <h2 class="sec-h">Group winner odds &amp; match-by-match</h2>
-    <p class="lead">Each group's standings next to where the model predicted the teams to finish, so you can see who is ahead of the forecast and who is behind. Expand a group for the match-by-match predictions and results.</p>
+    <p class="lead">Each group's final standings next to where the model predicted the teams to finish, so you can see who beat the forecast and who fell short. Expand a group for the match-by-match predictions and results.</p>
     <div class="scoreboard" id="grpScore"></div>
     <div class="grid" id="groupGrid"></div>
     <div id="thirdsTable"></div>
@@ -560,7 +560,7 @@
   <!-- KNOCKOUT PHASE (placeholder, built once the round of 32 is set) -->
   <section id="knockout" role="tabpanel" aria-labelledby="tab-knockout" tabindex="0">
     <h2 class="sec-h">Knockout bracket</h2>
-    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. It fills in match by match as each group finishes and the bracket is set. Predicted scores are the most likely final result from simulating the tie (90 minutes, plus extra time when level, then penalties if still level), so they are usually decisive; each prediction also shows the chance it goes to extra time and the smaller chance it goes to penalties.</p>
+    <p class="lead">The model's pick and advance odds for every knockout match, with the real result slotting in color-coded, round by round. Predicted scores are the most likely final result from simulating the tie (90 minutes, plus extra time when level, then penalties if still level), so they are usually decisive; each prediction also shows the chance it goes to extra time and the smaller chance it goes to penalties.</p>
     <div class="scoreboard" id="koScore"></div>
     <div id="koBracket"></div>
   </section>
@@ -568,7 +568,7 @@
   <!-- SCHEDULE -->
   <section id="schedule" role="tabpanel" aria-labelledby="tab-schedule" tabindex="0">
     <h2 class="sec-h">The tournament, by date</h2>
-    <p class="lead">Every fixture by kickoff time, with the model's predicted score. Real results slot in as games are played. Knockouts join once the bracket is set.</p>
+    <p class="lead">Every fixture by kickoff time, with the model's predicted score. Real results slot in as games are played.</p>
     <div class="scoreboard" id="schedScore"></div>
     <div class="predkey" id="predKey"></div>
     <div class="schedsync" id="schedSync" role="status" aria-live="polite"></div>
@@ -578,7 +578,7 @@
   <!-- TOP SCORERS -->
   <section id="topscorers" role="tabpanel" aria-labelledby="tab-topscorers" tabindex="0">
     <h2 class="sec-h">Golden Boot</h2>
-    <p class="lead">The bookmakers' pre-tournament pick for the Golden Boot, next to who is actually scoring. The model rates teams, not players, so the expected column comes from the bookmakers and stays put once the tournament starts.</p>
+    <p class="lead">The bookmakers' pre-tournament pick for the Golden Boot, next to who is actually scoring. The model rates teams, not players, so the expected column comes from the bookmakers and does not move during the tournament.</p>
     <div class="scgrid">
       <div class="sccol exp">
         <div class="scol-h"><span>Expected</span><small>Day 0 market</small></div>
@@ -596,10 +596,10 @@
     <div class="prose">
       <div class="methodhero" id="methodHero"></div>
       <h2 class="sec-h">The five models, compared</h2>
-      <p>One tournament, played out <b id="nsim2"></b> times. Each run goes through all 104 games, the eight best third-placed teams, the official FIFA round of 32, and the bracket the rest of the way, with extra time and penalties when a tie needs them. The engine underneath stays the same. What changes between the five is how a single match is rated, from the ones that use only past results to the ones that use the betting market.</p>
-      <p>The first three use results only. <b>Pure Elo</b> treats a team like a chess rating, going on who has been beating whom. It is steady and hard to fool with one odd scoreline, it has no feel for how a team plays, and of the five it leans on the favorites most. <b>Pure Goals</b> learns each team's attack and defense from <b><span id="dcm1"></span> internationals</b> since 2010, where the home side scores about <b>1.31x</b> as often, so it works in scorelines rather than just winners. It also rewards a team for scoring heavily against weaker opponents, which lifts teams like Japan and Algeria. <b>Hybrid</b> averages the two, and each covers for the other's blind spot. On 1,230 internationals it had not seen, it does at least as well as either one alone, with the steadiest confidence of the three:</p>
+      <p>One tournament, played out <b id="nsim2"></b> times. Each run plays the 72 group games, ranks the eight best third-placed teams, fills the official FIFA round of 32, and plays the bracket through to the final, with extra time and penalties when a tie needs them. The engine underneath stays the same. What changes between the five is how a single match is rated, from the ones that use only past results to the ones that use the betting market.</p>
+      <p>The first three use results only. <b>Pure Elo</b> treats a team like a chess rating, going on who has been beating whom. It is steady and hard to fool with one odd scoreline, it has no feel for how a team plays, and of the five it leans on the favorites most. <b>Pure Goals</b> learns each team's attack and defense from <b><span id="dcm1"></span> internationals</b> since 2010, where the home side scores about <b>1.31x</b> as often, so it works in scorelines rather than just winners. It also rewards a team for scoring heavily against weaker opponents, which lifts teams like Japan and Algeria. <b>Hybrid</b> averages the two, and each covers for the other's blind spot. On 1,230 internationals it had not seen, it scores at least as well as either one on the probability measures, with the steadiest confidence of the three:</p>
       <table class="cal" id="ooTable"></table>
-      <p>The three columns each grade a forecast a different way (the same three appear in both tables). <b>Acc</b> (accuracy, higher is better) is the plainest: how often the model's most likely outcome is the one that happened. <b>Log-loss</b> (lower is better) grades the probabilities themselves, not just the pick, and punishes a confident call that turns out wrong far more than a hedged one. <b>RPS</b> (ranked probability score, lower is better) does the same but gives partial credit for being close, since a home win sits nearer a draw than an away win. Hybrid wins or ties on all three. It clearly beats the goals model and is just barely ahead of plain Elo, close enough that either could be best, so blending lands at least as good as the best single method and a little steadier. A more complicated model did not mean a more accurate one.</p>
+      <p>The three columns each grade a forecast a different way (the same three appear in both tables). <b>Acc</b> (accuracy, higher is better) is the plainest: how often the model's most likely outcome is the one that happened. <b>Log-loss</b> (lower is better) grades the probabilities themselves, not just the pick, and punishes a confident call that turns out wrong far more than a hedged one. <b>RPS</b> (ranked probability score, lower is better) does the same but gives partial credit for being close, since a home win sits nearer a draw than an away win. Hybrid leads on log-loss, ties Pure Elo on RPS, and gives up a point of accuracy to Pure Goals. On the probability scores it clearly beats the goals model and is just barely ahead of plain Elo, close enough that either could be best, so blending lands at least as well as the best single method and a little steadier. A more complicated model did not mean a more accurate one.</p>
       <p>The last two bring in the bookmakers. <b>Hybrid + Market</b> reads the ratings the betting odds imply and meets Hybrid halfway, which pulls Argentina down a little and lifts France. <b>Pure Market</b> drops the model and runs the bookmakers' implied ratings through the same bracket, so their read covers every tie and round, not just the title. It is the bookmakers as they stood before kickoff, played forward and then held fixed.</p>
       <p>Those two are absent from the table above for a reason: they are built from the betting market, and there is no history of international match odds to hold out and score them on. The nearest test is club football, where every game is priced. Across 5,327 held-out club matches with real closing odds:</p>
       <table class="cal" id="clubTable"></table>
@@ -613,7 +613,7 @@
 
       <h3>Where it's weak</h3>
       <p><b>It backs the favorites too hard.</b> A fixed-strength simulation cannot see a tournament turn the way a real one does, an injury, a sudden run of great form, a red card at the wrong moment, so probability piles onto the big teams (Pure Elo most, Pure Market least). The head-to-heads still look right: Spain against Argentina is close to a coin flip.</p>
-      <p><b>The live odds only see the score.</b> Once a game is played the odds re-simulate with that score locked in, but the underlying ratings stay at their pre-tournament strength, frozen on 6 June. Winning by a little and winning by a lot move them the same amount, and injuries, current form, and a re-pricing market do not show up at all.</p>
+      <p><b>The live odds only see the score.</b> Once a game is played the odds re-simulate with that score locked in, but the underlying ratings stay at their pre-tournament strength, frozen on June 6. Winning by a little and winning by a lot move them the same amount, and injuries, current form, and a re-pricing market do not show up at all.</p>
       <p><b>The validation only goes so far.</b> The 1,230 test games are mostly one-sided qualifiers and friendlies that almost any model gets right, with very few of the tight knockout matches a World Cup turns on. And the test grades individual match calls; the title odds themselves cannot be checked until the trophy is lifted.</p>
       <p><b>The single most likely score is shaky.</b> In an even game 1-1, 1-0 and 0-0 sit within a few percent of each other, so the headline score can flip on very little. The win, draw and loss split is firmer than the exact number. The model also draws a little less than real life, around 23 to 24 percent in the groups against a 26 to 28 percent norm.</p>
       <p><b>There is no top-scorer model.</b> The engine rates teams, not players. The <a class="xlink" href="#" data-go="topscorers">Top Scorers</a> tab puts the bookmakers' pre-tournament pick next to whoever is actually scoring.</p>
@@ -908,7 +908,7 @@
     let chip, clab, predRow='';
     if(a){
       const tier = predTier({modal:t.modal, p_home:t.p_a, p_draw:t.p_draw, p_away:t.p_b}, {hs:a.hs, as:a.as});
-      chip = `<div class="sc ft" data-tip="The real result over 120 minutes (regulation and extra time). A shootout decides who advances but does not change this score.">${a.hs}-${a.as}</div>`;
+      chip = `<div class="sc ft" data-tip="The real result over 120 minutes (regulation and extra time). Penalties decide who advances but do not change this score.">${a.hs}-${a.as}</div>`;
       clab = `result &middot; ${advanceLabel(a)}`;   // who advanced and how (in 90, in extra time, or on penalties)
       predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${t.modal[0]}-${t.modal[1]}</div><div class="sclab">predicted</div></div>`;
     } else {
@@ -926,7 +926,7 @@
       <div class="top"><div class="ta">${t.a}</div>${chip}<div class="tb">${t.b}</div><div class="sclab clab">${clab}</div></div>
       ${predRow}
       <div class="alts">also: <span>${alts}</span></div>
-      <div class="wdl" data-tip="Chance each side advances, after extra time and any shootout."><i class="w" style="width:${t.adv_a}%"></i><i class="l" style="width:${t.adv_b}%"></i></div>
+      <div class="wdl" data-tip="Chance each side advances, after extra time and penalties if needed."><i class="w" style="width:${t.adv_a}%"></i><i class="l" style="width:${t.adv_b}%"></i></div>
       <div class="det"><div class="dl"><span>${t.a} <b>${fmt(t.adv_a)}%</b></span><span>${t.b} <b>${fmt(t.adv_b)}%</b></span></div>${ko120}</div>
     </div>`;
   }
@@ -1011,8 +1011,8 @@
   const liveBadge = mm => {
     const live = matchLive(mm);
     const label = live ? 'In play' : 'Awaiting result';
-    const tip = live ? "Kicked off, but no final score in our feed yet. Tap to check the live score on Google."
-                     : "Looks finished, but the result is not in our feed yet. Tap to check the score on Google.";
+    const tip = live ? "Kicked off, but no final score in the feed yet. Tap to check the live score on Google."
+                     : "Looks finished, but the result is not in the feed yet. Tap to check the score on Google.";
     return `<a class="livelink ${live?'live':'await'}" href="${liveSearch(mm)}" target="_blank" rel="noopener" data-tip="${tip}"><span class="livedot"></span>${label}<span class="livearrow">&#8599;</span></a>`;
   };
   // one shared match card, used by both the Groups tab and the Schedule, identical in both. The schedule
@@ -1295,7 +1295,7 @@
     };
     document.getElementById('raceBars').innerHTML = top.map(t=>{
       const v=gv(t,'champ'), o=OPTA[t], m=MKT[t];
-      const mk=(val,cls)=> val==null?'':`<span class="mk ${cls}" style="left:${(val/maxv)*100}%" title="${cls}"></span>`;
+      const mk=(val,cls)=> val==null?'':`<span class="mk ${cls}" style="left:${(val/maxv)*100}%"></span>`;
       // Day 0 view: the outside comparisons (Opta, bookmakers). Live view: only the Day 0 movement mark.
       const ticks = baseView ? mk(o,'opta')+mk(m,'mkt') : mk(T[t].champ0,'day0');
       const delta = baseView ? '' : barDelta(T[t]);
@@ -1440,17 +1440,19 @@
         </div>`;
     }
 
-    // adaptive note: how the SELECTED model reads the title race against the bookmakers, from live data
-    // (computed, never hardcoded, so it stays true as the odds re-simulate and as you switch models)
+    // adaptive note: how the SELECTED model reads the title race against the bookmakers. The bookmakers'
+    // odds are pre-tournament and never refreshed, so this compares the model's Day 0 odds (champ0), not
+    // its live ones, or an eliminated team would read as the model being "cautious" rather than simply out.
     const noteEl = document.getElementById('methodNote');
     const priced = Object.keys(MKT).filter(t => T[t]);
+    const day0champ = td => td.champ0 != null ? td.champ0 : td.champ;
     if (noteEl && priced.length) {
       const sgn = x => (x >= 0 ? '+' : '') + fmt(x);
       const fav = priced.slice().sort((a, b) => MKT[b] - MKT[a])[0];   // the bookmakers' favorite
       let over = priced[0], under = priced[0], od = -Infinity, ud = Infinity;
-      priced.forEach(t => { const d = T[t].champ - MKT[t];
+      priced.forEach(t => { const d = day0champ(T[t]) - MKT[t];
         if (d > od) { od = d; over = t; } if (d < ud) { ud = d; under = t; } });
-      const spread = Object.keys(MODELS).map(m => (MODELS[m].teams[fav] || {}).champ).filter(v => v != null);
+      const spread = Object.keys(MODELS).map(m => { const v = MODELS[m].teams[fav]; return v ? day0champ(v) : null; }).filter(v => v != null);
       const lo = Math.min(...spread), hi = Math.max(...spread);
       const CHAR = {
         elo: `<b>Pure Elo</b> backs the favorites hardest of the five. It rates teams on results alone, so it is blind to squad depth and to who is fit and in form for kickoff.`,
@@ -1481,8 +1483,11 @@
     if (m=/^1([A-L])$/.exec(d)) return 'Winner '+m[1];
     if (m=/^2([A-L])$/.exec(d)) return 'Runner-up '+m[1];
     if (d==='3') return '3rd place';
-    if (m=/^W(\d+)$/.exec(d)) return 'Winner M'+m[1];
-    if (m=/^L(\d+)$/.exec(d)) return 'Loser M'+m[1];
+    if (m=/^([WL])(\d+)$/.exec(d)){                          // a match slot -> the round that feeds it
+      const f = (DATA.ko_schedule||[]).find(x=>x.slot===+m[2]);
+      const r = f && SHORT_ROUND[f.round] ? SHORT_ROUND[f.round] : 'M'+m[2];
+      return r + (m[1]==='W' ? ' winner' : ' loser');
+    }
     return d;
   }
   // resolve one bracket-position descriptor to a team if it is already known, else null:
@@ -1509,8 +1514,15 @@
     const m = /^([WL])(\d+)$/.exec(desc);
     if (m){
       const fx = (DATA.ko_schedule||[]).find(f=>f.slot===+m[2]);
-      const side = d => koSide(d) || (d==='3' ? '3rd' : d);   // a team if known, else the short code
-      return `${m[1]==='W'?'Winner':'Loser'} of ${fx ? side(fx.home_desc)+'/'+side(fx.away_desc) : 'match '+m[2]}`;
+      const grp = d => /^[12][A-L]$/.test(d) || d==='3';
+      // show the feeding matchup only when both sides read as teams or group slots (one round down);
+      // deeper than that (a semi or final still two rounds out), name the match by its round instead
+      // of leaking "Winner of W89/W90".
+      if (fx && (koSide(fx.home_desc)||grp(fx.home_desc)) && (koSide(fx.away_desc)||grp(fx.away_desc))){
+        const side = d => koSide(d) || koDesc(d);
+        return `${m[1]==='W'?'Winner':'Loser'} of ${side(fx.home_desc)}/${side(fx.away_desc)}`;
+      }
+      return koDesc(desc);                                    // e.g. "QF winner" for an undecided feeder
     }
     return koDesc(desc);                                      // a group slot still to be decided
   }
@@ -1520,7 +1532,7 @@
   // who advanced and how: in 90, in extra time, or on penalties (with the winner-first shootout
   // score when the feed carries it). A level 120-minute score with a winner can only be a shootout.
   function advanceLabel(a){
-    if (!a.winner) return 'to a shootout';
+    if (!a.winner) return 'to penalties';
     if (a.hs === a.as){
       const ps = a.pens ? ` (${a.pens[0]}-${a.pens[1]})` : '';   // home-away order, matching the score line
       return `${a.winner} advanced on penalties${ps}`;
@@ -1538,7 +1550,9 @@
     if (fix.round === 'third') {
       const [h,a] = sfLosers();
       const mm = {home:h, away:a, date:fix.date, kickoff_utc:fix.kickoff_utc, venue:fix.venue};
-      const res = (h && a) ? actualFor(mm) : null;
+      const k = (h && a) ? KO_ACT[koPairKey(h,a)] : null;    // the play-off result lives in the finals feed, not the group feed
+      const res = k ? {hs: k.home===h ? k.hs : k.as, as: k.home===h ? k.as : k.hs}
+                    : ((h && a) ? actualFor(mm) : null);
       const chip = res
         ? `<div class="sc ft" data-tip="The third-place play-off result.">${res.hs}-${res.as}</div>`
         : `<div class="sc tbd" data-tip="The two beaten semi-finalists. No model pick: the engine does not simulate the third-place play-off.">v</div>`;
@@ -1576,12 +1590,13 @@
     const dayCount = {};
     items.forEach(it => { const k = localDay(it.obj); dayCount[k] = (dayCount[k]||0)+1; });
     // prediction accuracy across every played fixture: group games and knockout ties alike. The
-    // third-place play-off counts toward "played" (it is a real match) but has no pick to grade.
+    // third-place play-off has no model pick, so it is left out of this accuracy tally (its real result
+    // still shows on its own card).
     let played = 0, against = 0, exact = 0;
     items.forEach(it => {
       const fix = it.obj;
       if (fix.round === 'third') {
-        const [h,a] = sfLosers(); if (h && a && actualFor({home:h, away:a, date:fix.date})) played++;
+        return;                                                // no pick to grade
       } else if (fix.slot != null) {                           // knockout tie
         const tie = (MODELS[CUR].knockout||{})[fix.slot]; if (!tie) return;
         const a = koActual(tie); if (!a) return;
