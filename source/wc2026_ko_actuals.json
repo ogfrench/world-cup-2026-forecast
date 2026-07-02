@@ -80,6 +80,14 @@
   "aet": false
  },
  {
+  "home": "Spain",
+  "away": "Austria",
+  "hs": 3,
+  "as": 0,
+  "winner": "Spain",
+  "aet": false
+ },
+ {
   "home": "USA",
   "away": "Bosnia-Herzegovina",
   "hs": 2,
