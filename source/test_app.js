@@ -25,6 +25,10 @@ function eq(actual, expected, msg) {
   if (a === e) { passed++; }
   else { failed++; console.error(`FAIL: ${msg}\n  expected ${e}\n  got      ${a}`); }
 }
+function ok(cond, msg) {
+  if (cond) { passed++; }
+  else { failed++; console.error(`FAIL: ${msg}\n  expected truthy, got falsy`); }
+}
 
 // pull a snippet out of the built app by regex, asserting it is present exactly once
 function pull(re, label) {
@@ -78,6 +82,29 @@ const snippet = [
   pull(/function koRounds\(\)\{[\s\S]*?\n  \}/, 'koRounds'),
   pull(/function matchSearch\(mm, a\)\{[\s\S]*?\n  \}/, 'matchSearch'),
   pull(/const liveSearch = [^\n]*/, 'liveSearch'),
+  // ---- render-layer helpers + card builders (they return HTML strings; no DOM needed) ----
+  'let n = 50000;',                                               // se()/copy read the sim count
+  pull(/const fmt = [^\n]*/, 'fmt'),
+  pull(/const MON = \[[^\]]*\];/, 'MON'),
+  pull(/const koLocal = [^\n]*/, 'koLocal'),
+  pull(/const localTime = [^\n]*/, 'localTime'),
+  pull(/const localDay = [^\n]*/, 'localDay'),
+  pull(/const fmtDay = [^\n]*/, 'fmtDay'),
+  pull(/const venueName = [^\n]*/, 'venueName'),
+  pull(/const PRED_TIP = \{[\s\S]*?\n  \};/, 'PRED_TIP'),
+  pull(/const SUNDOWN = [^\n]*/, 'SUNDOWN'),
+  pull(/const ROUND_LABEL = [^\n]*/, 'ROUND_LABEL'),
+  pull(/function roundPill\(round\)\{ return [^\n]*\}/, 'roundPill'),
+  pull(/function scoreOver\(matches\)\{[\s\S]*?\n  \}/, 'scoreOver'),
+  pull(/function scoreboardHTML\(s, lab, extra, scope, done\)\{[\s\S]*?\n  \}/, 'scoreboardHTML'),
+  pull(/function matchClock\(mm\)\{[\s\S]*?\n  \}/, 'matchClock'),
+  pull(/function matchPending\(mm\)\{[^\n]*\}/, 'matchPending'),
+  pull(/function matchLive\(mm\)\{[^\n]*\}/, 'matchLive'),
+  pull(/const liveBadge = mm => \{[\s\S]*?\n  \};/, 'liveBadge'),
+  pull(/function sfLosers\(\)\{[^\n]*\}/, 'sfLosers'),
+  pull(/function koCard\(t, roundChip\)\{[\s\S]*?\n  \}/, 'koCard'),
+  pull(/function schedKoCard\(fix, sched\)\{[\s\S]*?\n  \}/, 'schedKoCard'),
+  'this.scoreboardHTML = scoreboardHTML; this.koCard = koCard; this.schedKoCard = schedKoCard;',
   'this.predTier = predTier; this.setActuals = o => { ACTUALS = o; }; this.setKoAct = o => { KO_ACT = o; }; this.parseFinals = parseFinals; this.actualFor = actualFor;',
   'this.esc = esc; this.scRow = scRow; this.groupStandings = groupStandings; this.matchSearch = matchSearch; this.liveSearch = liveSearch;',
   'this.predRankOf = predRankOf; this.fullStandingCalled = fullStandingCalled; this.thirdsRanking = thirdsRanking; this.koDesc = koDesc;',
@@ -87,7 +114,7 @@ const snippet = [
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals, parseScorers, predTier, koActual, actualFor, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, koSide, koLabel, advanceLabel, scheduleUnits, koRounds, matchSearch, liveSearch, parseFinals } = sandbox;
+const { matchState, parseActuals, parseScorers, predTier, koActual, actualFor, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, koSide, koLabel, advanceLabel, scheduleUnits, koRounds, matchSearch, liveSearch, parseFinals, scoreboardHTML, koCard, schedKoCard } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -470,6 +497,56 @@ eq(decodeURIComponent(finURL.split('q=')[1]), 'Mexico vs South Africa 2-0 2026-0
 const liveURL = liveSearch({ home: 'Mexico', away: 'South Africa', date: '2026-06-14' });
 eq(decodeURIComponent(liveURL.split('q=')[1]), 'Mexico vs South Africa 2026-06-14 World Cup',
    'in play / awaiting search: teams and date, no score (unknown), no leftover double space');
+
+// ---- render-string tests: the card builders and scoreboard (the render layer, where most bugs live) ----
+// scoreboardHTML tense: a finished scope reads past tense, an ongoing one reads "so far", nothing played collapses
+ok(scoreboardHTML({played:72,against:20,exact:8},'Pure Market',null,'in the group phase',true).includes('did in the group phase'),
+   'scoreboardHTML reads past tense once its scope is complete');
+ok(scoreboardHTML({played:5,against:1,exact:1},'Pure Market',null,'on the knockout matches',false).includes('is doing on the knockout matches so far'),
+   'scoreboardHTML reads "so far" while its scope is ongoing');
+eq(scoreboardHTML({played:0,against:0,exact:0},'Pure Market',null,'x',false), '', 'nothing played collapses to empty');
+
+// koCard, played penalty tie (scheduled, so the caption carries the round chip): the chip is the
+// 120-minute score, and the result line names the advancer and the home-away shootout score (PR #86/#91)
+sandbox.setKoAct({});
+const koPen = koCard({a:'Germany', b:'Paraguay', modal:[1,0], top_scores:[[1,0,13],[2,1,12],[2,0,11]],
+  adv_a:71.9, adv_b:28.1, p_a:57.7, p_draw:22.9, p_b:19.3, p_pens:11, kickoff_utc:'2026-06-29T19:00Z', venue:'Boston',
+  played:{hs:1, as_:1, winner:'Paraguay', aet:true, pens:[3,4]}}, 'r32');
+ok(koPen.includes('>1-1<'), 'koCard: the score chip is the 120-minute score, not the shootout');
+ok(koPen.includes('Paraguay advanced on penalties (3-4)'), 'koCard: result line names the advancer and the home-away shootout score');
+ok(koPen.includes('R32'), 'koCard: the round chip renders on a scheduled tie');
+
+// koCard, unplayed tie (kickoff far in the future so no live badge): predicted score, the extra-time/
+// penalties line, and no result line
+const koPred = koCard({a:'France', b:'Sweden', modal:[2,0], top_scores:[[2,0,14],[1,0,12],[3,0,9]],
+  adv_a:80, adv_b:20, p_a:60, p_draw:22, p_b:18, p_pens:9, kickoff_utc:'2027-07-01T19:00Z', venue:'Dallas'}, 'r32');
+ok(koPred.includes('>2-0<'), 'koCard: an unplayed tie shows the predicted modal score');
+ok(koPred.includes('penalties 9.0%'), 'koCard: the extra-time/penalties line shows on a prediction');
+ok(!koPred.includes('advanced'), 'koCard: no result line on an unplayed tie');
+
+sandbox.setData({ ko_schedule:[
+  {slot:97,round:'qf',home_desc:'W89',away_desc:'W90'},
+  {slot:101,round:'sf',home_desc:'W97',away_desc:'W98'},
+  {slot:104,round:'third',home_desc:'L101',away_desc:'L102'}] });
+
+// schedKoCard, a semi-final placeholder (nothing played yet): names the feeding round, no raw slot codes
+sandbox.setGroupCtx({}, {m:{teams:{}, group_matches:{}, knockout:{}}}, 'm', {});
+const sf = schedKoCard({round:'sf', slot:101, home_desc:'W97', away_desc:'W98',
+  kickoff_utc:'2026-07-14T19:00Z', venue:'Dallas', date:'2026-07-14'}, true);
+ok(sf.includes('QF winner'), 'schedKoCard: a semi-final placeholder names the feeding round (its feeders are quarter-final winners)');
+ok(!/W9\d/.test(sf), 'schedKoCard: no raw slot codes (W89/W90/W97) leak into the placeholder');
+
+// schedKoCard, third-place play-off with the semis played: the result comes from the finals feed
+// (KO_ACT), not the group feed (regression for the fix in PR #91)
+sandbox.setGroupCtx({}, {m:{teams:{}, group_matches:{},
+  knockout:{101:{a:'BraA',b:'BraB',played:{hs:2,as_:1,winner:'BraA'}},
+            102:{a:'ArgA',b:'ArgB',played:{hs:0,as_:1,winner:'ArgB'}}}}}, 'm', {});
+sandbox.setKoAct({ [koPairKey('BraB','ArgA')]: {home:'BraB', away:'ArgA', hs:3, as:2, winner:'BraB'} });   // losers of 101/102
+const third = schedKoCard({round:'third', slot:104, home_desc:'L101', away_desc:'L102',
+  kickoff_utc:'2026-07-18T19:00Z', venue:'Miami', date:'2026-07-18'}, true);
+ok(third.includes('BraB') && third.includes('ArgA'), 'schedKoCard: the third-place play-off shows the two beaten semi-finalists');
+ok(third.includes('>3-2<'), 'schedKoCard: the third-place result is read from the finals feed, not the group feed');
+sandbox.setKoAct({});
 
 console.log(failed
   ? `\n${failed} failed, ${passed} passed.`

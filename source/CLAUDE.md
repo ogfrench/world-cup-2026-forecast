@@ -103,6 +103,32 @@ The autonomous refresh (`.github/workflows/refresh.yml`) runs steps 1 to 4 on a 
 when `wc2026_actuals.json` actually changes, and commits the result so Netlify redeploys. It rebuilds on
 the latest `main` and retries on a push race, so a concurrent merge cannot leave it half-applied.
 
+## Testing (three layers, no dependency)
+
+`test_app.js` runs against the built `index.html` with Node's `vm`, pulling function source out of the
+template into a sandbox (no jsdom, no npm). Three kinds of test live there:
+
+1. Pure helpers: `matchState`, `koActual`, `koLabel`/`koDesc`, `parseFinals`/`parseActuals`/`parseScorers`,
+   `groupStandings`, `advanceLabel`, `actualFor`, etc. Assert on return values.
+2. Render-string tests: the card builders (`koCard`, `schedKoCard`, `matchCard`) and `scoreboardHTML`
+   return HTML strings and touch no DOM, so they are pulled into the sandbox and asserted on their
+   output directly. This is where the render layer gets covered, and every review finding that lived in
+   a card builder is pinned here as a regression test (penalty display, round-label placeholders, the
+   third-place feed lookup, scoreboard tense). The top-level `render*` functions that write to elements
+   would need a small hand-rolled `document` stub (`getElementById` returning nodes that record
+   `innerHTML`); add one when covering them, do not reach for jsdom.
+3. An optional Playwright smoke (NOT in CI, run by hand) against the pre-installed Chromium, for the
+   visual/layout regressions that string assertions cannot see.
+
+`test_pipeline.py` covers the Python pipeline (feed parse, orientation, engine conditioning, the
+incremental bracket, KO reorientation). Engine tests need numpy and skip without it; the refresh Action
+installs numpy and runs the full suite before committing.
+
+The rule (see the complexity budget in the root `CLAUDE.md`): any change to a render function
+(`render`, `renderSchedule`, `renderKnockout`, `renderScorers`, `matchCard`/`koCard`/`schedKoCard`,
+`scoreboardHTML`) adds or extends a render-string test. CI stays dependency-free; the browser smoke is
+opt-in.
+
 ## Recutting the v1.0 release (do it the hardened way)
 
 The release is recut with a one-shot `.github/workflows/release.yml` that publishes `v1.0` at the
