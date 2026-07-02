@@ -78,5 +78,13 @@
   "as": 1,
   "winner": "Canada",
   "aet": false
+ },
+ {
+  "home": "USA",
+  "away": "Bosnia-Herzegovina",
+  "hs": 2,
+  "as": 0,
+  "winner": "USA",
+  "aet": false
  }
 ]
