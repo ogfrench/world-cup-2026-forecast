@@ -966,11 +966,13 @@
     const exp=document.getElementById('scExpected');
     if(exp) exp.innerHTML = SC_MKT.map((s,i)=>scRow(i+1, s[0], s[1], s[2])).join('');
     const live=document.getElementById('scLive'), note=document.getElementById('scNote');
+    const sub=document.getElementById('scLiveSub'); if(sub) sub.textContent = tournamentOver() ? 'final' : 'live';
     if(!live) return;
     if(SC_LIVE.length){
       live.innerHTML = SC_LIVE.slice(0,15).map((s,i)=>scRow(i+1, s.player, s.team, s.goals)).join('');
       const tot=SC_LIVE.reduce((a,b)=>a+b.goals,0);
-      if(note) note.textContent = `${tot} goal${tot>1?'s':''} from ${SC_LIVE.length} player${SC_LIVE.length>1?'s':''} so far. The expected column is the pre-tournament market and does not move.`;
+      const span = tournamentOver() ? 'in the tournament' : 'so far';
+      if(note) note.textContent = `${tot} goal${tot>1?'s':''} from ${SC_LIVE.length} player${SC_LIVE.length>1?'s':''} ${span}. The expected column is the pre-tournament market and does not move.`;
     } else {
       live.innerHTML = `<div class="scempty">No goals in the feed yet. Scorers appear here as results land.</div>`;
       if(note) note.textContent = '';
@@ -978,8 +980,9 @@
   }
   function actualFor(mm){
     const r = ACTUALS[actKey(mm.date, mm.home, mm.away)];
-    if (!r) return null;
-    return r.home===mm.home ? {hs:r.hs, as:r.as} : {hs:r.as, as:r.hs};
+    if (r) return r.home===mm.home ? {hs:r.hs, as:r.as} : {hs:r.as, as:r.hs};
+    if (mm.played) return {hs:mm.played.hs, as:mm.played.as};   // embedded result: works offline and after sundown
+    return null;
   }
   // ---- match clock: one source of truth for the live/awaiting badges and the poll cadence ----
   // matchState is pure (clock + whether we already hold a result), so it is unit-testable in isolation.
@@ -1102,7 +1105,11 @@
           if (c && c.data) { ACTUALS = c.data; ACT_SYNC = c.t||0; ACT_STATE = 'cache';
                              if (c.scorers) SC_LIVE = c.scorers; if (c.ko) KO_ACT = c.ko;
                              ACT_SIG = JSON.stringify(c.data) + '|' + JSON.stringify(c.ko||{}); } } catch(e){}
-    LIVE_SIG = badgeSig(); paintLive(); pulse();
+    LIVE_SIG = badgeSig(); paintLive();
+    // during the tournament, run the heartbeat. Past sundown the heartbeat is off, but still do one
+    // fetch so a fresh visitor picks up the final scorers and any late results on top of the embedded
+    // archive (the group and knockout results are baked into the payload, so the page renders regardless).
+    if (Date.now() > SUNDOWN) fetchFeed(); else pulse();
   }
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { clearTimeout(ACT_TIMER); ACT_TIMER = null; }
@@ -1325,7 +1332,11 @@
     const openG = new Set([...grid.querySelectorAll('details.matches[open]')].map(d=>d.dataset.g));
     // the eight best third-placed teams advance too; mark them green like the top two. Same ranking
     // the bracket and the thirds table use (points, GD, goals, then Elo), top 8 of the twelve.
-    const qualThirds = new Set(thirdsRanking().slice(0, 8).map(x => x.team));
+    const thirdsRk = thirdsRanking();
+    const qualThirds = new Set(thirdsRk.slice(0, 8).map(x => x.team));
+    // the best-eight cut is provisional until every group has finished (a rival third's points can still
+    // rise, or its goal difference fall), so "Through/Missed" waits on the whole stage, not one group.
+    const allGroupsDone = thirdsRk.length > 0 && thirdsRk.every(x => x.P === 3);
     grid.innerHTML = Object.keys(G).map(g=>{
       const st = groupStandings(g);
       const done = st.anyPlayed && G[g].every(t=>st.tbl[t].P===3);   // all six group games played
@@ -1353,8 +1364,8 @@
                      : d<0 ? ` <span class="gmove down" aria-label="down ${-d}">${-d}</span>` : '';
           const adv = st.pos[t] <= 2 || qualThirds.has(t);            // top two, or a best third
           const thirdNote = st.pos[t] === 3
-            ? (qualThirds.has(t) ? ` ${done ? 'Through' : 'In'} as one of the eight best third-placed teams.`
-                                 : ` ${done ? 'Missed' : 'Outside'} the best-eight third-placed cut.`)
+            ? (qualThirds.has(t) ? ` ${allGroupsDone ? 'Through' : 'In'} as one of the eight best third-placed teams.`
+                                 : ` ${allGroupsDone ? 'Missed' : 'Outside'} the best-eight third-placed cut.`)
             : '';
           const posTip = (done
             ? `Finished <b>${ord(st.pos[t])}</b> in Group ${g}. Top two and the best third-placed teams advance.`
@@ -1628,15 +1639,15 @@
       : '';
     const sync = document.getElementById('schedSync'); if (!sync) return;
     const when = ACT_SYNC ? new Date(ACT_SYNC).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
-    if (ACT_STATE==='live')
-      sync.innerHTML = `<span class="dotlive"></span>Live results &middot; ${played} of ${items.length} played`
-                     + (when ? ` &middot; synced ${when}` : '');
+    const tally = `${played} of ${items.length} played`;
+    if (tournamentOver())               // archive: results come from the embedded payload, no live polling
+      sync.innerHTML = `<span class="dotoff"></span>Final results &middot; ${tally}`;
+    else if (ACT_STATE==='live')
+      sync.innerHTML = `<span class="dotlive"></span>Live results &middot; ${tally}` + (when ? ` &middot; synced ${when}` : '');
     else if (ACT_STATE==='cache')   // last fetch failed: be honest it is stale, not live
       sync.innerHTML = `<span class="dotoff"></span>Showing last results${when?` from ${when}`:''}, reconnecting&hellip;`;
-    else if (ACT_STATE==='off')
-      sync.innerHTML = `<span class="dotoff"></span>Live results unavailable, showing predictions only`;
-    else
-      sync.innerHTML = `<span class="dotoff"></span>Loading results&hellip;`;
+    else                                // no live connection yet: the embedded results still render
+      sync.innerHTML = `<span class="dotoff"></span>${played ? tally : 'Loading results&hellip;'}`;
   }
 
   // open one group's match predictions, open the whole grid row (the groups sitting side by side).

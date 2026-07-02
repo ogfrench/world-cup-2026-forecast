@@ -497,8 +497,13 @@ def _bracket_core(group_actuals, ko_played, elo_sign):
         e = bracket.get(slot)
         if e and frozenset((e['a'], e['b'])) in played:
             pl = played[frozenset((e['a'], e['b']))]
-            e['played'] = dict(hs=pl['hs'], as_=pl['as'], winner=pl['winner'],
-                               aet=pl.get('aet', False), pens=pl.get('pens'))
+            flip = pl['home'] != e['a']            # orient the feed's home/away to this tie's a/b
+            hs, as_ = (pl['as'], pl['hs']) if flip else (pl['hs'], pl['as'])
+            pens = pl.get('pens')
+            if flip and pens:
+                pens = [pens[1], pens[0]]
+            e['played'] = dict(hs=hs, as_=as_, winner=pl['winner'],
+                               aet=pl.get('aet', False), pens=pens)
     for slot in list(bracket):
         fill(slot)
     def won(slot):

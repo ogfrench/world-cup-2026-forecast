@@ -383,6 +383,23 @@ class TestBracket(unittest.TestCase):
         self.assertEqual((br[73]['a'], br[73]['b']),
                          (self._elo_order('A')[1], self._elo_order('B')[1]))
 
+    def test_played_ko_result_orients_to_the_tie(self):
+        # the feed may list a knockout tie with either side as "home"; fill() must orient the score and
+        # the shootout to the tie's own a/b, mirroring the browser's koActual.
+        e = self.e
+        a = self._elo_order('A')[1]                       # tie 73 is 2A v 2B, so a = runner-up A
+        b = self._elo_order('B')[1]                        # b = runner-up B
+        groups = {'A': self._rr('A', 1), 'B': self._rr('B', 1)}
+        reversed_feed = [{'home': b, 'away': a, 'hs': 2, 'as': 1, 'winner': b, 'aet': True, 'pens': [5, 4]}]
+        p = e.actual_bracket(groups, reversed_feed)[73]['played']
+        self.assertEqual((p['hs'], p['as_']), (1, 2))      # a's score first, not the feed's home-first 2-1
+        self.assertEqual(p['pens'], [4, 5])                # shootout flipped with the score
+        self.assertEqual(p['winner'], b)                   # winner is name-based, unchanged by orientation
+        # sanity: a feed already in tie order is untouched
+        same = [{'home': a, 'away': b, 'hs': 2, 'as': 1, 'winner': a, 'aet': False, 'pens': None}]
+        q = e.actual_bracket(groups, same)[73]['played']
+        self.assertEqual((q['hs'], q['as_'], q['pens']), (2, 1, None))
+
     def test_full_group_stage_gives_16_r32(self):
         e = self.e
         full = {g: self._rr(g, gi + 2) for gi, g in enumerate(e.GROUPS)}   # distinct margins -> thirds separated

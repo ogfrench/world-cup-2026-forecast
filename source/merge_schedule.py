@@ -26,6 +26,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 RESULTS = os.path.join(HERE, 'wc2026_results.json')
 SCHEDULE = os.path.join(HERE, 'wc2026_schedule.json')
 KO_SCHEDULE = os.path.join(HERE, 'wc2026_ko_schedule.json')
+ACTUALS = os.path.join(HERE, 'wc2026_actuals.json')
 
 
 def annotate_knockout(results, ko_sched):
@@ -59,9 +60,15 @@ def main():
     results = json.load(open(RESULTS, encoding='utf-8'))
     schedule = json.load(open(SCHEDULE, encoding='utf-8'))
     by_pair = {frozenset((s['home'], s['away'])): s for s in schedule}
+    # played group results, so the page is a self-contained archive: after the sundown cutoff the
+    # browser stops polling the live feed, so the group standings/scoreboard need the results embedded
+    # (the knockout results already ride along on each tie). Oriented to the match's official home/away.
+    actuals = json.load(open(ACTUALS, encoding='utf-8')) if os.path.exists(ACTUALS) else []
+    by_actual = {frozenset((a['home'], a['away'])): a for a in actuals}
 
     n_reoriented = 0
     n_annotated = 0
+    n_played = 0
     for model in results['models'].values():
         for g, matches in model['group_matches'].items():
             for m in matches:
@@ -78,6 +85,13 @@ def main():
                 m['kickoff_utc'] = s['kickoff_utc']
                 m['venue'] = s['venue']
                 n_annotated += 1
+                res = by_actual.get(frozenset((m['home'], m['away'])))
+                if res is not None:
+                    hs, as_ = (res['hs'], res['as']) if res['home'] == m['home'] else (res['as'], res['hs'])
+                    m['played'] = {'hs': hs, 'as': as_}       # oriented to the match's home/away
+                    n_played += 1
+                elif 'played' in m:
+                    del m['played']                            # idempotent: drop a stale embed if the result is gone
 
     # The KO calendar is fixed in advance, so this attaches date/kickoff/venue to whatever ties the
     # engine has resolved so far (by slot). See annotate_knockout above. The full calendar is also
@@ -89,7 +103,7 @@ def main():
 
     json.dump(results, open(RESULTS, 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
-    print(f"annotated {n_annotated} group predictions (reoriented {n_reoriented}) "
+    print(f"annotated {n_annotated} group predictions (reoriented {n_reoriented}, {n_played} with results) "
           f"and {n_ko} knockout ties")
 
 
