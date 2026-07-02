@@ -78,7 +78,7 @@ const snippet = [
   pull(/function koRounds\(\)\{[\s\S]*?\n  \}/, 'koRounds'),
   pull(/function matchSearch\(mm, a\)\{[\s\S]*?\n  \}/, 'matchSearch'),
   pull(/const liveSearch = [^\n]*/, 'liveSearch'),
-  'this.predTier = predTier; this.setActuals = o => { ACTUALS = o; }; this.setKoAct = o => { KO_ACT = o; }; this.parseFinals = parseFinals;',
+  'this.predTier = predTier; this.setActuals = o => { ACTUALS = o; }; this.setKoAct = o => { KO_ACT = o; }; this.parseFinals = parseFinals; this.actualFor = actualFor;',
   'this.esc = esc; this.scRow = scRow; this.groupStandings = groupStandings; this.matchSearch = matchSearch; this.liveSearch = liveSearch;',
   'this.predRankOf = predRankOf; this.fullStandingCalled = fullStandingCalled; this.thirdsRanking = thirdsRanking; this.koDesc = koDesc;',
   'this.scheduleUnits = scheduleUnits; this.koRounds = koRounds; this.parseActuals = parseActuals;',
@@ -87,7 +87,7 @@ const snippet = [
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals, parseScorers, predTier, koActual, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, koSide, koLabel, advanceLabel, scheduleUnits, koRounds, matchSearch, liveSearch, parseFinals } = sandbox;
+const { matchState, parseActuals, parseScorers, predTier, koActual, actualFor, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, koSide, koLabel, advanceLabel, scheduleUnits, koRounds, matchSearch, liveSearch, parseFinals } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -185,6 +185,19 @@ eq(overlay['2026-06-20|Ecuador|Ivory Coast'], { home: 'Ivory Coast', away: 'Ecua
 eq(overlay['2026-06-14|Mexico|South Africa'], { home: 'Mexico', away: 'South Africa', hs: 2, as: 0 },
    'a played game with no half-time score overlays end to end');
 eq(overlay.hasOwnProperty('2026-06-14|Australia|Turkiye'), false, 'the unplayed fixture produces no result');
+
+// ---- actualFor: falls back to the embedded result when the live feed has nothing (archive path) ----
+// after the sundown cutoff the browser stops polling, so group results ride along in the payload.
+sandbox.setActuals({});
+eq(actualFor({home:'Mexico',away:'South Korea',date:'2026-06-11',played:{hs:1,as:0}}), {hs:1,as:0},
+   'actualFor uses the embedded played result when the feed is empty (offline / after sundown)');
+eq(actualFor({home:'Mexico',away:'South Korea',date:'2026-06-11'}), null,
+   'no feed result and no embedded result: nothing to show');
+// the live feed still wins when present (it is the freshest source)
+sandbox.setActuals(parseActuals('Thu June 11\n  12:00 UTC-6    Mexico 2-2 (1-1) South Korea   @ X\n'));
+eq(actualFor({home:'Mexico',away:'South Korea',date:'2026-06-11',played:{hs:1,as:0}}), {hs:2,as:2},
+   'the live feed result takes precedence over the embedded one');
+sandbox.setActuals({});
 
 // ---- koActual: the knockout result, server-conditioned or live from the feed ----
 // the bracket tab reuses the Schedule/Groups live pattern; koActual is the one new piece, so it is

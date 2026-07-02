@@ -35,7 +35,8 @@ Build artifacts and source:
   from `cup.txt`, and `wc2026_ko_actuals.json` (knockout results with the shootout winner) from
   `cup_finals.txt` via `parse_finals`.
 - `merge_schedule.py`: folds the schedule into the results JSON (annotates date/venue, reorients
-  home/away to the official side). Idempotent, no re-simulation.
+  home/away to the official side, and embeds each played group result so the page is a self-contained
+  archive once the live feed stops). Idempotent, no re-simulation.
 - `wc2026_engine.py`: the simulation engine. All five models, market calibration, Annex C, KO logic.
   `run(..., actuals=...)` conditions the Monte Carlo on played games (locks them, samples the rest);
   `load_actuals()` reads `wc2026_actuals.json`; `validate()` checks the invariants. Seeds are fixed, so
@@ -201,6 +202,9 @@ odds (win in 90 or extra time, or take the shootout), all read from the same sim
 The group cards still show the analytic 90-minute modal (`match_report`, `argmax(M)`).
 
 The bracket has the same live state as Schedule and Groups, reusing `matchState`/`liveBadge`/`actualFor`.
+`actualFor` prefers the live feed but falls back to each fixture's embedded `played` (group results are
+baked in by `merge_schedule`, knockout results ride on each tie), so Groups and Schedule render from the
+payload alone once polling stops at sundown; `startLive` still runs one fetch past sundown for the final scorers.
 Knockout RESULTS come from a separate feed, `cup_finals.txt` (the group feed `cup.txt` is group-only).
 Both sides read it: `fetch_actuals.parse_finals` (server) and `parseFinals` (browser) parse the match
 lines `(NN) ... Home H-A [a.e.t. (...),] [P1-P2 pen.] Away`, taking the 120-minute score and, on a
@@ -208,7 +212,9 @@ draw, the shootout winner from the `P1-P2 pen.` note (openfootball's convention,
 `koActual(t)` resolves a tie's result preferring the server-conditioned `played`, then the live finals
 feed (`KO_ACT`, keyed by team pair, oriented to the tie's a/b), then a decisive group-feed score; a
 drawn score with no shootout line yet leaves the winner unknown. The shootout score is carried too
-(`parse_finals`/`parseFinals` capture the `P1-P2 pen.` numbers into `played.pens`/`pens`). A played tie
+(`parse_finals`/`parseFinals` capture the `P1-P2 pen.` numbers into `played.pens`/`pens`). Both the
+server (`_bracket_core.fill`) and the browser (`koActual`) orient a played result to the tie's a/b,
+flipping the score and the shootout when the feed happens to list the away side first. A played tie
 carries an `aet` flag (the line was `a.e.t.` or had a shootout); `koCard`'s result label spells out how
 it was decided via `advanceLabel`: "result &middot; {winner} advanced", "... in extra time" (decisive
 after 120), or "... on penalties (3-4)" (level after 120, shootout score shown in home-away order to

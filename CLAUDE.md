@@ -42,7 +42,7 @@ repo root as-is, so the homepage is the app.
   - `wc2026_ko_schedule.json` - the official knockout calendar keyed by bracket slot (date, kickoff, venue), from openfootball `cup_finals.txt`. Merged onto each known knockout tie by `merge_schedule.py`.
   - `make_data.py` - the data generator: runs the engine unconditioned (Day 0) and conditioned (live) from one shared calibration, writes both JSON files. This is the regeneration entry point.
   - `fetch_actuals.py` - pulls played group games from the openfootball feed into `wc2026_actuals.json` (engine names, official home/away).
-  - `merge_schedule.py` - merges the schedule into `wc2026_results.json`: annotates each group match with its date/venue and reorients home/away to the official side, and attaches the knockout calendar to each known tie by slot. Idempotent, no re-simulation.
+  - `merge_schedule.py` - merges the schedule into `wc2026_results.json`: annotates each group match with its date/venue, reorients home/away to the official side, embeds each played group result (so the page stays a self-contained archive once the live feed stops), and attaches the knockout calendar to each known tie by slot. Idempotent, no re-simulation.
   - `build_app.py` - injects the JSON into the template and writes `index.html`.
   - `check_app.js` - CI sanity check: script blocks parse, five models present, file is built.
   - `test_pipeline.py` - tests for the update pipeline (feed parse, home/away orientation, engine conditioning + validation). Stdlib unittest; engine tests skip without numpy. Run: `python -m unittest discover -s source -p 'test_*.py'`.
@@ -72,7 +72,9 @@ or the merge; it only checks `index.html` is in sync with the committed JSON.
 The live odds update on their own: `.github/workflows/refresh.yml` runs this pipeline on a windowed
 cron, but only when `wc2026_actuals.json` actually changes (a new played game), and commits the
 result so Netlify redeploys. Both the Action and the in-browser polling stop a week after the final
-(the sundown cutoff, 26 Jul).
+(the sundown cutoff, 26 Jul). After that the page is a static archive: group and knockout results are
+baked into the payload, so it renders in full with no feed (one hydrating fetch still runs at load for
+the final scorers).
 
 Live actual results also overlay in the browser at runtime from the openfootball feed (public,
 CORS-enabled, no key); see the live-results block in the template. That overlay is deterministic and
