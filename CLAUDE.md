@@ -6,11 +6,29 @@ the validation, the gotchas), read [source/CLAUDE.md](source/CLAUDE.md) and
 
 ## Keep it simple (read this first)
 
-This is a basic website, built for fun. Do not overkill it. No frameworks, no bundler,
-no package.json, no TypeScript, no component library, no front-end test runner. If a
-change can be a few lines of plain HTML, CSS, or vanilla JS in the template, that is the
-right size. Match the existing style and move on. Reach for heavier tooling only if
-something is genuinely broken without it. When in doubt, do less.
+Simple here is about the DELIVERY, not the model. The site is one static, self-contained
+`index.html`: no framework, no bundler, no package.json, no TypeScript, no component library,
+no runtime dependency, ever. The front end is plain vanilla JS. That part stays boring on
+purpose, and a front-end change that can be a few lines of HTML/CSS/JS in the template is the
+right size. Match the existing style and move on.
+
+The engine and pipeline are a different story, and that is fine. The Monte Carlo, the FIFA
+Annex C round of 32, the incremental bracket derivation, the two-tail Elo defer guard, and the
+embedded archive are genuinely non-trivial. They earn that complexity because they are the
+product and because they are pure and covered by tests. So the complexity budget is explicit:
+
+- Put necessary complexity in the engine/pipeline (Python, pure-ish, tested). Keep the render
+  layer dumb string-building, because it is the least tested and, as history shows, the most
+  bug-prone surface. When something is hard, push the hard part down into a testable function.
+- No new runtime dependency. No front-end build step beyond `build_app.py`.
+- Do not add a new subsystem without a test and a line in the docs. Any change to a render
+  function (`render`, `renderSchedule`, `renderKnockout`, `renderScorers`, the card builders)
+  adds or extends a render-string test in `source/test_app.js` (see the Testing note in
+  `source/CLAUDE.md`).
+
+Known sophisticated pieces, so they are not a surprise: incremental `actual_bracket`, the
+`_resolve_thirds` clinch/invariance logic, the two-tail defer guard, and the embedded
+group/knockout archive. `source/CLAUDE.md` is the detailed handoff for all of it.
 
 ## What this is
 
