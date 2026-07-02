@@ -69,6 +69,7 @@ const snippet = [
   pull(/function fullStandingCalled\(g\)\{[\s\S]*?\n  \}/, 'fullStandingCalled'),
   pull(/function thirdsRanking\(\)\{[\s\S]*?\n  \}/, 'thirdsRanking'),
   pull(/const KO_ROUNDS = \[[\s\S]*?\];/, 'KO_ROUNDS'),
+  pull(/const SHORT_ROUND = \{[^}]*\};/, 'SHORT_ROUND'),
   pull(/function koDesc\(d\)\{[\s\S]*?\n  \}/, 'koDesc'),
   pull(/function koSide\(desc\)\{[\s\S]*?\n  \}/, 'koSide'),
   pull(/function koLabel\(desc\)\{[\s\S]*?\n  \}/, 'koLabel'),
@@ -382,8 +383,10 @@ eq(fullStandingCalled('A'), null, 'an unfinished group is null (excluded from th
 eq(koDesc('1A'), 'Winner A', 'group winner descriptor');
 eq(koDesc('2C'), 'Runner-up C', 'group runner-up descriptor');
 eq(koDesc('3'), '3rd place', 'third-placed descriptor');
-eq(koDesc('W73'), 'Winner M73', 'match-winner descriptor');
-eq(koDesc('L101'), 'Loser M101', 'match-loser descriptor (third-place play-off)');
+sandbox.setData({ ko_schedule: [{slot:73,round:'r32'},{slot:101,round:'sf'}] });
+eq(koDesc('W73'), 'R32 winner', 'match-winner descriptor resolves to the round that feeds the slot');
+eq(koDesc('L101'), 'SF loser', 'match-loser descriptor resolves to the round');
+eq(koDesc('W999'), 'M999 winner', 'a slot missing from the schedule falls back to the match number');
 
 // ---- koSide / koLabel: half-known brackets (fill the side we already know, give context for the rest) ----
 (function(){
@@ -416,7 +419,7 @@ eq(advanceLabel({winner:'Canada',hs:2,as:1,aet:true}),'Canada advanced in extra 
 eq(advanceLabel({winner:'Canada',hs:1,as:1,aet:true}),'Canada advanced on penalties','a level result after 120 min with an advancer is penalties');
 eq(advanceLabel({winner:'Canada',hs:1,as:1,aet:true,pens:[5,4]}),'Canada advanced on penalties (5-4)','the shootout score is shown when the feed carries it');
 eq(advanceLabel({winner:'Morocco',hs:1,as:1,aet:true,pens:[2,3]}),'Morocco advanced on penalties (2-3)','the shootout score reads in home-away order (the away side can win it, here 2-3)');
-eq(advanceLabel({winner:null,hs:1,as:1}),'to a shootout','a draw with no advancer yet is pending the shootout');
+eq(advanceLabel({winner:null,hs:1,as:1}),'to penalties','a draw with no advancer yet is pending the shootout');
 
 // ---- scheduleUnits / koRounds: the data behind the Schedule list and the bracket ----
 (function(){
