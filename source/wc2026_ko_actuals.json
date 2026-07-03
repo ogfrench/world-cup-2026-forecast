@@ -72,6 +72,14 @@
   ]
  },
  {
+  "home": "Portugal",
+  "away": "Croatia",
+  "hs": 2,
+  "as": 1,
+  "winner": "Portugal",
+  "aet": false
+ },
+ {
   "home": "South Africa",
   "away": "Canada",
   "hs": 0,
