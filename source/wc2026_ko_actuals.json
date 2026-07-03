@@ -1,5 +1,17 @@
 [
  {
+  "home": "Australia",
+  "away": "Egypt",
+  "hs": 1,
+  "as": 1,
+  "winner": "Egypt",
+  "aet": true,
+  "pens": [
+   2,
+   4
+  ]
+ },
+ {
   "home": "Belgium",
   "away": "Senegal",
   "hs": 3,
