@@ -96,6 +96,14 @@
   "aet": false
  },
  {
+  "home": "Switzerland",
+  "away": "Algeria",
+  "hs": 2,
+  "as": 0,
+  "winner": "Switzerland",
+  "aet": false
+ },
+ {
   "home": "USA",
   "away": "Bosnia-Herzegovina",
   "hs": 2,
