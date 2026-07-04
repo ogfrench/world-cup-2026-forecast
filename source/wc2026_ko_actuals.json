@@ -36,6 +36,14 @@
   "aet": false
  },
  {
+  "home": "Canada",
+  "away": "Morocco",
+  "hs": 0,
+  "as": 3,
+  "winner": "Morocco",
+  "aet": false
+ },
+ {
   "home": "Colombia",
   "away": "Ghana",
   "hs": 1,
