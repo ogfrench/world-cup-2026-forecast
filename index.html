@@ -544,7 +544,7 @@
     <div id="raceBars"></div>
 
     <h2 class="sec-h">Road to the final</h2>
-    <p class="lead">How far each team gets: how often they reach each round across the 50,000 simulations. The odds pile onto the favorites as the field thins.</p>
+    <p class="lead">How far each team gets: how often they reach each round across the 50,000 simulations. The odds pile onto the favorites as the field thins. The live view narrows to the teams still in it and the rounds still to play; switch to Day 0 for the full pre-tournament table.</p>
     <div class="tbl-scroll"><table id="koTable"></table></div>
   </section>
 
@@ -1239,6 +1239,18 @@
           watch:'It is pinned to pre-tournament odds, not live match prices, so it is only ever as sharp as the bookmakers.'}
   };
 
+  // the live "Road to the final" matrix, trimmed to what still matters: drop the reach-round columns
+  // whose round is already decided (every team sits at 0 or 100 there) and the teams eliminated at the
+  // current frontier round. On the Day 0 view nothing is decided, so the full pre-tournament table shows.
+  // `val(team, key)` is the per-view value accessor (gv), so this follows the Live / Day 0 toggle.
+  function koMatrixShown(teams, cols, val){
+    const decided = c => teams.every(t => { const v = val(t, c[0]); return v < 0.05 || v > 99.95; });
+    let first = cols.findIndex(c => !decided(c));
+    if (first < 0) first = cols.length - 1;            // all rounds decided (tournament over): keep the last column
+    const frontier = cols[first][0];
+    return { cols: cols.slice(first), rows: teams.filter(t => val(t, frontier) > 0.0005) };
+  }
+
   function render(){
     const T = MODELS[CUR].teams, GM = MODELS[CUR].group_matches;
     // live when conditioned on played games and the Day 0 baseline is attached
@@ -1311,16 +1323,18 @@
         <div class="val">${fmt(v)}<small>±${se(v).toFixed(1)}</small>${delta}</div></div>`;
     }).join('');
 
-    // knockout matrix (top 24), in the selected view
+    // knockout matrix, in the selected view. On the live view it trims to the rounds still to play and
+    // the teams still in it (koMatrixShown); on Day 0 it stays the full pre-tournament table.
     const cols=[['advance','R32','Reached the round of 32, i.e. survived the group stage.'],
                 ['r16','R16','Reached the round of 16.'],
                 ['qf','QF','Reached the quarter-finals (last 8).'],
                 ['sf','SF','Reached the semi-finals (last 4).'],
                 ['final','Final','Reached the final.'],
                 ['champ','Win','Won the tournament. Share of the 50,000 runs ending with this team as champion.']];
-    const head='<thead><tr><th class="tname" style="text-align:left">Team</th>'+cols.map(c=>`<th data-tip="${c[2]}">${c[1]}</th>`).join('')+'</tr></thead>';
-    const body='<tbody>'+byChamp.slice(0,24).map(t=>{
-      const cells=cols.map(c=>{const v=gv(t,c[0]);const a=Math.min(.9,v/100*0.95+0.04);
+    const mtx = koMatrixShown(byChamp, cols, gv);
+    const head='<thead><tr><th class="tname" style="text-align:left">Team</th>'+mtx.cols.map(c=>`<th data-tip="${c[2]}">${c[1]}</th>`).join('')+'</tr></thead>';
+    const body='<tbody>'+mtx.rows.slice(0,24).map(t=>{
+      const cells=mtx.cols.map(c=>{const v=gv(t,c[0]);const a=Math.min(.9,v/100*0.95+0.04);
         const dark=v>=46;  // bright cell -> dark text; a halo keeps the number legible
         return `<td data-tip="${t} reaches <b>${c[1]}</b> in ${fmt(v)}% of runs (±${se(v).toFixed(1)})." style="background:rgba(200,255,77,${a.toFixed(3)});color:${dark?'#0a0b0d':'var(--txt)'};text-shadow:${dark?'0 1px 1px rgba(255,255,255,.22)':'0 1px 2px rgba(0,0,0,.8)'}">${fmt(v)}</td>`;}).join('');
       return `<tr><td class="tname">${t}<span class="grp-pill" data-tip="Group ${T[t].group}">${T[t].group}</span></td>${cells}</tr>`;

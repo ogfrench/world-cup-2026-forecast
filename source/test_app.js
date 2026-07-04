@@ -104,7 +104,8 @@ const snippet = [
   pull(/function sfLosers\(\)\{[^\n]*\}/, 'sfLosers'),
   pull(/function koCard\(t, roundChip\)\{[\s\S]*?\n  \}/, 'koCard'),
   pull(/function schedKoCard\(fix, sched\)\{[\s\S]*?\n  \}/, 'schedKoCard'),
-  'this.scoreboardHTML = scoreboardHTML; this.koCard = koCard; this.schedKoCard = schedKoCard;',
+  pull(/function koMatrixShown\(teams, cols, val\)\{[\s\S]*?\n  \}/, 'koMatrixShown'),
+  'this.scoreboardHTML = scoreboardHTML; this.koCard = koCard; this.schedKoCard = schedKoCard; this.koMatrixShown = koMatrixShown;',
   'this.predTier = predTier; this.setActuals = o => { ACTUALS = o; }; this.setKoAct = o => { KO_ACT = o; }; this.parseFinals = parseFinals; this.actualFor = actualFor;',
   'this.esc = esc; this.scRow = scRow; this.groupStandings = groupStandings; this.matchSearch = matchSearch; this.liveSearch = liveSearch;',
   'this.predRankOf = predRankOf; this.fullStandingCalled = fullStandingCalled; this.thirdsRanking = thirdsRanking; this.koDesc = koDesc;',
@@ -114,7 +115,7 @@ const snippet = [
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals, parseScorers, predTier, koActual, actualFor, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, koSide, koLabel, advanceLabel, scheduleUnits, koRounds, matchSearch, liveSearch, parseFinals, scoreboardHTML, koCard, schedKoCard } = sandbox;
+const { matchState, parseActuals, parseScorers, predTier, koActual, actualFor, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, koSide, koLabel, advanceLabel, scheduleUnits, koRounds, matchSearch, liveSearch, parseFinals, scoreboardHTML, koCard, schedKoCard, koMatrixShown } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -547,6 +548,32 @@ const third = schedKoCard({round:'third', slot:104, home_desc:'L101', away_desc:
 ok(third.includes('BraB') && third.includes('ArgA'), 'schedKoCard: the third-place play-off shows the two beaten semi-finalists');
 ok(third.includes('>3-2<'), 'schedKoCard: the third-place result is read from the finals feed, not the group feed');
 sandbox.setKoAct({});
+
+// ---- koMatrixShown: the live "Road to the final" trims decided rounds and eliminated teams ----
+const MCOLS = [['advance'],['r16'],['qf'],['sf'],['final'],['champ']];
+const mval = data => (t,k) => data[t][k];
+// pre-tournament: nothing is decided and everyone is still in, so the full table shows
+const pre = koMatrixShown(['A','B','C'], MCOLS, mval({
+  A:{advance:80,r16:50,qf:30,sf:18,final:9,champ:5},
+  B:{advance:40,r16:20,qf:9,sf:4,final:2,champ:1},
+  C:{advance:12,r16:5,qf:2,sf:1,final:0.4,champ:0.2}}));
+eq(pre.cols.map(c=>c[0]), ['advance','r16','qf','sf','final','champ'], 'koMatrixShown: pre-tournament shows every reach-round column');
+eq(pre.rows, ['A','B','C'], 'koMatrixShown: pre-tournament shows every team');
+// groups done, round of 32 part-played: the R32 column (all 0/100) drops; teams out in R32 or the groups drop
+const mid = koMatrixShown(['ThruR16','Pending','LostR32','GroupOut'], MCOLS, mval({
+  ThruR16:{advance:100,r16:100,qf:40,sf:18,final:8,champ:3},   // won its R32 tie
+  Pending:{advance:100,r16:60,qf:22,sf:9,final:4,champ:1.5},    // R32 not played yet
+  LostR32:{advance:100,r16:0,qf:0,sf:0,final:0,champ:0},        // knocked out in the R32
+  GroupOut:{advance:0,r16:0,qf:0,sf:0,final:0,champ:0}}));      // never qualified
+eq(mid.cols.map(c=>c[0]), ['r16','qf','sf','final','champ'], 'koMatrixShown: a finished round (all 0/100) drops off');
+eq(mid.rows, ['ThruR16','Pending'], 'koMatrixShown: eliminated teams (out in R32 or the groups) drop, live teams stay');
+// tournament over: every column is decided, so only the Win column and the champion remain
+const end = koMatrixShown(['Winner','RunnerUp','Other'], MCOLS, mval({
+  Winner:{advance:100,r16:100,qf:100,sf:100,final:100,champ:100},
+  RunnerUp:{advance:100,r16:100,qf:100,sf:100,final:100,champ:0},
+  Other:{advance:100,r16:0,qf:0,sf:0,final:0,champ:0}}));
+eq(end.cols.map(c=>c[0]), ['champ'], 'koMatrixShown: tournament over leaves only the Win column');
+eq(end.rows, ['Winner'], 'koMatrixShown: tournament over leaves only the champion');
 
 console.log(failed
   ? `\n${failed} failed, ${passed} passed.`
