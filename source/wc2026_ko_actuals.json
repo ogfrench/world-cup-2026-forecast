@@ -108,6 +108,14 @@
   ]
  },
  {
+  "home": "Paraguay",
+  "away": "France",
+  "hs": 0,
+  "as": 1,
+  "winner": "France",
+  "aet": false
+ },
+ {
   "home": "Portugal",
   "away": "Croatia",
   "hs": 2,
