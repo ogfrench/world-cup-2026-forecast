@@ -114,9 +114,11 @@ template into a sandbox (no jsdom, no npm). Three kinds of test live there:
    return HTML strings and touch no DOM, so they are pulled into the sandbox and asserted on their
    output directly. This is where the render layer gets covered, and every review finding that lived in
    a card builder is pinned here as a regression test (penalty display, round-label placeholders, the
-   third-place feed lookup, scoreboard tense). The top-level `render*` functions that write to elements
-   would need a small hand-rolled `document` stub (`getElementById` returning nodes that record
-   `innerHTML`); add one when covering them, do not reach for jsdom.
+   third-place feed lookup, scoreboard tense). Logic inside a top-level `render*` that is worth testing
+   is pushed into a pure helper and tested directly, e.g. `koMatrixShown` (the live "Road to the final"
+   trimming: drop decided-round columns and eliminated teams, view-aware). The `render*` functions
+   themselves would need a small hand-rolled `document` stub (`getElementById` returning nodes that
+   record `innerHTML`); add one when covering them, do not reach for jsdom.
 3. An optional Playwright smoke (NOT in CI, run by hand) against the pre-installed Chromium, for the
    visual/layout regressions that string assertions cannot see.
 
