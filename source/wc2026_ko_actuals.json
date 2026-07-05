@@ -36,6 +36,14 @@
   "aet": false
  },
  {
+  "home": "Brazil",
+  "away": "Norway",
+  "hs": 1,
+  "as": 2,
+  "winner": "Norway",
+  "aet": false
+ },
+ {
   "home": "Canada",
   "away": "Morocco",
   "hs": 0,
