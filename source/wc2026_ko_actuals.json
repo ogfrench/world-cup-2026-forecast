@@ -173,6 +173,14 @@
  },
  {
   "home": "USA",
+  "away": "Belgium",
+  "hs": 1,
+  "as": 4,
+  "winner": "Belgium",
+  "aet": false
+ },
+ {
+  "home": "USA",
   "away": "Bosnia-Herzegovina",
   "hs": 2,
   "as": 0,
