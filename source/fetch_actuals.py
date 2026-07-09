@@ -9,7 +9,7 @@ The autonomous refresh runs this before re-simulating; it is also safe to run by
 
     python3 source/fetch_actuals.py
 """
-import json, os, re, sys, urllib.request
+import json, os, re, sys, time, urllib.request, urllib.error
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = 'https://raw.githubusercontent.com/openfootball/worldcup/master/2026--usa/cup.txt'
@@ -27,6 +27,27 @@ NAME = {'Czech Republic': 'Czechia', 'Bosnia & Herzegovina': 'Bosnia-Herzegovina
         'IR Iran': 'Iran', 'Cabo Verde': 'Cape Verde', 'Congo DR': 'DR Congo'}
 MON = {'May': 5, 'June': 6, 'July': 7}
 nm = lambda s: NAME.get(s.strip(), s.strip())
+
+# The openfootball feed occasionally rate-limits (HTTP 429) or returns a transient 5xx, which used to
+# red-X the whole scheduled refresh on a single hiccup. Retry those (and network errors) with a short
+# backoff; a 429 Retry-After is honored when present. A 4xx that is not 429 is a real error, not retried.
+RETRY_CODES = {429, 500, 502, 503, 504}
+
+def fetch(url, timeout=30, tries=4):
+    for attempt in range(1, tries + 1):
+        try:
+            return urllib.request.urlopen(url, timeout=timeout).read().decode('utf-8')
+        except urllib.error.HTTPError as ex:
+            if ex.code not in RETRY_CODES or attempt == tries:
+                raise
+            wait = ex.headers.get('Retry-After') if ex.code == 429 else None
+            delay = int(wait) if (wait or '').isdigit() else 2 ** attempt
+        except (urllib.error.URLError, TimeoutError) as ex:
+            if attempt == tries:
+                raise
+            delay = 2 ** attempt
+        sys.stderr.write('fetch %s failed (attempt %d/%d): retrying in %ds\n' % (url, attempt, tries, delay))
+        time.sleep(delay)
 
 DRE = re.compile(r'^[A-Z][a-z]{2}\s+([A-Z][a-z]+)\s+(\d{1,2})\s*$')
 # the half-time score in parentheses is optional: a played game that is missing it must still parse,
@@ -141,12 +162,12 @@ def main():
     idx = build_index(sched)
     canon = set().union(*idx.keys()) if idx else set()
     try:
-        txt = urllib.request.urlopen(SRC, timeout=30).read().decode('utf-8')
+        txt = fetch(SRC)
     except Exception as ex:
         sys.exit('fetch failed: %s' % ex)
     rows, ko_grp = split_games(parse(txt), idx)
     try:
-        ko_txt = urllib.request.urlopen(KO_SRC, timeout=30).read().decode('utf-8')
+        ko_txt = fetch(KO_SRC)
     except Exception as ex:
         sys.stderr.write('warning: finals feed fetch failed (%s); knockout results skipped\n' % ex)
         ko_txt = ''
