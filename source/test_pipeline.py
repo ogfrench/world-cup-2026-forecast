@@ -259,6 +259,61 @@ class TestReorient(unittest.TestCase):
         self.assertEqual(m, original)
 
 
+class TestFetchRetry(unittest.TestCase):
+    """fetch_actuals.fetch: retry a 429/5xx or network hiccup, surface a real 4xx, honor Retry-After."""
+
+    def setUp(self):
+        self._orig_open = fa.urllib.request.urlopen
+        self._orig_sleep = fa.time.sleep
+        self.slept = []
+        fa.time.sleep = lambda s: self.slept.append(s)
+
+    def tearDown(self):
+        fa.urllib.request.urlopen = self._orig_open
+        fa.time.sleep = self._orig_sleep
+
+    def _http_error(self, code, retry_after=None):
+        hdrs = {'Retry-After': retry_after} if retry_after is not None else {}
+        return fa.urllib.error.HTTPError('u', code, 'e', hdrs, None)
+
+    def _resp(self, body):
+        return type('R', (), {'read': lambda self, b=body: b.encode('utf-8')})()
+
+    def _seq(self, items):
+        """A urlopen stub that raises/returns the given items in order, one per call."""
+        it = iter(items)
+        def _open(url, timeout=30):
+            x = next(it)
+            if isinstance(x, Exception):
+                raise x
+            return x
+        return _open
+
+    def test_retries_429_then_succeeds(self):
+        fa.urllib.request.urlopen = self._seq([self._http_error(429), self._resp('ok')])
+        with redirect_stderr(io.StringIO()):
+            self.assertEqual(fa.fetch('u', tries=4), 'ok')
+        self.assertEqual(self.slept, [2])  # one backoff before the successful retry
+
+    def test_retry_after_header_is_honored(self):
+        fa.urllib.request.urlopen = self._seq([self._http_error(429, '7'), self._resp('ok')])
+        with redirect_stderr(io.StringIO()):
+            fa.fetch('u', tries=4)
+        self.assertEqual(self.slept, [7])
+
+    def test_non_retryable_4xx_raises_immediately(self):
+        fa.urllib.request.urlopen = self._seq([self._http_error(404)])
+        with self.assertRaises(fa.urllib.error.HTTPError):
+            fa.fetch('u', tries=4)
+        self.assertEqual(self.slept, [])  # 404 is a real error, no retry
+
+    def test_gives_up_after_tries_and_raises(self):
+        fa.urllib.request.urlopen = self._seq([self._http_error(503)] * 3)
+        with redirect_stderr(io.StringIO()), self.assertRaises(fa.urllib.error.HTTPError):
+            fa.fetch('u', tries=3)
+        self.assertEqual(self.slept, [2, 4])  # backoff after attempts 1 and 2, then the 3rd raises
+
+
 @unittest.skipUnless(HAVE_NUMPY, "engine requires numpy")
 class TestEngineConditioning(unittest.TestCase):
     """The engine functions that lock played games in and guard the output. Need numpy."""
