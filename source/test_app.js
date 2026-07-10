@@ -574,6 +574,10 @@ const end = koMatrixShown(['Winner','RunnerUp','Other'], MCOLS, mval({
   Other:{advance:100,r16:0,qf:0,sf:0,final:0,champ:0}}));
 eq(end.cols.map(c=>c[0]), ['champ'], 'koMatrixShown: tournament over leaves only the Win column');
 eq(end.rows, ['Winner'], 'koMatrixShown: tournament over leaves only the champion');
+// the "Who lifts the trophy" podium and title bars slice from this same rows set (in champion-odds
+// order), so an eliminated team can never pad them: with under 16 alive, the slice holds only live teams.
+eq(mid.rows.slice(0,3), ['ThruR16','Pending'], 'koMatrixShown: podium/bars slice holds only teams still in it, never padded with eliminated');
+eq(end.rows.slice(0,16), ['Winner'], 'koMatrixShown: with the tournament over the bars collapse to the champion, no runners-up padding');
 
 console.log(failed
   ? `\n${failed} failed, ${passed} passed.`

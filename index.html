@@ -532,7 +532,7 @@
     </div>
     <div class="podium" id="podium"></div>
     <h2 class="sec-h">Who lifts the trophy</h2>
-    <p class="lead">Each bar is a team's chance of winning the tournament under the selected model. On the Day 0 view the dashed ticks mark Opta's supercomputer and the bookmakers as outside comparisons (both are pre-tournament figures, so they line up with Day 0, not the live odds). On the live view a tick marks where each team started, so you can see how far it has moved.</p>
+    <p class="lead">Each bar is a team's chance of winning the tournament under the selected model. On the Day 0 view the dashed ticks mark Opta's supercomputer and the bookmakers as outside comparisons (both are pre-tournament figures, so they line up with Day 0, not the live odds). On the live view a tick marks where each team started, so you can see how far it has moved, and the bars show only the teams still in it; switch to Day 0 for the full pre-tournament field.</p>
     <div class="legend">
       <span data-tip="The model you've selected. Each bar is its chance that the team wins the whole tournament."><i class="sw model"></i> <span class="has-tip">Selected model</span></span>
       <span class="lg-base" data-tip="Opta's published supercomputer title odds, shown as an outside comparison on the Day 0 view. Pre-tournament figures, not refreshed, so they are only a fair comparison against the Day 0 odds. None of these models was trained on them."><i class="sw opta"></i> <span class="has-tip">Opta supercomputer</span></span>
@@ -1264,6 +1264,19 @@
     // so they are only a fair check against Day 0; on the moved live bars we show just the Day 0 mark.
     const baseView = !live || day0;
 
+    // the reach-round columns, and the set of teams still in it under the selected view. koMatrixShown
+    // trims eliminated teams at the current frontier round (live view only; on Day 0 nothing is decided,
+    // so `alive` is the full field). The podium, the title bars and the reach-round matrix all draw from
+    // this same set, so a knocked-out team drops out of every one of them at once.
+    const cols=[['advance','R32','Reached the round of 32, i.e. survived the group stage.'],
+                ['r16','R16','Reached the round of 16.'],
+                ['qf','QF','Reached the quarter-finals (last 8).'],
+                ['sf','SF','Reached the semi-finals (last 4).'],
+                ['final','Final','Reached the final.'],
+                ['champ','Win','Won the tournament. Share of the 50,000 runs ending with this team as champion.']];
+    const mtx = koMatrixShown(byChamp, cols, gv);
+    const alive = mtx.rows;   // teams still able to reach the frontier round, in champion-odds order
+
     // Live / Day 0 toggle governs the whole tab (live data only)
     const tgl=document.getElementById('titleToggle');
     if(tgl){ tgl.style.display = live ? 'inline-flex' : 'none';
@@ -1279,7 +1292,7 @@
       if(Math.abs(d)<0.05) return `<div class="mv even" data-tip="Unchanged from the Day 0 (pre-tournament) odds.">level with Day 0</div>`;
       return `<div class="mv ${d>0?'up':'down'}" data-tip="Change from the Day 0 (pre-tournament) odds of <b>${fmt(then)}%</b>.">${fmt(Math.abs(d))} since Day 0</div>`;
     };
-    document.getElementById('podium').innerHTML = byChamp.slice(0,3).map((t,i)=>`
+    document.getElementById('podium').innerHTML = alive.slice(0,3).map((t,i)=>`
       <div class="pod ${podCols[i]}">
         <div class="rk">${rkTxt[i]}</div>
         <div class="tnm">${t}</div>
@@ -1301,8 +1314,9 @@
       } else tl.style.display='none';
     }
 
-    // title race bars (top 16)
-    const top = byChamp.slice(0,16);
+    // title race bars: the top 16 of the teams still in it (live view drops eliminated teams; Day 0 is
+    // the full field, so this is the pre-tournament top 16 unchanged)
+    const top = alive.slice(0,16);
     const maxv = Math.max(...top.map(t=> baseView
         ? Math.max(gv(t,'champ'), OPTA[t]||0, MKT[t]||0)   // Day 0: bound the Opta/bookmaker ticks
         : Math.max(gv(t,'champ'), T[t].champ0||0)))*1.08;  // live: bound the Day 0 movement mark
@@ -1323,15 +1337,8 @@
         <div class="val">${fmt(v)}<small>±${se(v).toFixed(1)}</small>${delta}</div></div>`;
     }).join('');
 
-    // knockout matrix, in the selected view. On the live view it trims to the rounds still to play and
-    // the teams still in it (koMatrixShown); on Day 0 it stays the full pre-tournament table.
-    const cols=[['advance','R32','Reached the round of 32, i.e. survived the group stage.'],
-                ['r16','R16','Reached the round of 16.'],
-                ['qf','QF','Reached the quarter-finals (last 8).'],
-                ['sf','SF','Reached the semi-finals (last 4).'],
-                ['final','Final','Reached the final.'],
-                ['champ','Win','Won the tournament. Share of the 50,000 runs ending with this team as champion.']];
-    const mtx = koMatrixShown(byChamp, cols, gv);
+    // knockout matrix, in the selected view. Same trimmed set as the podium and bars (koMatrixShown):
+    // live view shows the rounds still to play and the teams still in it, Day 0 the full table.
     const head='<thead><tr><th class="tname" style="text-align:left">Team</th>'+mtx.cols.map(c=>`<th data-tip="${c[2]}">${c[1]}</th>`).join('')+'</tr></thead>';
     const body='<tbody>'+mtx.rows.slice(0,24).map(t=>{
       const cells=mtx.cols.map(c=>{const v=gv(t,c[0]);const a=Math.min(.9,v/100*0.95+0.04);
