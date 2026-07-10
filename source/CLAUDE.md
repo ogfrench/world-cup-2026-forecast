@@ -115,8 +115,12 @@ template into a sandbox (no jsdom, no npm). Three kinds of test live there:
    output directly. This is where the render layer gets covered, and every review finding that lived in
    a card builder is pinned here as a regression test (penalty display, round-label placeholders, the
    third-place feed lookup, scoreboard tense). Logic inside a top-level `render*` that is worth testing
-   is pushed into a pure helper and tested directly, e.g. `koMatrixShown` (the live "Road to the final"
-   trimming: drop decided-round columns and eliminated teams, view-aware). The `render*` functions
+   is pushed into a pure helper and tested directly, e.g. `koMatrixShown` (drop decided-round columns and
+   eliminated teams at the frontier round, view-aware). One call to it drives three surfaces on the Title
+   Odds tab so they stay in lockstep: its `rows` (teams still in it, in champion-odds order) is the set the
+   podium and the "Who lifts the trophy" title bars slice from, and its `cols`/`rows` are the reach-round
+   matrix. In the live view an eliminated team drops out of all three at once; on Day 0 nothing is decided,
+   so the full field shows. The `render*` functions
    themselves would need a small hand-rolled `document` stub (`getElementById` returning nodes that
    record `innerHTML`); add one when covering them, do not reach for jsdom.
 3. An optional Playwright smoke (NOT in CI, run by hand) against the pre-installed Chromium, for the
