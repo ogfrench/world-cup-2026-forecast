@@ -197,6 +197,9 @@
   .tname{text-align:left!important;font-family:'Archivo'!important;font-weight:700;white-space:nowrap;position:sticky;left:0;background:var(--surface)}
   thead th.tname{background:var(--bg2)}   /* the Team header matches its header row, not the sticky-left body cells */
   .tname small{font-family:'DM Mono';font-weight:400;color:var(--faint);margin-left:6px}
+  /* keep the Team column to its content so the reach-round columns get the slack. Without this, a
+     trimmed live table (few columns) lets auto-layout balloon the Team column and push the rest off. */
+  #koTable .tname{width:1%}
   .grp-pill{display:inline-block;min-width:16px;font-size:9px;color:var(--bg);background:var(--faint);
             border-radius:3px;padding:1px 4px;font-family:'DM Mono';margin-left:6px;vertical-align:middle}
 
@@ -1346,7 +1349,11 @@
         return `<td data-tip="${t} reaches <b>${c[1]}</b> in ${fmt(v)}% of runs (±${se(v).toFixed(1)})." style="background:rgba(200,255,77,${a.toFixed(3)});color:${dark?'#0a0b0d':'var(--txt)'};text-shadow:${dark?'0 1px 1px rgba(255,255,255,.22)':'0 1px 2px rgba(0,0,0,.8)'}">${fmt(v)}</td>`;}).join('');
       return `<tr><td class="tname">${t}<span class="grp-pill" data-tip="Group ${T[t].group}">${T[t].group}</span></td>${cells}</tr>`;
     }).join('')+'</tbody>';
-    document.getElementById('koTable').innerHTML=head+body;
+    // scale the table's min-width to the columns actually shown, so a trimmed live table (2-3 columns)
+    // fits the screen instead of forcing the full-table 560px scroll that hid the round columns.
+    const koT=document.getElementById('koTable');
+    koT.style.minWidth=(140+mtx.cols.length*70)+'px';
+    koT.innerHTML=head+body;
 
     // groups: predicted group-winner odds + live actual table + collapsible match predictions
     const grid = document.getElementById('groupGrid');
