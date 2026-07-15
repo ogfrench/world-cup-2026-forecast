@@ -500,6 +500,41 @@ class TestBracket(unittest.TestCase):
         self.assertNotIn(73, e.actual_bracket({'A': tie, 'B': Bgrp}, []))        # deferred
         self.assertIn(73, e.actual_bracket({'A': self._rr('A', 1), 'B': Bgrp}, []))  # clean -> emitted
 
+    def _play(self, group_actuals, skip=()):
+        """Play the whole known bracket deterministically (the a-side wins 1-0 each tie), skipping any
+        slots in `skip`, so downstream rounds resolve. Returns the fully-derived bracket."""
+        e = self.e
+        ko = []
+        for _ in range(40):                              # bounded: 31 ties in the bracket
+            br = e.actual_bracket(group_actuals, ko)
+            added = False
+            for s, tie in sorted(br.items()):
+                if s in skip or tie['played'] is not None:
+                    continue
+                ko.append({'home': tie['a'], 'away': tie['b'], 'hs': 1, 'as': 0, 'winner': tie['a']})
+                added = True
+            if not added:
+                break
+        return e.actual_bracket(group_actuals, ko)
+
+    def test_third_place_emitted_once_both_semis_decided(self):
+        e = self.e
+        full = {g: self._rr(g, gi + 2) for gi, g in enumerate(e.GROUPS)}
+        br = self._play(full)
+        self.assertIn(103, br)                            # the final
+        self.assertIn(104, br)                            # the third-place play-off
+        self.assertEqual(br[104]['round'], 'third')
+        # the two beaten semi-finalists: the a-side won each semi, so the losers are the b-sides
+        self.assertEqual((br[104]['a'], br[104]['b']), (br[101]['b'], br[102]['b']))
+
+    def test_third_place_absent_until_second_semi_decided(self):
+        e = self.e
+        full = {g: self._rr(g, gi + 2) for gi, g in enumerate(e.GROUPS)}
+        br = self._play(full, skip={102})                 # play everything but the second semi
+        self.assertIn(101, br)                            # first semi is set...
+        self.assertNotIn(103, br)                         # ...but the final needs both winners
+        self.assertNotIn(104, br)                         # ...and the play-off needs both losers
+
     def test_locks_invariant_third_beyond_kl(self):
         # With one group still open, a third whose Annex C slot is the same across every possible
         # set of eight qualifiers is placed early, not just K and L. Here groups A-L minus J are
@@ -590,8 +625,11 @@ class TestKoScheduleAlignment(unittest.TestCase):
         token = lambda ref: ({'W': '1', 'R': '2'}[ref[0]] + ref[1]) if ref[0] in ('W', 'R') else '3'
         feeders = {**e.R16_PAIRS, **e.QF_PAIRS, **e.SF_PAIRS, 103: e.FINAL_FEEDERS}
         for r in ko:
-            if r['round'] == 'third':
-                continue                      # display-only consolation match, no engine slot to align
+            if r['round'] == 'third':          # the two beaten semi-finalists: losers of the two SF slots
+                sfs = list(e.SF_PAIRS)
+                self.assertEqual((r['home_desc'], r['away_desc']), (f'L{sfs[0]}', f'L{sfs[1]}'),
+                                 "third-place descriptor mismatch")
+                continue
             s = r['slot']
             if s in e.R32_SYMBOLIC:
                 fa_, fb_ = e.R32_SYMBOLIC[s]

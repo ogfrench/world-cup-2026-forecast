@@ -77,7 +77,7 @@ const snippet = [
   pull(/function koDesc\(d\)\{[\s\S]*?\n  \}/, 'koDesc'),
   pull(/function koSide\(desc\)\{[\s\S]*?\n  \}/, 'koSide'),
   pull(/function koLabel\(desc\)\{[\s\S]*?\n  \}/, 'koLabel'),
-  pull(/function advanceLabel\(a\)\{[\s\S]*?\n  \}/, 'advanceLabel'),
+  pull(/function advanceLabel\(a, verb\)\{[\s\S]*?\n  \}/, 'advanceLabel'),
   pull(/function scheduleUnits\(\)\{[\s\S]*?\n  \}/, 'scheduleUnits'),
   pull(/function koRounds\(\)\{[\s\S]*?\n  \}/, 'koRounds'),
   pull(/function matchSearch\(mm, a\)\{[\s\S]*?\n  \}/, 'matchSearch'),
@@ -102,7 +102,7 @@ const snippet = [
   pull(/function matchLive\(mm\)\{[^\n]*\}/, 'matchLive'),
   pull(/const liveBadge = mm => \{[\s\S]*?\n  \};/, 'liveBadge'),
   pull(/function sfLosers\(\)\{[^\n]*\}/, 'sfLosers'),
-  pull(/function koCard\(t, roundChip\)\{[\s\S]*?\n  \}/, 'koCard'),
+  pull(/function koCard\(t, roundChip, verb\)\{[\s\S]*?\n  \}/, 'koCard'),
   pull(/function schedKoCard\(fix, sched\)\{[\s\S]*?\n  \}/, 'schedKoCard'),
   pull(/function koMatrixShown\(teams, cols, val\)\{[\s\S]*?\n  \}/, 'koMatrixShown'),
   'this.scoreboardHTML = scoreboardHTML; this.koCard = koCard; this.schedKoCard = schedKoCard; this.koMatrixShown = koMatrixShown;',
@@ -461,6 +461,9 @@ eq(advanceLabel({winner:'Canada',hs:1,as:1,aet:true}),'Canada advanced on penalt
 eq(advanceLabel({winner:'Canada',hs:1,as:1,aet:true,pens:[5,4]}),'Canada advanced on penalties (5-4)','the shootout score is shown when the feed carries it');
 eq(advanceLabel({winner:'Morocco',hs:1,as:1,aet:true,pens:[2,3]}),'Morocco advanced on penalties (2-3)','the shootout score reads in home-away order (the away side can win it, here 2-3)');
 eq(advanceLabel({winner:null,hs:1,as:1}),'to penalties','a draw with no advancer yet is pending the shootout');
+// verb='win' for the third-place play-off: a side wins it, it does not advance from it
+eq(advanceLabel({winner:'France',hs:1,as:0},'win'),'France won','third-place play-off says won, not advanced');
+eq(advanceLabel({winner:'France',hs:1,as:1,aet:true,pens:[4,3]},'win'),'France won on penalties (4-3)','third-place play-off shootout says won on penalties');
 
 // ---- scheduleUnits / koRounds: the data behind the Schedule list and the bracket ----
 (function(){
@@ -525,6 +528,12 @@ ok(koPred.includes('>2-0<'), 'koCard: an unplayed tie shows the predicted modal 
 ok(koPred.includes('penalties 9.0%'), 'koCard: the extra-time/penalties line shows on a prediction');
 ok(!koPred.includes('advanced'), 'koCard: no result line on an unplayed tie');
 
+// koCard, verb='win' (the third-place play-off): the wording is "win", never "advance"
+const koWin = koCard({a:'France', b:'England', modal:[1,0], top_scores:[[1,0,14],[2,1,11],[0,0,9]],
+  adv_a:55, adv_b:45, p_a:48, p_draw:27, p_b:25, p_pens:13, kickoff_utc:'2027-07-18T19:00Z', venue:'Miami', date:'2027-07-18'}, 'third', 'win');
+ok(!koWin.includes('advance'), 'koCard win-verb: the third-place card never says advance');
+ok(koWin.includes('each side wins'), 'koCard win-verb: the odds bar tooltip says wins');
+
 sandbox.setData({ ko_schedule:[
   {slot:97,round:'qf',home_desc:'W89',away_desc:'W90'},
   {slot:101,round:'sf',home_desc:'W97',away_desc:'W98'},
@@ -548,6 +557,16 @@ const third = schedKoCard({round:'third', slot:104, home_desc:'L101', away_desc:
 ok(third.includes('BraB') && third.includes('ArgA'), 'schedKoCard: the third-place play-off shows the two beaten semi-finalists');
 ok(third.includes('>3-2<'), 'schedKoCard: the third-place result is read from the finals feed, not the group feed');
 sandbox.setKoAct({});
+
+// schedKoCard, third-place play-off once the engine has emitted a prediction (slot 104 in the knockout
+// map): a full prediction card, with "win" wording (nothing advances from the play-off)
+sandbox.setGroupCtx({}, {m:{teams:{}, group_matches:{}, knockout:{104:{a:'France', b:'England', round:'third',
+  modal:[1,0], top_scores:[[1,0,14],[2,1,11],[0,0,9]], adv_a:55, adv_b:45, p_a:48, p_draw:27, p_b:25, p_pens:13,
+  kickoff_utc:'2027-07-18T19:00Z', venue:'Miami', date:'2027-07-18', played:null}}}}, 'm', {});
+const third2 = schedKoCard({round:'third', slot:104, home_desc:'L101', away_desc:'L102',
+  kickoff_utc:'2027-07-18T19:00Z', venue:'Miami', date:'2027-07-18'}, true);
+ok(third2.includes('>1-0<'), 'schedKoCard: an emitted third-place tie shows the model prediction');
+ok(!third2.includes('advance'), 'schedKoCard: the third-place prediction card uses win wording, not advance');
 
 // ---- koMatrixShown: the live "Road to the final" trims decided rounds and eliminated teams ----
 const MCOLS = [['advance'],['r16'],['qf'],['sf'],['final'],['champ']];
