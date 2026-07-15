@@ -257,10 +257,14 @@ teams are unknown until the groups finish): `wc2026_ko_schedule.json` carries da
 from the official openfootball calendar, and `merge_schedule.py` attaches it onto each emitted tie.
 `test_pipeline.py` guards that every slot's bracket descriptors match the engine (`R32_SYMBOLIC` and the
 feeder pairs), so a tie can never carry the wrong date. The engine's final is slot 103 (official match
-104). The engine does not simulate the third-place play-off (official match 103), so it rides in the
-schedule as a display-only fixture with `round:"third"` and synthetic `slot:104`: shown in the Schedule
-and the bracket with the two beaten semi-finalists and the real score but no model pick. The alignment
-guard skips it. The Schedule and the Knockout tab both render the whole calendar from `ko_schedule` via
+104). The third-place play-off (official match 103) rides at synthetic `slot:104`, `round:"third"`. It sits
+outside the advancement bracket (nothing progresses from it), so `_bracket_core` emits it separately: once
+both semis are decided the two beaten semi-finalists are known, and it is an ordinary tie the model can
+predict, so it is emitted with a full `ko_report` prediction like any other. The front end renders it with
+`koCard(tie, 'third', 'win')`: the verb switches the advance wording to win ("France won", "% to win", "each
+side wins"), because a side wins the play-off rather than advancing from it. Until both semis are decided,
+`schedKoCard` falls back to showing the two beaten-semi-finalist slots as they resolve. The alignment guard
+asserts the slot-104 descriptors are `L101`/`L102` (the two SF losers). The Schedule and the Knockout tab both render the whole calendar from `ko_schedule` via
 `scheduleUnits()` / `koRounds()` (pure, unit-tested), so all 104 fixtures appear before the teams are known.
 A tie with a `kickoff_utc` shows the in-play/awaiting badge and folds into the live heartbeat via
 `koTies()`. The `cup_finals.txt` played-line and `pen.` formats are built to openfootball's 2022

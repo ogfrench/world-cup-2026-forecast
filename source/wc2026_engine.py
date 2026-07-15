@@ -514,6 +514,18 @@ def _bracket_core(group_actuals, ko_played, elo_sign):
         if wp and wq:
             bracket[slot] = dict(round=ROUND_OF[slot], a=wp, b=wq, played=None)
             fill(slot)
+    # third-place play-off (official match 103, our synthetic slot 104): the two beaten semi-finalists.
+    # It sits outside the advancement bracket (nothing progresses from it), so it is emitted separately,
+    # but it is an ordinary tie the model can predict, so once both semis are decided we emit it too.
+    def lost(slot):
+        e = bracket.get(slot)
+        if e and e['played'] and e['played']['winner']:
+            return e['b'] if e['played']['winner'] == e['a'] else e['a']
+        return None
+    la, lb = lost(101), lost(102)
+    if la and lb:
+        bracket[104] = dict(round='third', a=la, b=lb, played=None)
+        fill(104)
     return bracket
 
 def actual_bracket(group_actuals, ko_played):

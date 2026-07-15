@@ -896,7 +896,9 @@
     if (!a) return null;
     return {hs:a.hs, as:a.as, winner: a.hs>a.as ? t.a : a.as>a.hs ? t.b : null};
   }
-  function koCard(t, roundChip){
+  function koCard(t, roundChip, verb){
+    const adv = verb === 'win' ? 'win' : 'advance';    // third-place play-off: a side wins it, does not advance
+    const advs = verb === 'win' ? 'wins' : 'advances';
     const favA = t.adv_a>=t.adv_b, fav = favA?t.a:t.b, favAdv = Math.max(t.adv_a,t.adv_b);
     const alts = t.top_scores.slice(1,4).map(s=>`${s[0]}-${s[1]}`).join(' · ');
     const a = koActual(t), mm = {home:t.a, away:t.b, date:t.date, kickoff_utc:t.kickoff_utc, venue:t.venue};
@@ -907,15 +909,15 @@
     const cap = t.kickoff_utc
       ? `<span class="capgrp">${captime}${roundChip ? roundPill(roundChip) : ''}</span>`
         + `<span class="capgrp capend">${t.venue ? `<span class="capven" data-tip="${t.venue}">${venueName(t.venue)}</span>` : ''}${srch}</span>`
-      : `<span class="capven">${fav} favored &middot; ${fmt(favAdv)}% to advance</span>${srch}`;
+      : `<span class="capven">${fav} favored &middot; ${fmt(favAdv)}% to ${adv}</span>${srch}`;
     let chip, clab, predRow='';
     if(a){
       const tier = predTier({modal:t.modal, p_home:t.p_a, p_draw:t.p_draw, p_away:t.p_b}, {hs:a.hs, as:a.as});
       chip = `<div class="sc ft" data-tip="The real result over 120 minutes (regulation and extra time). Penalties decide who advances but do not change this score.">${a.hs}-${a.as}</div>`;
-      clab = `result &middot; ${advanceLabel(a)}`;   // who advanced and how (in 90, in extra time, or on penalties)
+      clab = `result &middot; ${advanceLabel(a, verb)}`;   // who advanced/won and how (in 90, in extra time, or on penalties)
       predRow = `<div class="predline"><div class="ppred ${tier}" data-tip="${PRED_TIP[tier]}">${t.modal[0]}-${t.modal[1]}</div><div class="sclab">predicted</div></div>`;
     } else {
-      chip = `<div class="sc" data-tip="The most likely final scoreline from simulating the tie: 90 minutes, plus extra time added on if level. It is usually decisive, because a 90-minute draw is only about one run in four. Trust the advance odds more than this exact number.">${t.modal[0]}-${t.modal[1]}</div>`;
+      chip = `<div class="sc" data-tip="The most likely final scoreline from simulating the tie: 90 minutes, plus extra time added on if level. It is usually decisive, because a 90-minute draw is only about one run in four. Trust the ${adv} odds more than this exact number.">${t.modal[0]}-${t.modal[1]}</div>`;
       clab = 'predicted';
       if(t.kickoff_utc && matchPending(mm)) predRow = `<div class="predline">${liveBadge(mm)}</div>`;  // in-play / awaiting badge
     }
@@ -929,7 +931,7 @@
       <div class="top"><div class="ta">${t.a}</div>${chip}<div class="tb">${t.b}</div><div class="sclab clab">${clab}</div></div>
       ${predRow}
       <div class="alts">also: <span>${alts}</span></div>
-      <div class="wdl" data-tip="Chance each side advances, after extra time and penalties if needed."><i class="w" style="width:${t.adv_a}%"></i><i class="l" style="width:${t.adv_b}%"></i></div>
+      <div class="wdl" data-tip="Chance each side ${advs}, after extra time and penalties if needed."><i class="w" style="width:${t.adv_a}%"></i><i class="l" style="width:${t.adv_b}%"></i></div>
       <div class="det"><div class="dl"><span>${t.a} <b>${fmt(t.adv_a)}%</b></span><span>${t.b} <b>${fmt(t.adv_b)}%</b></span></div>${ko120}</div>
     </div>`;
   }
@@ -1570,23 +1572,26 @@
   // how a played knockout tie was decided: a draw after 120 minutes with an advancer means penalties
   // who advanced and how: in 90, in extra time, or on penalties (with the winner-first shootout
   // score when the feed carries it). A level 120-minute score with a winner can only be a shootout.
-  function advanceLabel(a){
+  function advanceLabel(a, verb){
+    const won = verb === 'win' ? 'won' : 'advanced';   // the third-place play-off is won, not advanced from
     if (!a.winner) return 'to penalties';
     if (a.hs === a.as){
       const ps = a.pens ? ` (${a.pens[0]}-${a.pens[1]})` : '';   // home-away order, matching the score line
-      return `${a.winner} advanced on penalties${ps}`;
+      return `${a.winner} ${won} on penalties${ps}`;
     }
-    return `${a.winner} advanced${a.aet ? ' in extra time' : ''}`;
+    return `${a.winner} ${won}${a.aet ? ' in extra time' : ''}`;
   }
   // one knockout fixture for a list (Schedule or the bracket). A resolved tie shows its full prediction
-  // card; the third-place play-off shows the two beaten semi-finalists and the real score but no pick
-  // (the engine does not simulate it); any other unresolved tie shows its bracket slots.
+  // card; the third-place play-off is predicted once both semis are decided (the two beaten semi-finalists),
+  // and until then shows those slots as they resolve; any other unresolved tie shows its bracket slots.
   // Renders the same in both views (the round tag is always in the caption), so the sched flag is
   // currently unused, kept for call-site symmetry with matchCard.
   function schedKoCard(fix, sched){
     const pill = roundPill(fix.round);   // the round tag shows on every knockout card, in both views
     const time = mm => `<span class="captime">${fmtDay(localDay(mm))} &middot; ${localTime(mm)}</span>`;
     if (fix.round === 'third') {
+      const tie = (MODELS[CUR].knockout||{})[fix.slot];   // the engine predicts it once both semis are decided
+      if (tie) return koCard(tie, 'third', 'win');          // a normal card, with "win" wording (nothing advances)
       const [h,a] = sfLosers();
       const mm = {home:h, away:a, date:fix.date, kickoff_utc:fix.kickoff_utc, venue:fix.venue};
       const k = (h && a) ? KO_ACT[koPairKey(h,a)] : null;    // the play-off result lives in the finals feed, not the group feed
