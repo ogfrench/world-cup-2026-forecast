@@ -1,0 +1,46 @@
+name: Recut v1.0 release
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  recut:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Recut v1.0 at current main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          SHA="${{ github.sha }}"
+          RID=$(gh release view v1.0 --json id -q .id 2>/dev/null || true)
+          if [ -n "${RID:-}" ]; then
+            gh release delete v1.0 --yes || true
+          fi
+          git tag -f v1.0 "$SHA"
+          git push -f origin "refs/tags/v1.0"
+          for i in 1 2 3 4 5 6; do
+            if gh release create v1.0 \
+                 --verify-tag \
+                 --target "$SHA" \
+                 --title "World Cup 2026 Forecast v1.0" \
+                 --notes-file .github/release_notes.md; then
+              echo "release published"
+              break
+            fi
+            echo "attempt $i failed, retrying in 5s"
+            sleep 5
+          done
+      - name: Remove this one-shot workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -f .github/workflows/release.yml .github/release_notes.md
+          git commit -m "Remove one-shot release workflow [skip actions]"
+          git push origin HEAD:main
