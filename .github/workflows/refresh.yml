@@ -31,12 +31,12 @@ jobs:
         with:
           fetch-depth: 0            # full history so we can reset onto the latest origin/main
 
-      - name: Sundown check (stop a week after the final)
+      - name: Sundown check (stop the day after the final)
         id: sundown
         run: |
-          if [ "$(date -u +%s)" -gt "$(date -u -d '2026-07-26' +%s)" ]; then
+          if [ "$(date -u +%s)" -gt "$(date -u -d '2026-07-21' +%s)" ]; then
             echo "go=false" >> "$GITHUB_OUTPUT"
-            echo "Past sundown (2026-07-26); the tournament is over. Nothing to do."
+            echo "Past sundown (end of 2026-07-20); the tournament is over. Nothing to do."
           else
             echo "go=true" >> "$GITHUB_OUTPUT"
           fi

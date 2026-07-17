@@ -89,8 +89,8 @@ or the merge; it only checks `index.html` is in sync with the committed JSON.
 
 The live odds update on their own: `.github/workflows/refresh.yml` runs this pipeline on a windowed
 cron, but only when `wc2026_actuals.json` actually changes (a new played game), and commits the
-result so Netlify redeploys. Both the Action and the in-browser polling stop a week after the final
-(the sundown cutoff, 26 Jul). After that the page is a static archive: group and knockout results are
+result so Netlify redeploys. Both the Action and the in-browser polling stop the day after the final
+(the sundown cutoff, end of 20 Jul). After that the page is a static archive: group and knockout results are
 baked into the payload, so it renders in full with no feed (one hydrating fetch still runs at load for
 the final scorers).
 

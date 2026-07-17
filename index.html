@@ -787,9 +787,9 @@
   // knockout results live in a separate file, keyed by match number; a "P1-P2 pen." note carries the
   // shootout winner a level score cannot. Optional: if it 404s or is empty, the bracket just waits.
   const ACT_SRC_KO = 'https://raw.githubusercontent.com/openfootball/worldcup/master/2026--usa/cup_finals.txt';
-  // sundown: a week after the 19 Jul final (26 Jul), stop polling the feed for good. The last
+  // sundown: the day after the 19 Jul final (end of 20 Jul), stop polling the feed for good. The last
   // cached results still render; the page just stops querying a tournament that is over.
-  const SUNDOWN = Date.parse('2026-07-26T00:00:00Z');
+  const SUNDOWN = Date.parse('2026-07-21T00:00:00Z');
   const ACT_NAME = {'Czech Republic':'Czechia','Bosnia & Herzegovina':'Bosnia-Herzegovina','Bosnia and Herzegovina':'Bosnia-Herzegovina','Turkey':'Turkiye','Türkiye':'Turkiye','Curaçao':'Curacao',"Côte d'Ivoire":'Ivory Coast','Korea Republic':'South Korea','IR Iran':'Iran','Cabo Verde':'Cape Verde','Congo DR':'DR Congo'};
   const ACT_MON = {May:5,June:6,July:7};
   let ACTUALS = {}, KO_ACT = {}, ACT_SYNC = 0, ACT_STATE = 'init', ACT_TIMER = null, ACT_SIG = '', LAST_FETCH = 0, LIVE_SIG = '';
