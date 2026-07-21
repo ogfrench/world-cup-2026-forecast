@@ -120,7 +120,13 @@ template into a sandbox (no jsdom, no npm). Three kinds of test live there:
    Odds tab so they stay in lockstep: its `rows` (teams still in it, in champion-odds order) is the set the
    podium and the "Who lifts the trophy" title bars slice from, and its `cols`/`rows` are the reach-round
    matrix. In the live view an eliminated team drops out of all three at once; on Day 0 nothing is decided,
-   so the full field shows. The `render*` functions
+   so the full field shows. Once the tournament is decided (`tournamentOver()`), that whole forecast is
+   hidden and the tab shows the actual finishing order instead: `finalStandings()` reads the played final
+   (slot 103) and third-place play-off (slot 104), returning null until both are settled, and
+   `resultLine()` builds each card's winner-first scoreline with the extra-time / shootout wording. Both
+   are pure and tested directly; `render()` only toggles which block is visible and forces the reach-round
+   table to the Day 0 field (the live numbers have collapsed onto the champion, so the pre-tournament
+   forecast is the useful record to keep). The `render*` functions
    themselves would need a small hand-rolled `document` stub (`getElementById` returning nodes that
    record `innerHTML`); add one when covering them, do not reach for jsdom.
 3. An optional Playwright smoke (NOT in CI, run by hand) against the pre-installed Chromium, for the

@@ -92,7 +92,14 @@ cron, but only when `wc2026_actuals.json` actually changes (a new played game), 
 result so Netlify redeploys. Both the Action and the in-browser polling stop the day after the final
 (the sundown cutoff, end of 20 Jul). After that the page is a static archive: group and knockout results are
 baked into the payload, so it renders in full with no feed (one hydrating fetch still runs at load for
-the final scorers).
+the final scorers). At sundown the Title Odds tab swaps its "Who lifts the trophy" forecast for a top-four
+results overview (champion, runners-up, third, fourth, with the deciding scorelines), keeping the
+reach-round table below as the pre-tournament record.
+
+The exact final version that was deployed is frozen under `archive/wc2026/` (the built `index.html`, its
+payload, and a README), so it survives independent of the live root. See `REUSE.md` for how the engine and
+pipeline map onto other tournaments (another World Cup or a Euro are mostly config; the two-legged
+competitions are not).
 
 Live actual results also overlay in the browser at runtime from the openfootball feed (public,
 CORS-enabled, no key); see the live-results block in the template. That overlay is deterministic and
