@@ -105,7 +105,11 @@ const snippet = [
   pull(/function koCard\(t, roundChip, verb\)\{[\s\S]*?\n  \}/, 'koCard'),
   pull(/function schedKoCard\(fix, sched\)\{[\s\S]*?\n  \}/, 'schedKoCard'),
   pull(/function koMatrixShown\(teams, cols, val\)\{[\s\S]*?\n  \}/, 'koMatrixShown'),
+  pull(/function finalStandings\(\)\{[\s\S]*?\n  \}/, 'finalStandings'),
+  pull(/function resultLine\(e\)\{[\s\S]*?\n  \}/, 'resultLine'),
+  pull(/function resultsHTML\(\)\{[\s\S]*?\n  \}/, 'resultsHTML'),
   'this.scoreboardHTML = scoreboardHTML; this.koCard = koCard; this.schedKoCard = schedKoCard; this.koMatrixShown = koMatrixShown;',
+  'this.finalStandings = finalStandings; this.resultLine = resultLine; this.resultsHTML = resultsHTML;',
   'this.predTier = predTier; this.setActuals = o => { ACTUALS = o; }; this.setKoAct = o => { KO_ACT = o; }; this.parseFinals = parseFinals; this.actualFor = actualFor;',
   'this.esc = esc; this.scRow = scRow; this.groupStandings = groupStandings; this.matchSearch = matchSearch; this.liveSearch = liveSearch;',
   'this.predRankOf = predRankOf; this.fullStandingCalled = fullStandingCalled; this.thirdsRanking = thirdsRanking; this.koDesc = koDesc;',
@@ -115,7 +119,7 @@ const snippet = [
 
 const sandbox = {};
 vm.runInNewContext(snippet, sandbox);
-const { matchState, parseActuals, parseScorers, predTier, koActual, actualFor, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, koSide, koLabel, advanceLabel, scheduleUnits, koRounds, matchSearch, liveSearch, parseFinals, scoreboardHTML, koCard, schedKoCard, koMatrixShown } = sandbox;
+const { matchState, parseActuals, parseScorers, predTier, koActual, actualFor, scheduleAnchor, esc, scRow, groupStandings, predRankOf, fullStandingCalled, thirdsRanking, koDesc, koSide, koLabel, advanceLabel, scheduleUnits, koRounds, matchSearch, liveSearch, parseFinals, scoreboardHTML, koCard, schedKoCard, koMatrixShown, finalStandings, resultLine, resultsHTML } = sandbox;
 
 // ---- matchState: the live/awaiting clock ----
 const KO = Date.parse('2026-06-14T04:00Z');   // Australia v Turkiye kickoff (the reported case)
@@ -597,6 +601,42 @@ eq(end.rows, ['Winner'], 'koMatrixShown: tournament over leaves only the champio
 // order), so an eliminated team can never pad them: with under 16 alive, the slice holds only live teams.
 eq(mid.rows.slice(0,3), ['ThruR16','Pending'], 'koMatrixShown: podium/bars slice holds only teams still in it, never padded with eliminated');
 eq(end.rows.slice(0,16), ['Winner'], 'koMatrixShown: with the tournament over the bars collapse to the champion, no runners-up padding');
+
+// ---- finalStandings + resultsHTML: the top-four overview shown once the tournament is decided ----
+// not decided yet: the final (103) has no result, so there are no standings to show
+sandbox.setGroupCtx({}, {m:{teams:{}, group_matches:{}, knockout:{
+  103:{a:'Spain', b:'Argentina', round:'final', played:null},
+  104:{a:'France', b:'England', round:'third', played:{hs:4, as_:6, winner:'England', aet:false, pens:null}}}}}, 'm', {});
+sandbox.setKoAct({});
+eq(finalStandings(), null, 'finalStandings: null until the final is decided');
+eq(resultsHTML(), '', 'resultsHTML: empty string until the final is decided');
+// missing the final and third slots entirely: still null, never throws
+sandbox.setGroupCtx({}, {m:{teams:{}, group_matches:{}, knockout:{}}}, 'm', {});
+eq(finalStandings(), null, 'finalStandings: null when the final/third slots are absent');
+// both decided: Spain beat Argentina 1-0 a.e.t. in the final, England beat France 6-4 for third
+sandbox.setGroupCtx({}, {m:{teams:{}, group_matches:{}, knockout:{
+  103:{a:'Spain', b:'Argentina', round:'final', played:{hs:1, as_:0, winner:'Spain', aet:true, pens:null}},
+  104:{a:'France', b:'England', round:'third', played:{hs:4, as_:6, winner:'England', aet:false, pens:null}}}}}, 'm', {});
+const stand = finalStandings();
+eq(stand.map(e=>e.team), ['Spain','Argentina','England','France'], 'finalStandings: champion, runner-up, third, fourth in order');
+eq(stand.map(e=>e.pos), [1,2,3,4], 'finalStandings: positions 1..4');
+// the winner-first scoreline and how each tie was settled
+eq(resultLine(stand[0]), 'beat Argentina 1-0 (a.e.t.) in the final', 'resultLine: champion shows the winner-first final score and extra time');
+eq(resultLine(stand[1]), 'lost the final to Spain', 'resultLine: runner-up points back at the final');
+eq(resultLine(stand[2]), 'beat France 6-4 in the third-place play-off', 'resultLine: third place reads winner-first, no extra time flag');
+eq(resultLine(stand[3]), 'lost the third-place play-off to England', 'resultLine: fourth points back at the play-off');
+const rh = resultsHTML();
+ok(rh.includes('res champ') && rh.includes('>Spain<'), 'resultsHTML: champion card carries the champ class and the team');
+ok(rh.includes('World Champions') && rh.includes('Runners-up') && rh.includes('Third place') && rh.includes('Fourth place'),
+   'resultsHTML: all four rank labels render');
+ok(rh.includes('res silver') && rh.includes('res bronze') && rh.includes('res fourth'), 'resultsHTML: medal classes for 2nd/3rd/4th');
+// a final decided on penalties: winner-first shootout score, larger number first
+sandbox.setGroupCtx({}, {m:{teams:{}, group_matches:{}, knockout:{
+  103:{a:'Spain', b:'Argentina', round:'final', played:{hs:1, as_:1, winner:'Argentina', aet:true, pens:[3,4]}},
+  104:{a:'France', b:'England', round:'third', played:{hs:2, as_:0, winner:'France', aet:false, pens:null}}}}}, 'm', {});
+const standP = finalStandings();
+eq(standP[0].team, 'Argentina', 'finalStandings: a shootout winner is the champion');
+eq(resultLine(standP[0]), 'beat Spain 1-1 (4-3 pens) in the final', 'resultLine: a shootout final shows the winner-first pens score');
 
 console.log(failed
   ? `\n${failed} failed, ${passed} passed.`

@@ -73,6 +73,7 @@
     --line:#262b34; --line2:#323845;
     --txt:#eceef1; --muted:#969ca6; --faint:#8b919d;
     --lime:#c8ff4d; --lime-dim:#8fae3a; --gold:#ffd166; --blue:#5fb3ff;
+    --silver:#c5ccd6; --bronze:#d08b52;
     --win:#5cd17f; --draw:#8a909b; --loss:#ff6f5e;
     --maxw:1080px;
   }
@@ -180,6 +181,22 @@
   .pod.p1 .pct{color:var(--lime)} .pod.p2 .pct{color:var(--blue)} .pod.p3 .pct{color:var(--gold)}
   .pod .lbl{font-size:11px;color:var(--muted);letter-spacing:.04em}
   .pod .elo{font-family:'DM Mono';font-size:11px;color:var(--faint);margin-top:8px}
+
+  /* ---------- final standings (shown once the tournament is decided) ---------- */
+  .results{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:26px}
+  .res{background:linear-gradient(180deg,var(--surface2),var(--surface));border:1px solid var(--line);
+       border-radius:12px;padding:16px;position:relative;overflow:hidden}
+  .res::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--line2)}
+  .res.champ{grid-column:1/-1;padding:22px 20px;background:linear-gradient(180deg,rgba(255,209,102,.10),var(--surface))}
+  .res.champ::before{background:var(--gold)}
+  .res.silver::before{background:var(--silver)}
+  .res.bronze::before{background:var(--bronze)}
+  .res .rrk{font-family:'DM Mono';font-size:11px;color:var(--faint);letter-spacing:.06em;text-transform:uppercase}
+  .res.champ .rrk{color:var(--gold)}
+  .res .rteam{font-family:'Anton';text-transform:uppercase;line-height:1;margin:7px 0 5px;font-size:clamp(20px,5vw,30px)}
+  .res.champ .rteam{font-size:clamp(34px,9vw,54px)}
+  .res .rline{font-size:12.5px;color:var(--muted);line-height:1.45}
+  .res.champ .rline{font-size:14px;color:var(--txt)}
 
   /* ---------- knockout matrix ---------- */
   .koseg{display:inline-flex;margin:0 0 16px;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
@@ -481,6 +498,8 @@
   @media(max-width:360px){
     .podium{grid-template-columns:1fr 1fr;gap:8px}
     .pod.p3{grid-column:1/3}
+    .results{grid-template-columns:1fr 1fr;gap:8px}
+    .res.fourth{grid-column:1/3}
   }
 
   /* ---------- web: a little more breathing room ---------- */
@@ -533,10 +552,13 @@
       <button data-v="live" class="on" data-tip="The current forecast, updated for the games played so far.">Live</button>
       <button data-v="day0" data-tip="The frozen pre-tournament forecast, before any games were played.">Day 0</button>
     </div>
+    <h2 class="sec-h" id="resultsHead" style="display:none">How it finished</h2>
+    <p class="lead" id="resultsLead" style="display:none">The final four and how the last two games were settled. The pre-tournament forecast is below, for the record.</p>
+    <div class="results" id="results" style="display:none"></div>
     <div class="podium" id="podium"></div>
-    <h2 class="sec-h">Who lifts the trophy</h2>
-    <p class="lead">Each bar is a team's chance of winning the tournament under the selected model. On the Day 0 view the dashed ticks mark Opta's supercomputer and the bookmakers as outside comparisons (both are pre-tournament figures, so they line up with Day 0, not the live odds). On the live view a tick marks where each team started, so you can see how far it has moved, and the bars show only the teams still in it; switch to Day 0 for the full pre-tournament field.</p>
-    <div class="legend">
+    <h2 class="sec-h" id="titleHead">Who lifts the trophy</h2>
+    <p class="lead" id="titleLead">Each bar is a team's chance of winning the tournament under the selected model. On the Day 0 view the dashed ticks mark Opta's supercomputer and the bookmakers as outside comparisons (both are pre-tournament figures, so they line up with Day 0, not the live odds). On the live view a tick marks where each team started, so you can see how far it has moved, and the bars show only the teams still in it; switch to Day 0 for the full pre-tournament field.</p>
+    <div class="legend" id="titleLegend">
       <span data-tip="The model you've selected. Each bar is its chance that the team wins the whole tournament."><i class="sw model"></i> <span class="has-tip">Selected model</span></span>
       <span class="lg-base" data-tip="Opta's published supercomputer title odds, shown as an outside comparison on the Day 0 view. Pre-tournament figures, not refreshed, so they are only a fair comparison against the Day 0 odds. None of these models was trained on them."><i class="sw opta"></i> <span class="has-tip">Opta supercomputer</span></span>
       <span class="lg-base" data-tip="The bookmakers' title odds (Polymarket / Kalshi / FanDuel) with their built-in margin removed, shown on the Day 0 view. Pre-tournament figures, not refreshed. A separate published-odds reference, not the Pure Market model."><i class="sw mkt"></i> <span class="has-tip">Bookmakers</span></span>
@@ -547,7 +569,7 @@
     <div id="raceBars"></div>
 
     <h2 class="sec-h">Road to the final</h2>
-    <p class="lead">How far each team gets: how often they reach each round across the 50,000 simulations. The odds pile onto the favorites as the field thins. The live view narrows to the teams still in it and the rounds still to play; switch to Day 0 for the full pre-tournament table.</p>
+    <p class="lead" id="koLead">How far each team gets: how often they reach each round across the 50,000 simulations. The odds pile onto the favorites as the field thins. The live view narrows to the teams still in it and the rounds still to play; switch to Day 0 for the full pre-tournament table.</p>
     <div class="tbl-scroll"><table id="koTable"></table></div>
   </section>
 
@@ -1261,7 +1283,8 @@
     // live when conditioned on played games and the Day 0 baseline is attached
     const anyT = T[Object.keys(T)[0]];
     const live = !!(META.live && anyT && anyT.champ0!=null);
-    const day0 = live && TVIEW==='day0';              // showing the frozen pre-tournament snapshot
+    const over = live && tournamentOver();            // decided: show the result, not the live forecast
+    const day0 = live && (TVIEW==='day0' || over);    // on sundown the retrospective sections show the full pre-tournament field
     const gv = (t,k)=> day0 ? T[t][k+'0'] : T[t][k];  // a team's value in the selected view
     const byChamp = Object.keys(T).sort((a,b)=>gv(b,'champ')-gv(a,'champ'));
     // the bars are the pre-tournament (Day 0) odds when there is no live data or the Day 0 view is
@@ -1282,13 +1305,24 @@
     const mtx = koMatrixShown(byChamp, cols, gv);
     const alive = mtx.rows;   // teams still able to reach the frontier round, in champion-odds order
 
-    // Live / Day 0 toggle governs the whole tab (live data only)
+    // Live / Day 0 toggle governs the whole tab (live data only, and only while the tournament is live)
     const tgl=document.getElementById('titleToggle');
-    if(tgl){ tgl.style.display = live ? 'inline-flex' : 'none';
+    if(tgl){ tgl.style.display = (live && !over) ? 'inline-flex' : 'none';
       tgl.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.v===(live?TVIEW:'live'))); }
     // legend follows the view: Opta + bookmakers on Day 0, the Day 0 movement mark on the live view
     document.querySelectorAll('.legend .lg-base').forEach(e=>e.style.display = baseView ? '' : 'none');
     document.querySelectorAll('.legend .lg-live').forEach(e=>e.style.display = baseView ? 'none' : '');
+
+    // sundown: the tournament is decided, so the "who lifts the trophy" forecast (favorites podium and
+    // title bars) gives way to the actual top-four result. The reach-round table stays below as a record
+    // of the pre-tournament forecast.
+    const show=(id,on,disp)=>{const el=document.getElementById(id); if(el) el.style.display = on ? (disp||'') : 'none';};
+    document.getElementById('results').innerHTML = over ? resultsHTML() : '';
+    show('results', over, 'grid'); show('resultsHead', over); show('resultsLead', over);
+    show('podium', !over, 'grid'); show('titleHead', !over); show('titleLead', !over);
+    show('titleLegend', !over, 'flex'); show('raceBars', !over);
+    if(over){ const kl=document.getElementById('koLead');
+      if(kl) kl.textContent='How far each team got in the pre-tournament forecast: how often they reached each round across the 50,000 simulations, before a ball was kicked.'; }
 
     // podium
     const podCols=['p1','p2','p3'], rkTxt=['1st favorite','2nd favorite','3rd favorite'];
@@ -1310,7 +1344,7 @@
     // banner above the bars
     const tl=document.getElementById('titleLive');
     if(tl){
-      if(live){ tl.style.display='flex';
+      if(live && !over){ tl.style.display='flex';
         tl.innerHTML = day0
           ? `<span class="ld" style="animation:none;background:var(--faint)"></span><span>The Day 0 forecast: the pre-tournament odds, before any games were played.</span>`
           : tournamentOver()
@@ -1580,6 +1614,48 @@
       return `${a.winner} ${won} on penalties${ps}`;
     }
     return `${a.winner} ${won}${a.aet ? ' in extra time' : ''}`;
+  }
+  // The final four in finishing order, read from the played final (engine slot 103) and the third-place
+  // play-off (slot 104). Returns null until both are decided, so the results overview only appears once the
+  // tournament is settled. Each entry carries the deciding tie and its result (oriented to the tie's a/b),
+  // so the card can print the scoreline and how it was won.
+  function finalStandings(){
+    const KO = MODELS[CUR].knockout || {};
+    const fin = KO['103'], third = KO['104'];
+    if (!fin || !third) return null;
+    const fa = koActual(fin), ta = koActual(third);
+    if (!fa || !fa.winner || !ta || !ta.winner) return null;
+    const runner = fin.a === fa.winner ? fin.b : fin.a;
+    const fourth = third.a === ta.winner ? third.b : third.a;
+    return [
+      {pos:1, team:fa.winner, tie:fin,   res:fa, other:runner},
+      {pos:2, team:runner,    tie:fin,   res:fa, other:fa.winner},
+      {pos:3, team:ta.winner, tie:third, res:ta, other:fourth},
+      {pos:4, team:fourth,    tie:third, res:ta, other:ta.winner},
+    ];
+  }
+  // one standings card's context line: the winner-first scoreline and how the tie was decided (extra time
+  // or the shootout) for the two teams that won it; the two that lost point back at the game they lost.
+  function resultLine(e){
+    const a = e.res, winFirst = e.tie.a === a.winner;
+    const sc = winFirst ? `${a.hs}-${a.as}` : `${a.as}-${a.hs}`;
+    const settle = a.hs === a.as
+      ? (a.pens ? ` (${Math.max(a.pens[0],a.pens[1])}-${Math.min(a.pens[0],a.pens[1])} pens)` : ' on penalties')
+      : (a.aet ? ' (a.e.t.)' : '');
+    if (e.pos === 1) return `beat ${e.other} ${sc}${settle} in the final`;
+    if (e.pos === 2) return `lost the final to ${e.other}`;
+    if (e.pos === 3) return `beat ${e.other} ${sc}${settle} in the third-place play-off`;
+    return `lost the third-place play-off to ${e.other}`;
+  }
+  function resultsHTML(){
+    const st = finalStandings();
+    if (!st) return '';
+    const cls = ['champ','silver','bronze','fourth'], rk = ['World Champions','Runners-up','Third place','Fourth place'];
+    return st.map(e => `<div class="res ${cls[e.pos-1]}">
+      <div class="rrk">${rk[e.pos-1]}</div>
+      <div class="rteam">${e.team}</div>
+      <div class="rline">${resultLine(e)}</div>
+    </div>`).join('');
   }
   // one knockout fixture for a list (Schedule or the bracket). A resolved tie shows its full prediction
   // card; the third-place play-off is predicted once both semis are decided (the two beaten semi-finalists),
