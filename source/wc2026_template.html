@@ -1314,14 +1314,18 @@
     document.querySelectorAll('.legend .lg-live').forEach(e=>e.style.display = baseView ? 'none' : '');
 
     // sundown: the tournament is decided, so the "who lifts the trophy" forecast (favorites podium and
-    // title bars) gives way to the actual top-four result. The reach-round table stays below as a record
-    // of the pre-tournament forecast.
+    // title bars) gives way to the actual top-four result. Gate on whether the standings actually resolved
+    // (finalStandings returns null until the final AND third-place are both settled for the selected model),
+    // so a decided-but-incomplete payload falls back to the forecast rather than an empty grid. The
+    // reach-round table stays below as a record of the pre-tournament forecast.
+    const standingsHTML = over ? resultsHTML() : '';
+    const showRes = !!standingsHTML;
     const show=(id,on,disp)=>{const el=document.getElementById(id); if(el) el.style.display = on ? (disp||'') : 'none';};
-    document.getElementById('results').innerHTML = over ? resultsHTML() : '';
-    show('results', over, 'grid'); show('resultsHead', over); show('resultsLead', over);
-    show('podium', !over, 'grid'); show('titleHead', !over); show('titleLead', !over);
-    show('titleLegend', !over, 'flex'); show('raceBars', !over);
-    if(over){ const kl=document.getElementById('koLead');
+    document.getElementById('results').innerHTML = standingsHTML;
+    show('results', showRes, 'grid'); show('resultsHead', showRes); show('resultsLead', showRes);
+    show('podium', !showRes, 'grid'); show('titleHead', !showRes); show('titleLead', !showRes);
+    show('titleLegend', !showRes, 'flex'); show('raceBars', !showRes);
+    if(showRes){ const kl=document.getElementById('koLead');
       if(kl) kl.textContent='How far each team got in the pre-tournament forecast: how often they reached each round across the 50,000 simulations, before a ball was kicked.'; }
 
     // podium
@@ -1344,7 +1348,7 @@
     // banner above the bars
     const tl=document.getElementById('titleLive');
     if(tl){
-      if(live && !over){ tl.style.display='flex';
+      if(live && !showRes){ tl.style.display='flex';
         tl.innerHTML = day0
           ? `<span class="ld" style="animation:none;background:var(--faint)"></span><span>The Day 0 forecast: the pre-tournament odds, before any games were played.</span>`
           : tournamentOver()
