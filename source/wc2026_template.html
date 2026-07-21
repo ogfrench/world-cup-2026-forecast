@@ -1716,19 +1716,23 @@
     // prediction accuracy across every played fixture: group games and knockout ties alike. The
     // third-place play-off has no model pick, so it is left out of this accuracy tally (its real result
     // still shows on its own card).
-    let played = 0, against = 0, exact = 0;
+    // `played` grades the model pick, so the third-place play-off (no pick) is excluded from it.
+    // `resulted` is the plain count of fixtures with a real result, third-place included, for the
+    // "N of 104 played" tally: otherwise a fully finished tournament reads 103 of 104.
+    let played = 0, against = 0, exact = 0, resulted = 0;
     items.forEach(it => {
       const fix = it.obj;
       if (fix.round === 'third') {
-        return;                                                // no pick to grade
+        const tie = (MODELS[CUR].knockout||{})[fix.slot];      // played, but no pick to grade
+        if (tie && koActual(tie)) resulted++;
       } else if (fix.slot != null) {                           // knockout tie
         const tie = (MODELS[CUR].knockout||{})[fix.slot]; if (!tie) return;
         const a = koActual(tie); if (!a) return;
-        played++; const t = predTier({modal:tie.modal, p_home:tie.p_a, p_draw:tie.p_draw, p_away:tie.p_b}, {hs:a.hs, as:a.as});
+        resulted++; played++; const t = predTier({modal:tie.modal, p_home:tie.p_a, p_draw:tie.p_draw, p_away:tie.p_b}, {hs:a.hs, as:a.as});
         if (t==='miss') against++; else if (t==='exact') exact++;
       } else {                                                 // group game
         const a = actualFor(fix); if (!a) return;
-        played++; const t = predTier(fix, a); if (t==='miss') against++; else if (t==='exact') exact++;
+        resulted++; played++; const t = predTier(fix, a); if (t==='miss') against++; else if (t==='exact') exact++;
       }
     });
     let html = '', curDay = null, open = false;
@@ -1752,7 +1756,7 @@
       : '';
     const sync = document.getElementById('schedSync'); if (!sync) return;
     const when = ACT_SYNC ? new Date(ACT_SYNC).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
-    const tally = `${played} of ${items.length} played`;
+    const tally = `${resulted} of ${items.length} played`;
     if (tournamentOver())               // archive: results come from the embedded payload, no live polling
       sync.innerHTML = `<span class="dotoff"></span>Final results &middot; ${tally}`;
     else if (ACT_STATE==='live')
@@ -1760,7 +1764,7 @@
     else if (ACT_STATE==='cache')   // last fetch failed: be honest it is stale, not live
       sync.innerHTML = `<span class="dotoff"></span>Showing last results${when?` from ${when}`:''}, reconnecting&hellip;`;
     else                                // no live connection yet: the embedded results still render
-      sync.innerHTML = `<span class="dotoff"></span>${played ? tally : 'Loading results&hellip;'}`;
+      sync.innerHTML = `<span class="dotoff"></span>${resulted ? tally : 'Loading results&hellip;'}`;
   }
 
   // open one group's match predictions, open the whole grid row (the groups sitting side by side).
