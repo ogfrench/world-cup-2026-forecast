@@ -1823,7 +1823,10 @@
     btn.classList.add('on'); btn.setAttribute('aria-selected','true');
     const t = btn.dataset.t;
     document.getElementById(t).classList.add('on');
-    if (t === 'schedule' || t === 'knockout') { scrollToCurrentMatch(t); return; }
+    // Schedule and Knockout normally jump to the match in focus. Once the tournament is over there is
+    // no live match to land on, and the anchor would fall to the very last fixture (the final), dumping
+    // you at the bottom of the list. At sundown, skip the jump and restore the tab like any other.
+    if ((t === 'schedule' || t === 'knockout') && !tournamentOver()) { scrollToCurrentMatch(t); return; }
     // Restore this tab's remembered position (0 the first time), animating the move when it actually
     // changes. Deferred a frame so the section swap and the browser's scroll-clamp settle first; the
     // smooth/instant choice is then made against the settled position (instant for a no-op or reduced
