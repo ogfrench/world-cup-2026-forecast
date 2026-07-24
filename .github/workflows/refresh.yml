@@ -11,9 +11,9 @@ name: Refresh forecast
 # loop rebuilds on the new tip and retries instead of failing.
 
 on:
-  schedule:
-    - cron: "*/30 16-23,0-5 * * *"   # every 30 min through the Americas match windows
-    - cron: "0 6-15 * * *"           # hourly through the quiet hours
+  # The tournament is over (past the sundown cutoff), so the scheduled refresh is retired: every run
+  # would be a no-op that still burns Actions minutes and log storage. Left as manual-only in case the
+  # pipeline is ever needed again; re-add the schedule crons to resume automatic refreshes.
   workflow_dispatch: {}              # manual "refresh now"
 
 permissions:
