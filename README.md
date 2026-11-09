@@ -1,6 +1,6 @@
 # World Cup 2026 Forecast
 
-[![CI](https://github.com/ogfrench/world-cup-2026-prediction/actions/workflows/ci.yml/badge.svg)](https://github.com/ogfrench/world-cup-2026-prediction/actions/workflows/ci.yml)
+[![CI](https://github.com/ogfrench/world-cup-2026-forecast/actions/workflows/ci.yml/badge.svg)](https://github.com/ogfrench/world-cup-2026-forecast/actions/workflows/ci.yml)
 
 **Live: https://wc2026forecast.xyz/**
 
@@ -65,6 +65,10 @@ Edit `source/wc2026_template.html`; `index.html` is generated from it.
 python source/build_app.py          # rebuild index.html
 python source/build_app.py --check  # verify it is in sync (CI)
 ```
+
+## For maintainers and coding agents
+
+Read [CLAUDE.md](CLAUDE.md) for the build and repository constraints, followed by [source/CLAUDE.md](source/CLAUDE.md) and [source/REPORT.md](source/REPORT.md) for model assumptions and validation. These are project instructions, usable as references by other assistants; they do not require a Claude-only toolchain. Keep the production page as a generated, self-contained static artifact and validate changes using the commands below.
 
 ## Tests
 
