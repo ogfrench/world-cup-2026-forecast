@@ -1,23 +1,32 @@
 {
-  "source": "https://github.com/ogfrench/claude-code-setup",
+  "source": "https://github.com/ogfrench/agentic-coding-setup",
   "note": "Written by sync-to-repos.sh. Edit the source repo, not these copies.",
   "copied": [
     ".claude/agents/cheap-reviewer.md",
     ".claude/skills/actions-cost",
+    ".claude/skills/architecture-gardener",
     ".claude/skills/best-practices",
+    ".claude/skills/delivery-loop",
+    ".claude/skills/design-system-adapter",
     ".claude/skills/deslopify",
+    ".claude/skills/diagram-craft",
     ".claude/skills/frogify",
     ".claude/skills/humanizer",
     ".claude/skills/issue-management",
+    ".claude/skills/knowledge-base-builder",
     ".claude/skills/learning-loop",
     ".claude/skills/model-delegation",
     ".claude/skills/netlify-cost",
+    ".claude/skills/plugin-experience-design",
+    ".claude/skills/presentation-design",
+    ".claude/skills/presentation-story",
+    ".claude/skills/product-passport",
     ".claude/skills/session-continuity",
     ".claude/skills/token-efficiency",
     ".claude/skills/visual-loop"
   ],
-  "snapshot_sha256": "e6f62e2ed279181ea64bb924e743e65dc81b326149656d1a16749afa2d658788",
-  "source_revision": "ce953ed9107681eadb9ef797098d280f86f9e0ef",
+  "snapshot_sha256": "201b06acdcb4e02662514d54b28ca13e7ac219b72300a31144fd2d56233f39d0",
+  "source_revision": "b696ec56ac7c190e5496dd35138ecb011ae777cf",
   "knowledge": {
     "stacks": [
       "any"
