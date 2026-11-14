@@ -1,13 +1,8 @@
 ---
 name: best-practices
 description: >-
-  Engineering practices learned across ogfrench's repos, one file per
-  topic: testing, data and concurrency, security, UI, git and CI, agents and
-  models. Read the topic that matches the work before a test for a race or a
-  browser flow, an ORM write or a cleanup job, an auth check or a client
-  payload, a form field or a widget, a CI change or a push, or delegating to
-  subagents. Triggers: "best practice", "how should I", "what did we learn",
-  "/best-practices".
+  Learned practices for tests, data, security, UI, CI and agents.
+  Use for domain changes or best-practice questions.
 ---
 
 # Best practices
