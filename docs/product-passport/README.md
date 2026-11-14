@@ -1,29 +1,22 @@
-# Product Passport: world-cup-2026-forecast
+# Product Passport: World Cup 2026 forecast
 
-> Initial documentation-derived navigation map, 9 November 2026. **Not source-verified.** This file is not a release certificate. Inspect current executable source and tests before asserting behavior or changing implementation.
+**Source review, 14 November 2026:** inspected the simulation entry point and pipeline test; located the app builder, live-result ingestion and GitHub workflows. This is a code navigation map, not a validation of any predicted result. No commands or browser journeys were run in this review.
 
-## Purpose
-World Cup Monte Carlo forecast dashboard.
+## Capability ownership
 
-## Documented capability areas
-- Compare tournament title and stage odds
-- view match predictions and actual results
-- switch between five forecasting models
+| User outcome | Owning source | Relevant check |
+| --- | --- | --- |
+| Generate tournament forecasts across five models | `source/wc2026_engine.py`, `source/model_params.json` | Engine smoke path and Python tests in `source/test_pipeline.py`; account for optional NumPy test skips |
+| Update played matches and forecast data | `source/fetch_actuals.py`, `source/make_data.py`, `source/merge_schedule.py`, `source/wc2026_actuals.json` | Feed parsing and played/unplayed regression cases in `source/test_pipeline.py` |
+| Render the public prediction dashboard | `source/build_app.py`, `source/wc2026_template.html`, generated `index.html` | `python source/build_app.py --check`, `node source/test_app.js`, actual desktop/mobile browser review |
+| Refresh automatically after new results | `.github/workflows/refresh.yml` | Check unchanged-feed no-op, latest-main race safety and eventual published update; a CI green result does not prove the refresh schedule fired |
 
-## Candidate entry points
-- `index.html`
-- `model selector`
+## Engineering workflow
 
-## Candidate source owners
-- `source/wc2026_engine.py`
-- `source/make_data.py`
-- `source/REPORT.md`
+1. Change the source model or ingestion code, never hand-edit generated odds in `index.html`. Preserve the distinction between forecast probabilities and actual results.
+2. During iteration use `python3 -m unittest discover -s source -p 'test_*.py'`; run `python source/build_app.py --check` and `node source/test_app.js` when touching generated markup, scripts, feeds or display.
+3. Exercise both a played match and an unplayed/malformed feed record, including home/away orientation, group vs knockout allocation, and idempotent refresh where relevant. A test skipped due to unavailable dependencies is **not** a pass.
+4. Review the real rendered dashboard for visual changes. Treat scheduled `refresh.yml` as a publishing workflow and do not replace its triggers or token privileges with PR-only validation to save minutes.
+5. Record exact SHA, model inputs, fixture or feed date, command outputs and separately observed deployment/refresh evidence in the PR. Use **passed / failed / blocked / not_run**.
 
-## Technology described in repository documentation
-Python; HTML.
-
-## Verification and evidence
-**Source inspection:** not completed for this seed map. **Execution:** no commands, real journeys, negative cases, deployment or host acceptance were run for this map. Start with `README.md`, `CLAUDE.md` where present, actual implementation and existing tests. Record concrete paths, commands, assertions, revision, environment and blocked/failed/not_run states here or in dedicated `features/<id>.md` entries as evidence accumulates.
-
-## Required upkeep
-When a capability, entry point, ownership boundary or integration changes, update this product map in the same PR after checking code and any executed tests. Do not claim a test passed merely because it is listed here. For recurring architecture faults invoke Architecture Gardener, without duplicating the Product Passport's behavioral scope. See `.claude/rules/product-passport.md`.
+**Review status:** source pointers checked; functional execution, schedule, CI and production deploy **not_run**. See `AGENTS.md` and `source/REPORT.md` for domain cautions.
