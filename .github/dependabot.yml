@@ -1,0 +1,15 @@
+# This completed static site has no application package dependencies.
+# Monitor GitHub Actions weekly without creating an unbounded PR backlog.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 1
+    groups:
+      actions:
+        patterns: ["*"]
